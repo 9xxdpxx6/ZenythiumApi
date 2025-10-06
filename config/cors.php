@@ -20,22 +20,27 @@ return [
     'allowed_methods' => ['*'],
 
     'allowed_origins' => [
+        // Development origins
         'http://localhost:3000',
         'http://localhost:3001', 
         'http://127.0.0.1:3000',
         'http://127.0.0.1:3001',
-        // Добавьте ваши продакшен домены здесь
-        // 'https://yourdomain.com',
+        
+        // Production origins (из .env)
+        ...(env('CORS_ALLOWED_ORIGINS') ? explode(',', env('CORS_ALLOWED_ORIGINS')) : []),
     ],
 
-    'allowed_origins_patterns' => [],
+    'allowed_origins_patterns' => [
+        // Паттерны для поддоменов (если нужно)
+        ...(env('CORS_ALLOWED_PATTERNS') ? explode(',', env('CORS_ALLOWED_PATTERNS')) : []),
+    ],
 
     'allowed_headers' => ['*'],
 
     'exposed_headers' => [],
 
-    'max_age' => 86400,
+    'max_age' => (int) env('CORS_MAX_AGE', 86400),
 
-    'supports_credentials' => true,
+    'supports_credentials' => (bool) env('CORS_SUPPORTS_CREDENTIALS', true),
 
 ];
