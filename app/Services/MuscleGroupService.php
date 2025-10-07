@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\MuscleGroup;
+use App\Filters\MuscleGroupFilter;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
@@ -15,23 +16,15 @@ final class MuscleGroupService
      */
     public function getAll(array $filters = []): Collection|LengthAwarePaginator
     {
+        $filter = new MuscleGroupFilter($filters);
         $query = MuscleGroup::query();
-
-        // Apply filters if provided
-        if (isset($filters['search'])) {
-            $query->where('name', 'like', '%' . $filters['search'] . '%');
-        }
-
-        // Load exercises count for specific user if user_id is provided
-        if (isset($filters['user_id'])) {
-            $query->withCount(['exercises' => function ($query) use ($filters) {
-                $query->where('user_id', $filters['user_id']);
-            }]);
-        }
+        
+        $filter->apply($query);
 
         // Apply pagination if requested
         if (isset($filters['per_page'])) {
-            return $query->paginate((int) $filters['per_page']);
+            $paginationParams = $filter->getPaginationParams();
+            return $query->paginate($paginationParams['per_page']);
         }
 
         return $query->get();
