@@ -23,7 +23,10 @@ final class MuscleGroupController extends Controller
     public function index(Request $request): JsonResponse
     {
         $filters = $request->query();
-        $filters['user_id'] = $request->user()->id;
+        
+        if ($request->user()) {
+            $filters['user_id'] = $request->user()->id;
+        }
         
         $muscleGroups = $this->muscleGroupService->getAll($filters);
         
@@ -59,7 +62,9 @@ final class MuscleGroupController extends Controller
      */
     public function show(MuscleGroup $muscleGroup, Request $request): JsonResponse
     {
-        $muscleGroup = $this->muscleGroupService->getById($muscleGroup->id, $request->user()->id);
+        $userId = $request->user() ? $request->user()->id : null;
+        
+        $muscleGroup = $this->muscleGroupService->getById($muscleGroup->id, $userId);
         
         return response()->json([
             'data' => new MuscleGroupResource($muscleGroup),

@@ -23,7 +23,7 @@ final class ExerciseController extends Controller
     public function index(Request $request): JsonResponse
     {
         $filters = $request->query();
-        $filters['user_id'] = $request->user()->id;
+        $filters['user_id'] = $request->user()?->id;
         
         $exercises = $this->exerciseService->getAll($filters);
         
@@ -47,7 +47,7 @@ final class ExerciseController extends Controller
     public function store(ExerciseRequest $request): JsonResponse
     {
         $data = $request->validated();
-        $data['user_id'] = $request->user()->id;
+        $data['user_id'] = $request->user()?->id;
         
         $exercise = $this->exerciseService->create($data);
         
@@ -62,7 +62,7 @@ final class ExerciseController extends Controller
      */
     public function show(Exercise $exercise, Request $request): JsonResponse
     {
-        $exercise = $this->exerciseService->getById($exercise->id, $request->user()->id);
+        $exercise = $this->exerciseService->getById($exercise->id, $request->user()?->id);
         
         return response()->json([
             'data' => new ExerciseResource($exercise),
@@ -75,7 +75,7 @@ final class ExerciseController extends Controller
      */
     public function update(ExerciseRequest $request, Exercise $exercise): JsonResponse
     {
-        $exercise = $this->exerciseService->update($exercise->id, $request->validated(), $request->user()->id);
+        $exercise = $this->exerciseService->update($exercise->id, $request->validated(), $request->user()?->id);
         
         return response()->json([
             'data' => new ExerciseResource($exercise),
@@ -88,7 +88,7 @@ final class ExerciseController extends Controller
      */
     public function destroy(Exercise $exercise, Request $request): JsonResponse
     {
-        $this->exerciseService->delete($exercise->id, $request->user()->id);
+        $this->exerciseService->delete($exercise->id, $request->user()?->id);
         
         return response()->json([
             'data' => null,

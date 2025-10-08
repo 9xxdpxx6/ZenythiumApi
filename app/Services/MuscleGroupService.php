@@ -38,6 +38,10 @@ final class MuscleGroupService
             $query->withCount(['exercises' => function ($query) use ($userId) {
                 $query->where('user_id', $userId);
             }]);
+        } else {
+            $query->withCount(['exercises' => function ($query) {
+                $query->where('user_id', -1);
+            }]);
         }
 
         return $query->findOrFail($id);

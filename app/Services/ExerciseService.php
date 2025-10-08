@@ -21,6 +21,11 @@ final class ExerciseService
         $filter = new ExerciseFilter($filters);
         $query = Exercise::query()->with('muscleGroup');
         
+        // Если user_id не передан, возвращаем пустой результат для безопасности
+        if (!isset($filters['user_id']) || $filters['user_id'] === null) {
+            return new LengthAwarePaginator([], 0, 15, 1);
+        }
+        
         $filter->apply($query);
 
         return $this->applyPagination($query, $filters);
