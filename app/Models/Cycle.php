@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Support\Carbon;
 
 final class Cycle extends Model
@@ -41,11 +42,19 @@ final class Cycle extends Model
     }
 
     /**
-     * Get the workouts for the cycle.
+     * Get the plans for the cycle.
      */
-    public function workouts(): HasMany
+    public function plans(): HasMany
     {
-        return $this->hasMany(Workout::class);
+        return $this->hasMany(Plan::class);
+    }
+
+    /**
+     * Get the workouts for the cycle through plans.
+     */
+    public function workouts(): HasManyThrough
+    {
+        return $this->hasManyThrough(Workout::class, Plan::class);
     }
 
     /**
