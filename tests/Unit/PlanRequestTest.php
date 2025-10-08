@@ -267,7 +267,7 @@ test('plan request custom messages are correct', function () {
     expect($messages['name.required'])->toBe('Название плана обязательно.');
     expect($messages['name.string'])->toBe('Название плана должно быть строкой.');
     expect($messages['name.max'])->toBe('Название плана не может быть длиннее 255 символов.');
-    expect($messages['name.unique'])->toBe('План с таким названием уже существует.');
+    expect($messages['name.unique'])->toBe('План с таким названием уже существует в этом цикле.');
     expect($messages['order.integer'])->toBe('Порядок должен быть числом.');
     expect($messages['order.min'])->toBe('Порядок должен быть больше 0.');
 });
