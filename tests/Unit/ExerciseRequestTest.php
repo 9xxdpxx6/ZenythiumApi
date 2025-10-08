@@ -8,6 +8,33 @@ use App\Models\MuscleGroup;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 
+dataset('required_fields', [
+    'name' => ['name'],
+    'muscle_group_id' => ['muscle_group_id'],
+]);
+
+dataset('invalid_muscle_group_ids', [
+    'non_existent' => [999999],
+    'non_integer' => ['not-a-number'],
+]);
+
+dataset('valid_muscle_group_ids', [
+    'integer' => [1],
+    'string_number' => ['1'],
+]);
+
+dataset('invalid_boolean_values', [
+    'string' => ['true'],
+    'array' => [[]],
+]);
+
+dataset('valid_boolean_values', [
+    'true' => [true],
+    'false' => [false],
+    'string_true' => ['1'],
+    'string_false' => ['0'],
+]);
+
 describe('ExerciseRequest', function () {
     beforeEach(function () {
         $this->user = User::factory()->create();
@@ -15,23 +42,22 @@ describe('ExerciseRequest', function () {
     });
 
     describe('validation rules', function () {
-        it('validates required name field', function () {
+        it('validates required field', function ($field) {
             $request = new ExerciseRequest();
             $request->setUserResolver(fn() => $this->user);
-            $validator = Validator::make([], $request->rules());
-
+            
+            $data = [
+                'name' => 'Test Exercise',
+                'muscle_group_id' => $this->muscleGroup->id,
+            ];
+            
+            unset($data[$field]);
+            
+            $validator = Validator::make($data, $request->rules());
+            
             expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('name'))->toBeTrue();
-        });
-
-        it('validates required muscle_group_id field', function () {
-            $request = new ExerciseRequest();
-            $request->setUserResolver(fn() => $this->user);
-            $validator = Validator::make(['name' => 'Test Exercise'], $request->rules());
-
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('muscle_group_id'))->toBeTrue();
-        });
+            expect($validator->errors()->has($field))->toBeTrue();
+        })->with('required_fields');
 
         it('validates name is string', function () {
             $request = new ExerciseRequest();
@@ -58,29 +84,28 @@ describe('ExerciseRequest', function () {
             expect($validator->errors()->has('name'))->toBeTrue();
         });
 
-        it('validates muscle_group_id is integer', function () {
+        it('validates muscle_group_id with invalid values', function ($muscleGroupId) {
             $request = new ExerciseRequest();
             $request->setUserResolver(fn() => $this->user);
             $validator = Validator::make([
                 'name' => 'Test Exercise',
-                'muscle_group_id' => 'not-a-number',
+                'muscle_group_id' => $muscleGroupId,
             ], $request->rules());
 
             expect($validator->fails())->toBeTrue();
             expect($validator->errors()->has('muscle_group_id'))->toBeTrue();
-        });
+        })->with('invalid_muscle_group_ids');
 
-        it('validates muscle_group_id exists', function () {
+        it('validates muscle_group_id with valid values', function ($muscleGroupId) {
             $request = new ExerciseRequest();
             $request->setUserResolver(fn() => $this->user);
             $validator = Validator::make([
                 'name' => 'Test Exercise',
-                'muscle_group_id' => 999,
+                'muscle_group_id' => $muscleGroupId,
             ], $request->rules());
 
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('muscle_group_id'))->toBeTrue();
-        });
+            expect($validator->passes())->toBeTrue();
+        })->with('valid_muscle_group_ids');
 
         it('validates unique name per user for creation', function () {
             Exercise::factory()->create([
@@ -146,18 +171,30 @@ describe('ExerciseRequest', function () {
             expect($validator->errors()->has('description'))->toBeTrue();
         });
 
-        it('validates is_active is boolean when provided', function () {
+        it('validates is_active with invalid values', function ($isActive) {
             $request = new ExerciseRequest();
             $request->setUserResolver(fn() => $this->user);
             $validator = Validator::make([
                 'name' => 'Test Exercise',
                 'muscle_group_id' => $this->muscleGroup->id,
-                'is_active' => 'not-boolean',
+                'is_active' => $isActive,
             ], $request->rules());
 
             expect($validator->fails())->toBeTrue();
             expect($validator->errors()->has('is_active'))->toBeTrue();
-        });
+        })->with('invalid_boolean_values');
+
+        it('validates is_active with valid values', function ($isActive) {
+            $request = new ExerciseRequest();
+            $request->setUserResolver(fn() => $this->user);
+            $validator = Validator::make([
+                'name' => 'Test Exercise',
+                'muscle_group_id' => $this->muscleGroup->id,
+                'is_active' => $isActive,
+            ], $request->rules());
+
+            expect($validator->passes())->toBeTrue();
+        })->with('valid_boolean_values');
 
         it('passes validation with valid data', function () {
             $request = new ExerciseRequest();

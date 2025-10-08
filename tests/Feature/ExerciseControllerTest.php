@@ -7,6 +7,14 @@ use App\Models\MuscleGroup;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
+dataset('protected_endpoints', [
+    'GET /api/exercises' => ['GET', '/api/exercises'],
+    'POST /api/exercises' => ['POST', '/api/exercises', []],
+    'GET /api/exercises/{id}' => ['GET', '/api/exercises/{id}'],
+    'PUT /api/exercises/{id}' => ['PUT', '/api/exercises/{id}', []],
+    'DELETE /api/exercises/{id}' => ['DELETE', '/api/exercises/{id}'],
+]);
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     Sanctum::actingAs($this->user);

@@ -7,6 +7,11 @@ use App\Models\MuscleGroup;
 use App\Models\User;
 use App\Services\ExerciseService;
 
+dataset('exception_scenarios', [
+    'non_existent' => [999999, 'non-existent exercise'],
+    'other_user' => [null, 'exercise from other user'],
+]);
+
 beforeEach(function () {
     $this->service = new ExerciseService();
     $this->user = User::factory()->create();
@@ -161,23 +166,22 @@ describe('ExerciseService', function () {
             expect($result->name)->toBe('Push-ups');
         });
 
-        it('throws exception for non-existent exercise', function () {
-            expect(fn() => $this->service->getById(999, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for exercise belonging to another user', function () {
-            $muscleGroup = MuscleGroup::factory()->create();
-            $otherUser = User::factory()->create();
+        it('throws exception for invalid exercise access', function ($exerciseId, $scenario) {
+            if ($scenario === 'exercise from other user') {
+                $muscleGroup = MuscleGroup::factory()->create();
+                $otherUser = User::factory()->create();
+                
+                $exercise = Exercise::factory()->create([
+                    'muscle_group_id' => $muscleGroup->id,
+                    'user_id' => $otherUser->id,
+                ]);
+                
+                $exerciseId = $exercise->id;
+            }
             
-            $exercise = Exercise::factory()->create([
-                'muscle_group_id' => $muscleGroup->id,
-                'user_id' => $otherUser->id,
-            ]);
-
-            expect(fn() => $this->service->getById($exercise->id, $this->user->id))
+            expect(fn() => $this->service->getById($exerciseId, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 
     describe('create', function () {
@@ -229,23 +233,24 @@ describe('ExerciseService', function () {
             ]);
         });
 
-        it('throws exception for non-existent exercise', function () {
-            expect(fn() => $this->service->update(999, ['name' => 'Test'], $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for exercise belonging to another user', function () {
-            $muscleGroup = MuscleGroup::factory()->create();
-            $otherUser = User::factory()->create();
+        it('throws exception for invalid exercise access', function ($exerciseId, $scenario) {
+            $data = ['name' => 'Test Exercise'];
             
-            $exercise = Exercise::factory()->create([
-                'muscle_group_id' => $muscleGroup->id,
-                'user_id' => $otherUser->id,
-            ]);
-
-            expect(fn() => $this->service->update($exercise->id, ['name' => 'Test'], $this->user->id))
+            if ($scenario === 'exercise from other user') {
+                $muscleGroup = MuscleGroup::factory()->create();
+                $otherUser = User::factory()->create();
+                
+                $exercise = Exercise::factory()->create([
+                    'muscle_group_id' => $muscleGroup->id,
+                    'user_id' => $otherUser->id,
+                ]);
+                
+                $exerciseId = $exercise->id;
+            }
+            
+            expect(fn() => $this->service->update($exerciseId, $data, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 
     describe('delete', function () {
@@ -264,22 +269,21 @@ describe('ExerciseService', function () {
             $this->assertDatabaseMissing('exercises', ['id' => $exercise->id]);
         });
 
-        it('throws exception for non-existent exercise', function () {
-            expect(fn() => $this->service->delete(999, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for exercise belonging to another user', function () {
-            $muscleGroup = MuscleGroup::factory()->create();
-            $otherUser = User::factory()->create();
+        it('throws exception for invalid exercise access', function ($exerciseId, $scenario) {
+            if ($scenario === 'exercise from other user') {
+                $muscleGroup = MuscleGroup::factory()->create();
+                $otherUser = User::factory()->create();
+                
+                $exercise = Exercise::factory()->create([
+                    'muscle_group_id' => $muscleGroup->id,
+                    'user_id' => $otherUser->id,
+                ]);
+                
+                $exerciseId = $exercise->id;
+            }
             
-            $exercise = Exercise::factory()->create([
-                'muscle_group_id' => $muscleGroup->id,
-                'user_id' => $otherUser->id,
-            ]);
-
-            expect(fn() => $this->service->delete($exercise->id, $this->user->id))
+            expect(fn() => $this->service->delete($exerciseId, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 });
