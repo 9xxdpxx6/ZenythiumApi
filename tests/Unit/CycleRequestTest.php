@@ -12,6 +12,26 @@ beforeEach(function () {
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
 });
 
+dataset('required_fields', [
+    'name' => ['name'],
+    'start_date' => ['start_date'],
+    'end_date' => ['end_date'],
+    'weeks' => ['weeks'],
+]);
+
+dataset('invalid_weeks', [
+    'zero' => [0],
+    'negative' => [-1],
+    'too_many' => [53],
+    'non_integer' => ['not-a-number'],
+]);
+
+dataset('valid_weeks', [
+    'minimum' => [1],
+    'maximum' => [52],
+    'string_number' => ['4'],
+]);
+
 describe('CycleRequest', function () {
     describe('validation rules', function () {
         it('passes validation with valid data', function () {
@@ -30,55 +50,7 @@ describe('CycleRequest', function () {
             expect($validator->passes())->toBeTrue();
         });
 
-        it('fails validation without name', function () {
-            $request = new CycleRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'start_date' => '2024-01-01',
-                'end_date' => '2024-01-31',
-                'weeks' => 4,
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('name'))->toBeTrue();
-        });
-
-        it('fails validation without start_date', function () {
-            $request = new CycleRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'name' => 'Test Cycle',
-                'end_date' => '2024-01-31',
-                'weeks' => 4,
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('start_date'))->toBeTrue();
-        });
-
-        it('fails validation without end_date', function () {
-            $request = new CycleRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'name' => 'Test Cycle',
-                'start_date' => '2024-01-01',
-                'weeks' => 4,
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('end_date'))->toBeTrue();
-        });
-
-        it('fails validation without weeks', function () {
+        it('fails validation without required field', function ($field) {
             $request = new CycleRequest();
             $request->setUserResolver(fn() => $this->user);
             
@@ -86,13 +58,16 @@ describe('CycleRequest', function () {
                 'name' => 'Test Cycle',
                 'start_date' => '2024-01-01',
                 'end_date' => '2024-01-31',
+                'weeks' => 4,
             ];
+            
+            unset($data[$field]);
             
             $validator = Validator::make($data, $request->rules());
             
             expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('weeks'))->toBeTrue();
-        });
+            expect($validator->errors()->has($field))->toBeTrue();
+        })->with('required_fields');
     });
 
     describe('name validation', function () {
@@ -235,7 +210,7 @@ describe('CycleRequest', function () {
     });
 
     describe('weeks validation', function () {
-        it('fails validation with zero weeks', function () {
+        it('fails validation with invalid weeks', function ($weeks) {
             $request = new CycleRequest();
             $request->setUserResolver(fn() => $this->user);
             
@@ -243,16 +218,16 @@ describe('CycleRequest', function () {
                 'name' => 'Test Cycle',
                 'start_date' => '2024-01-01',
                 'end_date' => '2024-01-31',
-                'weeks' => 0,
+                'weeks' => $weeks,
             ];
             
             $validator = Validator::make($data, $request->rules());
             
             expect($validator->fails())->toBeTrue();
             expect($validator->errors()->has('weeks'))->toBeTrue();
-        });
+        })->with('invalid_weeks');
 
-        it('fails validation with negative weeks', function () {
+        it('passes validation with valid weeks', function ($weeks) {
             $request = new CycleRequest();
             $request->setUserResolver(fn() => $this->user);
             
@@ -260,80 +235,13 @@ describe('CycleRequest', function () {
                 'name' => 'Test Cycle',
                 'start_date' => '2024-01-01',
                 'end_date' => '2024-01-31',
-                'weeks' => -1,
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('weeks'))->toBeTrue();
-        });
-
-        it('fails validation with more than 52 weeks', function () {
-            $request = new CycleRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'name' => 'Test Cycle',
-                'start_date' => '2024-01-01',
-                'end_date' => '2024-01-31',
-                'weeks' => 53,
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('weeks'))->toBeTrue();
-        });
-
-        it('passes validation with maximum weeks (52)', function () {
-            $request = new CycleRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'name' => 'Test Cycle',
-                'start_date' => '2024-01-01',
-                'end_date' => '2024-01-31',
-                'weeks' => 52,
+                'weeks' => $weeks,
             ];
             
             $validator = Validator::make($data, $request->rules());
             
             expect($validator->passes())->toBeTrue();
-        });
-
-        it('fails validation with non-integer weeks', function () {
-            $request = new CycleRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'name' => 'Test Cycle',
-                'start_date' => '2024-01-01',
-                'end_date' => '2024-01-31',
-                'weeks' => 'not-a-number',
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('weeks'))->toBeTrue();
-        });
-
-        it('passes validation with string weeks that can be cast to integer', function () {
-            $request = new CycleRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'name' => 'Test Cycle',
-                'start_date' => '2024-01-01',
-                'end_date' => '2024-01-31',
-                'weeks' => '4',
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->passes())->toBeTrue();
-        });
+        })->with('valid_weeks');
     });
 
     describe('update validation', function () {

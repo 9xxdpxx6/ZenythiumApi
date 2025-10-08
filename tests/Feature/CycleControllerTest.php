@@ -5,6 +5,14 @@ declare(strict_types=1);
 use App\Models\Cycle;
 use App\Models\User;
 
+dataset('protected_endpoints', [
+    'GET /api/cycles' => ['GET', '/api/cycles'],
+    'POST /api/cycles' => ['POST', '/api/cycles', []],
+    'GET /api/cycles/{id}' => ['GET', '/api/cycles/{id}'],
+    'PUT /api/cycles/{id}' => ['PUT', '/api/cycles/{id}', []],
+    'DELETE /api/cycles/{id}' => ['DELETE', '/api/cycles/{id}'],
+]);
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->cycle = Cycle::factory()->create([
@@ -445,21 +453,18 @@ describe('CycleController', function () {
     });
 
     describe('Authentication', function () {
-        it('requires authentication for all endpoints', function () {
-            $response = $this->getJson('/api/cycles');
+        it('requires authentication for protected endpoints', function ($method, $url, $data = null) {
+            // Заменяем {id} на реальный ID цикла
+            $url = str_replace('{id}', (string) $this->cycle->id, $url);
+            
+            $response = match($method) {
+                'GET' => $this->getJson($url),
+                'POST' => $this->postJson($url, $data),
+                'PUT' => $this->putJson($url, $data),
+                'DELETE' => $this->deleteJson($url),
+            };
+            
             $response->assertStatus(401);
-
-            $response = $this->postJson('/api/cycles', []);
-            $response->assertStatus(401);
-
-            $response = $this->getJson("/api/cycles/{$this->cycle->id}");
-            $response->assertStatus(401);
-
-            $response = $this->putJson("/api/cycles/{$this->cycle->id}", []);
-            $response->assertStatus(401);
-
-            $response = $this->deleteJson("/api/cycles/{$this->cycle->id}");
-            $response->assertStatus(401);
-        });
+        })->with('protected_endpoints');
     });
 });

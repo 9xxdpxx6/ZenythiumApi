@@ -7,6 +7,19 @@ use App\Models\Cycle;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 
+dataset('date_range_filters', [
+    'start_date_from' => ['start_date_from', '2024-05-01'],
+    'start_date_to' => ['start_date_to', '2024-05-01'],
+    'end_date_from' => ['end_date_from', '2024-05-01'],
+    'end_date_to' => ['end_date_to', '2024-05-01'],
+]);
+
+dataset('weeks_filters', [
+    'weeks_min' => ['weeks_min', 6],
+    'weeks_max' => ['weeks_max', 6],
+    'weeks_exact' => ['weeks', 4],
+]);
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);

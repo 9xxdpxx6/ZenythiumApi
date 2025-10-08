@@ -6,6 +6,11 @@ use App\Models\Cycle;
 use App\Models\User;
 use App\Services\CycleService;
 
+dataset('exception_scenarios', [
+    'non_existent' => [999999, 'non-existent cycle'],
+    'other_user' => [null, 'cycle from other user'],
+]);
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
@@ -82,18 +87,16 @@ describe('CycleService', function () {
             expect($cycle->id)->toBe($this->cycle->id);
         });
 
-        it('throws exception for non-existent cycle', function () {
-            expect(fn() => $this->cycleService->getById(999999, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for cycle from other user', function () {
-            $otherUser = User::factory()->create();
-            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+        it('throws exception for invalid cycle access', function ($cycleId, $scenario) {
+            if ($scenario === 'cycle from other user') {
+                $otherUser = User::factory()->create();
+                $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+                $cycleId = $otherCycle->id;
+            }
             
-            expect(fn() => $this->cycleService->getById($otherCycle->id, $this->user->id))
+            expect(fn() => $this->cycleService->getById($cycleId, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 
     describe('create', function () {
@@ -167,22 +170,18 @@ describe('CycleService', function () {
             expect($cycle->name)->toBe('Updated Cycle');
         });
 
-        it('throws exception for non-existent cycle', function () {
+        it('throws exception for invalid cycle access', function ($cycleId, $scenario) {
             $data = ['name' => 'Updated Cycle'];
             
-            expect(fn() => $this->cycleService->update(999999, $data, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for cycle from other user', function () {
-            $otherUser = User::factory()->create();
-            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+            if ($scenario === 'cycle from other user') {
+                $otherUser = User::factory()->create();
+                $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+                $cycleId = $otherCycle->id;
+            }
             
-            $data = ['name' => 'Updated Cycle'];
-            
-            expect(fn() => $this->cycleService->update($otherCycle->id, $data, $this->user->id))
+            expect(fn() => $this->cycleService->update($cycleId, $data, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 
     describe('delete', function () {
@@ -206,17 +205,15 @@ describe('CycleService', function () {
             ]);
         });
 
-        it('throws exception for non-existent cycle', function () {
-            expect(fn() => $this->cycleService->delete(999999, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for cycle from other user', function () {
-            $otherUser = User::factory()->create();
-            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+        it('throws exception for invalid cycle access', function ($cycleId, $scenario) {
+            if ($scenario === 'cycle from other user') {
+                $otherUser = User::factory()->create();
+                $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+                $cycleId = $otherCycle->id;
+            }
             
-            expect(fn() => $this->cycleService->delete($otherCycle->id, $this->user->id))
+            expect(fn() => $this->cycleService->delete($cycleId, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 });
