@@ -76,7 +76,8 @@ test('user can logout', function () {
 
     $response->assertStatus(200)
         ->assertJson([
-            'message' => 'Logout successful',
+            'data' => null,
+            'message' => 'Выход выполнен успешно',
         ]);
 });
 
@@ -90,13 +91,14 @@ test('user can get profile', function () {
 
     $response->assertStatus(200)
         ->assertJsonStructure([
-            'user' => [
+            'data' => [
                 'id',
                 'name',
                 'email',
                 'created_at',
                 'updated_at',
             ],
+            'message'
         ]);
 });
 
@@ -118,7 +120,8 @@ test('user can change password', function () {
 
     $response->assertStatus(200)
         ->assertJson([
-            'message' => 'Password changed successfully',
+            'data' => null,
+            'message' => 'Пароль успешно изменен',
         ]);
 });
 
@@ -136,6 +139,7 @@ test('user can request password reset', function () {
 
     $response->assertStatus(200)
         ->assertJson([
-            'message' => 'Password reset link sent to your email',
+            'data' => null,
+            'message' => 'Ссылка для сброса пароля отправлена на вашу почту',
         ]);
 });

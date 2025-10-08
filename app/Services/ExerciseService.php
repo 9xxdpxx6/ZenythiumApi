@@ -33,9 +33,9 @@ final class ExerciseService
     {
         $query = Exercise::query()->with('muscleGroup');
 
-        // if ($userId) {
-        //     $query->where('user_id', $userId);
-        // }
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
 
         return $query->findOrFail($id);
     }

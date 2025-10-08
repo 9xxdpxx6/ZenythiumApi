@@ -53,4 +53,31 @@ abstract class BaseFilter implements FilterInterface
     {
         return isset($this->filters[$key]) && !empty($this->filters[$key]);
     }
+
+    protected function getFilter(string $key): mixed
+    {
+        return $this->filters[$key] ?? null;
+    }
+
+    public function getPaginationParams(): array
+    {
+        $perPage = $this->getValidatedPerPage($this->filters['per_page'] ?? $this->getDefaultPerPage());
+        return ['per_page' => $perPage];
+    }
+
+    protected function getDefaultPerPage(): int
+    {
+        return 100;
+    }
+
+    private function getValidatedPerPage(mixed $perPage): int
+    {
+        $perPage = (int) $perPage;
+        
+        // Limit max per page to prevent performance issues
+        $perPage = min($perPage, 100);
+        
+        // Ensure at least 1 item per page
+        return max($perPage, 1);
+    }
 }

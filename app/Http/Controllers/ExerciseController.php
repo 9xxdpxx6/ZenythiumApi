@@ -46,7 +46,10 @@ final class ExerciseController extends Controller
      */
     public function store(ExerciseRequest $request): JsonResponse
     {
-        $exercise = $this->exerciseService->create($request->validated());
+        $data = $request->validated();
+        $data['user_id'] = $request->user()->id;
+        
+        $exercise = $this->exerciseService->create($data);
         
         return response()->json([
             'data' => new ExerciseResource($exercise->load('muscleGroup')),

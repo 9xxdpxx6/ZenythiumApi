@@ -41,4 +41,9 @@ final class MuscleGroupFilter extends BaseFilter
     {
         parent::applyDateRange($query, 'created_at');
     }
+
+    protected function getDefaultPerPage(): int
+    {
+        return 15;
+    }
 }
