@@ -21,7 +21,7 @@ final class PlanRequest extends FormRequest
      */
     public function rules(): array
     {
-        $planId = $this->route('plan')?->id;
+        $planId = $this->route('plan')?->id ?? 'NULL';
         $cycleId = $this->input('cycle_id');
 
         return [
