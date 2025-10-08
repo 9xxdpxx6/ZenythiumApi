@@ -18,6 +18,12 @@ final class ExerciseResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'description' => $this->description,
+            'muscle_group_id' => $this->muscle_group_id,
+            'muscle_group' => [
+                'id' => $this->muscleGroup->id,
+                'name' => $this->muscleGroup->name,
+            ],
+            'is_active' => $this->is_active,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
