@@ -49,23 +49,6 @@ abstract class BaseFilter implements FilterInterface
         }
     }
 
-    public function getPaginationParams(): array
-    {
-        $perPage = (int) ($this->filters['per_page'] ?? 15);
-        
-        // Limit max per page to prevent performance issues
-        $perPage = min($perPage, 100);
-        
-        return [
-            'per_page' => max($perPage, 1), // Ensure at least 1 item per page
-        ];
-    }
-
-    protected function getFilter(string $key, mixed $default = null): mixed
-    {
-        return $this->filters[$key] ?? $default;
-    }
-
     protected function hasFilter(string $key): bool
     {
         return isset($this->filters[$key]) && !empty($this->filters[$key]);

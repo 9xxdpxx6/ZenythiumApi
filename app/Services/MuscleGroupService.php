@@ -6,11 +6,13 @@ namespace App\Services;
 
 use App\Models\MuscleGroup;
 use App\Filters\MuscleGroupFilter;
+use App\Traits\HasPagination;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class MuscleGroupService
 {
+    use HasPagination;
     /**
      * Get all muscle groups with optional filtering and pagination.
      */
@@ -21,13 +23,7 @@ final class MuscleGroupService
         
         $filter->apply($query);
 
-        // Apply pagination if requested
-        if (isset($filters['per_page'])) {
-            $paginationParams = $filter->getPaginationParams();
-            return $query->paginate($paginationParams['per_page']);
-        }
-
-        return $query->get();
+        return $this->applyPagination($query, $filters);
     }
 
     /**

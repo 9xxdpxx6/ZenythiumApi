@@ -6,11 +6,13 @@ namespace App\Services;
 
 use App\Models\Exercise;
 use App\Filters\ExerciseFilter;
+use App\Traits\HasPagination;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class ExerciseService
 {
+    use HasPagination;
     /**
      * Get all exercises with optional filtering and pagination.
      */
@@ -21,13 +23,7 @@ final class ExerciseService
         
         $filter->apply($query);
 
-        // Apply pagination if requested
-        if (isset($filters['per_page'])) {
-            $paginationParams = $filter->getPaginationParams();
-            return $query->paginate($paginationParams['per_page']);
-        }
-
-        return $query->get();
+        return $this->applyPagination($query, $filters);
     }
 
     /**
