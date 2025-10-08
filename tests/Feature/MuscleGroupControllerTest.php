@@ -6,6 +6,14 @@ use App\Models\MuscleGroup;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
+dataset('protected_endpoints', [
+    'GET /api/muscle-groups' => ['GET', '/api/muscle-groups'],
+    'POST /api/muscle-groups' => ['POST', '/api/muscle-groups', []],
+    'GET /api/muscle-groups/{id}' => ['GET', '/api/muscle-groups/{id}'],
+    'PUT /api/muscle-groups/{id}' => ['PUT', '/api/muscle-groups/{id}', []],
+    'DELETE /api/muscle-groups/{id}' => ['DELETE', '/api/muscle-groups/{id}'],
+]);
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     Sanctum::actingAs($this->user);
@@ -222,5 +230,4 @@ describe('MuscleGroupController', function () {
             $response->assertStatus(404);
         });
     });
-
 });

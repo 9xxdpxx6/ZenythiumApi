@@ -6,6 +6,10 @@ use App\Models\MuscleGroup;
 use App\Models\User;
 use App\Services\MuscleGroupService;
 
+dataset('exception_scenarios', [
+    'non_existent' => [999999, 'non-existent muscle group'],
+]);
+
 beforeEach(function () {
     $this->service = new MuscleGroupService();
     $this->user = User::factory()->create();
@@ -86,10 +90,10 @@ describe('MuscleGroupService', function () {
             expect($result->name)->toBe('Chest');
         });
 
-        it('throws exception for non-existent muscle group', function () {
-            expect(fn() => $this->service->getById(999))
+        it('throws exception for non-existent muscle group', function ($muscleGroupId, $scenario) {
+            expect(fn() => $this->service->getById($muscleGroupId))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
 
         it('applies user filter for exercises count', function () {
             $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
@@ -131,10 +135,12 @@ describe('MuscleGroupService', function () {
             ]);
         });
 
-        it('throws exception for non-existent muscle group', function () {
-            expect(fn() => $this->service->update(999, ['name' => 'Test']))
+        it('throws exception for non-existent muscle group', function ($muscleGroupId, $scenario) {
+            $data = ['name' => 'Test Muscle Group'];
+            
+            expect(fn() => $this->service->update($muscleGroupId, $data))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 
     describe('delete', function () {
@@ -147,9 +153,9 @@ describe('MuscleGroupService', function () {
             $this->assertDatabaseMissing('muscle_groups', ['id' => $muscleGroup->id]);
         });
 
-        it('throws exception for non-existent muscle group', function () {
-            expect(fn() => $this->service->delete(999))
+        it('throws exception for non-existent muscle group', function ($muscleGroupId, $scenario) {
+            expect(fn() => $this->service->delete($muscleGroupId))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 });

@@ -6,6 +6,17 @@ use App\Http\Requests\MuscleGroupRequest;
 use App\Models\MuscleGroup;
 use Illuminate\Support\Facades\Validator;
 
+dataset('invalid_name_values', [
+    'non_string' => [123],
+    'too_long' => [str_repeat('a', 256)],
+]);
+
+dataset('valid_name_values', [
+    'short' => ['Chest'],
+    'medium' => ['Upper Body'],
+    'long' => [str_repeat('a', 255)],
+]);
+
 describe('MuscleGroupRequest', function () {
     describe('validation rules', function () {
         it('validates required name field', function () {
@@ -16,22 +27,20 @@ describe('MuscleGroupRequest', function () {
             expect($validator->errors()->has('name'))->toBeTrue();
         });
 
-        it('validates name is string', function () {
+        it('validates name with invalid values', function ($name) {
             $request = new MuscleGroupRequest();
-            $validator = Validator::make(['name' => 123], $request->rules());
+            $validator = Validator::make(['name' => $name], $request->rules());
 
             expect($validator->fails())->toBeTrue();
             expect($validator->errors()->has('name'))->toBeTrue();
-        });
+        })->with('invalid_name_values');
 
-        it('validates name max length', function () {
+        it('validates name with valid values', function ($name) {
             $request = new MuscleGroupRequest();
-            $longName = str_repeat('a', 256);
-            $validator = Validator::make(['name' => $longName], $request->rules());
+            $validator = Validator::make(['name' => $name], $request->rules());
 
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('name'))->toBeTrue();
-        });
+            expect($validator->fails())->toBeFalse();
+        })->with('valid_name_values');
 
         it('validates unique name for creation', function () {
             MuscleGroup::factory()->create(['name' => 'Chest']);
