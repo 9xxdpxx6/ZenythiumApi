@@ -7,7 +7,7 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-final class ExerciseResource extends JsonResource
+final class PlanResource extends JsonResource
 {
     /**
      * Transform the resource into an array.
@@ -17,13 +17,12 @@ final class ExerciseResource extends JsonResource
         return [
             'id' => $this->id,
             'name' => $this->name,
-            'description' => $this->description,
-            'user_id' => $this->user_id,
-            'muscle_group' => [
-                'id' => $this->muscleGroup->id,
-                'name' => $this->muscleGroup->name,
+            'order' => $this->order,
+            'exercise_count' => $this->exercise_count,
+            'cycle' => [
+                'id' => $this->cycle->id,
+                'name' => $this->cycle->name,
             ],
-            'is_active' => $this->is_active,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];

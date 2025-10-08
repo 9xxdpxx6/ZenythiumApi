@@ -4,12 +4,15 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 
 final class Plan extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'cycle_id',
         'name',
@@ -51,7 +54,7 @@ final class Plan extends Model
     /**
      * Get the workout sets for the plan.
      */
-    public function workoutSets(): HasMany
+    public function workoutSets(): HasManyThrough
     {
         return $this->hasManyThrough(WorkoutSet::class, PlanExercise::class);
     }
