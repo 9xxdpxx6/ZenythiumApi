@@ -7,6 +7,11 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Services\PlanService;
 
+dataset('exception_scenarios', [
+    'non_existent' => [999999, 'non-existent plan'],
+    'other_user' => [null, 'plan from other user'],
+]);
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
@@ -85,19 +90,17 @@ describe('PlanService', function () {
             expect($plan->id)->toBe($this->plan->id);
         });
 
-        it('throws exception for non-existent plan', function () {
-            expect(fn() => $this->planService->getById(999999, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for plan from other user', function () {
-            $otherUser = User::factory()->create();
-            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
-            $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+        it('throws exception for invalid plan access', function ($planId, $scenario) {
+            if ($scenario === 'plan from other user') {
+                $otherUser = User::factory()->create();
+                $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+                $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+                $planId = $otherPlan->id;
+            }
             
-            expect(fn() => $this->planService->getById($otherPlan->id, $this->user->id))
+            expect(fn() => $this->planService->getById($planId, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 
     describe('create', function () {
@@ -167,23 +170,19 @@ describe('PlanService', function () {
             expect($plan->name)->toBe('Updated Plan');
         });
 
-        it('throws exception for non-existent plan', function () {
+        it('throws exception for invalid plan access', function ($planId, $scenario) {
             $data = ['name' => 'Updated Plan'];
             
-            expect(fn() => $this->planService->update(999999, $data, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for plan from other user', function () {
-            $otherUser = User::factory()->create();
-            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
-            $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+            if ($scenario === 'plan from other user') {
+                $otherUser = User::factory()->create();
+                $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+                $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+                $planId = $otherPlan->id;
+            }
             
-            $data = ['name' => 'Updated Plan'];
-            
-            expect(fn() => $this->planService->update($otherPlan->id, $data, $this->user->id))
+            expect(fn() => $this->planService->update($planId, $data, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 
     describe('delete', function () {
@@ -207,18 +206,16 @@ describe('PlanService', function () {
             ]);
         });
 
-        it('throws exception for non-existent plan', function () {
-            expect(fn() => $this->planService->delete(999999, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
-
-        it('throws exception for plan from other user', function () {
-            $otherUser = User::factory()->create();
-            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
-            $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+        it('throws exception for invalid plan access', function ($planId, $scenario) {
+            if ($scenario === 'plan from other user') {
+                $otherUser = User::factory()->create();
+                $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+                $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+                $planId = $otherPlan->id;
+            }
             
-            expect(fn() => $this->planService->delete($otherPlan->id, $this->user->id))
+            expect(fn() => $this->planService->delete($planId, $this->user->id))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
-        });
+        })->with('exception_scenarios');
     });
 });

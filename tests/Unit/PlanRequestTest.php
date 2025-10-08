@@ -8,6 +8,31 @@ use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 
+dataset('required_fields', [
+    'cycle_id' => ['cycle_id'],
+    'name' => ['name'],
+]);
+
+dataset('invalid_cycle_ids', [
+    'non_existent' => [999999],
+    'non_integer' => ['not-a-number'],
+]);
+
+dataset('valid_cycle_ids', [
+    'integer' => [1],
+    'string_number' => ['1'],
+]);
+
+dataset('invalid_orders', [
+    'negative' => [-1],
+    'non_integer' => ['not-a-number'],
+]);
+
+dataset('valid_orders', [
+    'positive' => [1],
+    'string_number' => ['1'],
+]);
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
@@ -31,42 +56,30 @@ describe('PlanRequest', function () {
             expect($validator->passes())->toBeTrue();
         });
 
-        it('fails validation without cycle_id', function () {
-            $request = new PlanRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'name' => 'Test Plan',
-                'order' => 1,
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('cycle_id'))->toBeTrue();
-        });
-
-        it('fails validation without name', function () {
+        it('fails validation without required field', function ($field) {
             $request = new PlanRequest();
             $request->setUserResolver(fn() => $this->user);
             
             $data = [
                 'cycle_id' => $this->cycle->id,
+                'name' => 'Test Plan',
                 'order' => 1,
             ];
+            
+            unset($data[$field]);
             
             $validator = Validator::make($data, $request->rules());
             
             expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('name'))->toBeTrue();
-        });
+            expect($validator->errors()->has($field))->toBeTrue();
+        })->with('required_fields');
 
-        it('fails validation with invalid cycle_id', function () {
+        it('fails validation with invalid cycle_id', function ($cycleId) {
             $request = new PlanRequest();
             $request->setUserResolver(fn() => $this->user);
             
             $data = [
-                'cycle_id' => 999999,
+                'cycle_id' => $cycleId,
                 'name' => 'Test Plan',
                 'order' => 1,
             ];
@@ -75,30 +88,14 @@ describe('PlanRequest', function () {
             
             expect($validator->fails())->toBeTrue();
             expect($validator->errors()->has('cycle_id'))->toBeTrue();
-        });
+        })->with('invalid_cycle_ids');
 
-        it('fails validation with non-integer cycle_id', function () {
+        it('passes validation with valid cycle_id', function ($cycleId) {
             $request = new PlanRequest();
             $request->setUserResolver(fn() => $this->user);
             
             $data = [
-                'cycle_id' => 'not-a-number',
-                'name' => 'Test Plan',
-                'order' => 1,
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('cycle_id'))->toBeTrue();
-        });
-
-        it('passes validation with string cycle_id that can be cast to integer', function () {
-            $request = new PlanRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'cycle_id' => (string) $this->cycle->id,
+                'cycle_id' => $cycleId,
                 'name' => 'Test Plan',
                 'order' => 1,
             ];
@@ -106,7 +103,7 @@ describe('PlanRequest', function () {
             $validator = Validator::make($data, $request->rules());
             
             expect($validator->passes())->toBeTrue();
-        });
+        })->with('valid_cycle_ids');
     });
 
     describe('name validation', function () {
@@ -185,21 +182,36 @@ describe('PlanRequest', function () {
     });
 
     describe('order validation', function () {
-        it('fails validation with negative order', function () {
+        it('fails validation with invalid order', function ($order) {
             $request = new PlanRequest();
             $request->setUserResolver(fn() => $this->user);
             
             $data = [
                 'cycle_id' => $this->cycle->id,
                 'name' => 'Test Plan',
-                'order' => 0,
+                'order' => $order,
             ];
             
             $validator = Validator::make($data, $request->rules());
             
             expect($validator->fails())->toBeTrue();
             expect($validator->errors()->has('order'))->toBeTrue();
-        });
+        })->with('invalid_orders');
+
+        it('passes validation with valid order', function ($order) {
+            $request = new PlanRequest();
+            $request->setUserResolver(fn() => $this->user);
+            
+            $data = [
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Test Plan',
+                'order' => $order,
+            ];
+            
+            $validator = Validator::make($data, $request->rules());
+            
+            expect($validator->passes())->toBeTrue();
+        })->with('valid_orders');
 
         it('passes validation without order', function () {
             $request = new PlanRequest();
@@ -208,37 +220,6 @@ describe('PlanRequest', function () {
             $data = [
                 'cycle_id' => $this->cycle->id,
                 'name' => 'Test Plan',
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->passes())->toBeTrue();
-        });
-
-        it('fails validation with non-integer order', function () {
-            $request = new PlanRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'cycle_id' => $this->cycle->id,
-                'name' => 'Test Plan',
-                'order' => 'not-a-number',
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('order'))->toBeTrue();
-        });
-
-        it('passes validation with string order that can be cast to integer', function () {
-            $request = new PlanRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'cycle_id' => $this->cycle->id,
-                'name' => 'Test Plan',
-                'order' => '1',
             ];
             
             $validator = Validator::make($data, $request->rules());

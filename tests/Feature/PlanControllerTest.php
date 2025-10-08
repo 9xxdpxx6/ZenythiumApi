@@ -6,6 +6,14 @@ use App\Models\Cycle;
 use App\Models\Plan;
 use App\Models\User;
 
+dataset('protected_endpoints', [
+    'GET /api/plans' => ['GET', '/api/plans'],
+    'POST /api/plans' => ['POST', '/api/plans', []],
+    'GET /api/plans/{id}' => ['GET', '/api/plans/{id}'],
+    'PUT /api/plans/{id}' => ['PUT', '/api/plans/{id}', []],
+    'DELETE /api/plans/{id}' => ['DELETE', '/api/plans/{id}'],
+]);
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
@@ -367,21 +375,18 @@ describe('PlanController', function () {
     });
 
     describe('Authentication', function () {
-        it('requires authentication for all endpoints', function () {
-            $response = $this->getJson('/api/plans');
+        it('requires authentication for protected endpoints', function ($method, $url, $data = null) {
+            // Заменяем {id} на реальный ID плана
+            $url = str_replace('{id}', (string) $this->plan->id, $url);
+            
+            $response = match($method) {
+                'GET' => $this->getJson($url),
+                'POST' => $this->postJson($url, $data),
+                'PUT' => $this->putJson($url, $data),
+                'DELETE' => $this->deleteJson($url),
+            };
+            
             $response->assertStatus(401);
-
-            $response = $this->postJson('/api/plans', []);
-            $response->assertStatus(401);
-
-            $response = $this->getJson("/api/plans/{$this->plan->id}");
-            $response->assertStatus(401);
-
-            $response = $this->putJson("/api/plans/{$this->plan->id}", []);
-            $response->assertStatus(401);
-
-            $response = $this->deleteJson("/api/plans/{$this->plan->id}");
-            $response->assertStatus(401);
-        });
+        })->with('protected_endpoints');
     });
 });
