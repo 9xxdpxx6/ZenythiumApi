@@ -16,7 +16,7 @@ final class ExerciseService
     /**
      * Get all exercises with optional filtering and pagination.
      */
-    public function getAll(array $filters = []): Collection|LengthAwarePaginator
+    public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new ExerciseFilter($filters);
         $query = Exercise::query()->with('muscleGroup');
@@ -33,9 +33,9 @@ final class ExerciseService
     {
         $query = Exercise::query()->with('muscleGroup');
 
-        if ($userId) {
-            $query->where('user_id', $userId);
-        }
+        // if ($userId) {
+        //     $query->where('user_id', $userId);
+        // }
 
         return $query->findOrFail($id);
     }

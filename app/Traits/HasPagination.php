@@ -11,16 +11,12 @@ use Illuminate\Pagination\LengthAwarePaginator;
 trait HasPagination
 {
     /**
-     * Apply pagination to the query if requested.
+     * Apply pagination to the query.
      */
-    protected function applyPagination(Builder $query, array $filters): Collection|LengthAwarePaginator
+    protected function applyPagination(Builder $query, array $filters): LengthAwarePaginator
     {
-        if (isset($filters['per_page'])) {
-            $perPage = $this->getValidatedPerPage($filters['per_page']);
-            return $query->paginate($perPage);
-        }
-
-        return $query->get();
+        $perPage = $this->getValidatedPerPage($filters['per_page'] ?? 100);
+        return $query->paginate($perPage);
     }
 
     /**

@@ -39,10 +39,10 @@ final class MuscleGroupRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'The muscle group name is required.',
-            'name.string' => 'The muscle group name must be a string.',
-            'name.max' => 'The muscle group name may not be greater than 255 characters.',
-            'name.unique' => 'The muscle group name has already been taken.',
+            'name.required' => 'Название группы мышц обязательно.',
+            'name.string' => 'Название группы мышц должно быть строкой.',
+            'name.max' => 'Название группы мышц не может быть длиннее 255 символов.',
+            'name.unique' => 'Группа мышц с таким названием уже существует.',
         ];
     }
 }

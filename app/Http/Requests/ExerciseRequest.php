@@ -53,16 +53,16 @@ final class ExerciseRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'name.required' => 'The exercise name is required.',
-            'name.string' => 'The exercise name must be a string.',
-            'name.max' => 'The exercise name may not be greater than 255 characters.',
-            'name.unique' => 'The exercise name has already been taken.',
-            'description.string' => 'The description must be a string.',
-            'description.max' => 'The description may not be greater than 1000 characters.',
-            'muscle_group_id.required' => 'The muscle group is required.',
-            'muscle_group_id.integer' => 'The muscle group must be an integer.',
-            'muscle_group_id.exists' => 'The selected muscle group does not exist.',
-            'is_active.boolean' => 'The active status must be true or false.',
+            'name.required' => 'Название упражнения обязательно.',
+            'name.string' => 'Название упражнения должно быть строкой.',
+            'name.max' => 'Название упражнения не может быть длиннее 255 символов.',
+            'name.unique' => 'Упражнение с таким названием уже существует.',
+            'description.string' => 'Описание должно быть строкой.',
+            'description.max' => 'Описание не может быть длиннее 1000 символов.',
+            'muscle_group_id.required' => 'Группа мышц обязательна.',
+            'muscle_group_id.integer' => 'Группа мышц должна быть числом.',
+            'muscle_group_id.exists' => 'Выбранная группа мышц не существует.',
+            'is_active.boolean' => 'Статус активности должен быть true или false.',
         ];
     }
 

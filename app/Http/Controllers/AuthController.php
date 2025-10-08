@@ -28,7 +28,7 @@ final class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Ошибка валидации',
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -42,7 +42,7 @@ final class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'User registered successfully',
+            'message' => 'Пользователь успешно зарегистрирован',
             'user' => $user,
             'token' => $token,
             'token_type' => 'Bearer',
@@ -61,14 +61,14 @@ final class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Ошибка валидации',
                 'errors' => $validator->errors(),
             ], 422);
         }
 
         if (!Auth::attempt($request->only('email', 'password'))) {
             return response()->json([
-                'message' => 'Invalid credentials',
+                'message' => 'Неверные учетные данные',
             ], 401);
         }
 
@@ -76,7 +76,7 @@ final class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Login successful',
+            'message' => 'Вход выполнен успешно',
             'user' => $user,
             'token' => $token,
             'token_type' => 'Bearer',
@@ -91,7 +91,8 @@ final class AuthController extends Controller
         $request->user()->currentAccessToken()->delete();
 
         return response()->json([
-            'message' => 'Logout successful',
+            'data' => null,
+            'message' => 'Выход выполнен успешно'
         ]);
     }
 
@@ -103,7 +104,8 @@ final class AuthController extends Controller
         $request->user()->tokens()->delete();
 
         return response()->json([
-            'message' => 'Logged out from all devices',
+            'data' => null,
+            'message' => 'Выход со всех устройств выполнен'
         ]);
     }
 
@@ -113,7 +115,8 @@ final class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json([
-            'user' => $request->user(),
+            'data' => $request->user(),
+            'message' => 'Данные пользователя успешно получены'
         ]);
     }
 
@@ -128,7 +131,7 @@ final class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Ошибка валидации',
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -137,12 +140,14 @@ final class AuthController extends Controller
 
         if ($status === Password::RESET_LINK_SENT) {
             return response()->json([
-                'message' => 'Password reset link sent to your email',
+                'data' => null,
+                'message' => 'Ссылка для сброса пароля отправлена на вашу почту'
             ]);
         }
 
         return response()->json([
-            'message' => 'Unable to send password reset link',
+            'data' => null,
+            'message' => 'Не удалось отправить ссылку для сброса пароля'
         ], 500);
     }
 
@@ -159,7 +164,7 @@ final class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Ошибка валидации',
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -175,12 +180,14 @@ final class AuthController extends Controller
 
         if ($status === Password::PASSWORD_RESET) {
             return response()->json([
-                'message' => 'Password reset successfully',
+                'data' => null,
+                'message' => 'Пароль успешно сброшен'
             ]);
         }
 
         return response()->json([
-            'message' => 'Unable to reset password',
+            'data' => null,
+            'message' => 'Не удалось сбросить пароль'
         ], 500);
     }
 
@@ -196,7 +203,7 @@ final class AuthController extends Controller
 
         if ($validator->fails()) {
             return response()->json([
-                'message' => 'Validation failed',
+                'message' => 'Ошибка валидации',
                 'errors' => $validator->errors(),
             ], 422);
         }
@@ -205,7 +212,7 @@ final class AuthController extends Controller
 
         if (!Hash::check($request->current_password, $user->password)) {
             return response()->json([
-                'message' => 'Current password is incorrect',
+                'message' => 'Текущий пароль неверен',
             ], 422);
         }
 
@@ -214,7 +221,8 @@ final class AuthController extends Controller
         ]);
 
         return response()->json([
-            'message' => 'Password changed successfully',
+            'data' => null,
+            'message' => 'Пароль успешно изменен'
         ]);
     }
 
@@ -232,9 +240,12 @@ final class AuthController extends Controller
         $token = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
-            'message' => 'Token refreshed successfully',
-            'token' => $token,
-            'token_type' => 'Bearer',
+            'data' => [
+                'user' => $user,
+                'token' => $token,
+                'token_type' => 'Bearer'
+            ],
+            'message' => 'Токен успешно обновлен'
         ]);
     }
 }

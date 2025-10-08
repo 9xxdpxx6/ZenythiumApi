@@ -28,8 +28,16 @@ final class ExerciseController extends Controller
         $exercises = $this->exerciseService->getAll($filters);
         
         return response()->json([
-            'data' => ExerciseResource::collection($exercises),
-            'message' => 'Exercises retrieved successfully'
+            'data' => ExerciseResource::collection($exercises->items()),
+            'message' => 'Упражнения успешно получены',
+            'meta' => [
+                'current_page' => $exercises->currentPage(),
+                'last_page' => $exercises->lastPage(),
+                'per_page' => $exercises->perPage(),
+                'total' => $exercises->total(),
+                'from' => $exercises->firstItem(),
+                'to' => $exercises->lastItem(),
+            ]
         ]);
     }
 
@@ -42,7 +50,7 @@ final class ExerciseController extends Controller
         
         return response()->json([
             'data' => new ExerciseResource($exercise->load('muscleGroup')),
-            'message' => 'Exercise created successfully'
+            'message' => 'Упражнение успешно создано'
         ], 201);
     }
 
@@ -55,7 +63,7 @@ final class ExerciseController extends Controller
         
         return response()->json([
             'data' => new ExerciseResource($exercise),
-            'message' => 'Exercise retrieved successfully'
+            'message' => 'Упражнение успешно получено'
         ]);
     }
 
@@ -68,7 +76,7 @@ final class ExerciseController extends Controller
         
         return response()->json([
             'data' => new ExerciseResource($exercise),
-            'message' => 'Exercise updated successfully'
+            'message' => 'Упражнение успешно обновлено'
         ]);
     }
 
@@ -80,7 +88,8 @@ final class ExerciseController extends Controller
         $this->exerciseService->delete($exercise->id, $request->user()->id);
         
         return response()->json([
-            'message' => 'Exercise deleted successfully'
+            'data' => null,
+            'message' => 'Упражнение успешно удалено'
         ]);
     }
 }

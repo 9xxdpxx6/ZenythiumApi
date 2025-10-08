@@ -28,8 +28,16 @@ final class MuscleGroupController extends Controller
         $muscleGroups = $this->muscleGroupService->getAll($filters);
         
         return response()->json([
-            'data' => MuscleGroupResource::collection($muscleGroups),
-            'message' => 'Muscle groups retrieved successfully'
+            'data' => MuscleGroupResource::collection($muscleGroups->items()),
+            'message' => 'Группы мышц успешно получены',
+            'meta' => [
+                'current_page' => $muscleGroups->currentPage(),
+                'last_page' => $muscleGroups->lastPage(),
+                'per_page' => $muscleGroups->perPage(),
+                'total' => $muscleGroups->total(),
+                'from' => $muscleGroups->firstItem(),
+                'to' => $muscleGroups->lastItem(),
+            ]
         ]);
     }
 
@@ -42,7 +50,7 @@ final class MuscleGroupController extends Controller
         
         return response()->json([
             'data' => new MuscleGroupResource($muscleGroup),
-            'message' => 'Muscle group created successfully'
+            'message' => 'Группа мышц успешно создана'
         ], 201);
     }
 
@@ -55,7 +63,7 @@ final class MuscleGroupController extends Controller
         
         return response()->json([
             'data' => new MuscleGroupResource($muscleGroup),
-            'message' => 'Muscle group retrieved successfully'
+            'message' => 'Группа мышц успешно получена'
         ]);
     }
 
@@ -68,7 +76,7 @@ final class MuscleGroupController extends Controller
         
         return response()->json([
             'data' => new MuscleGroupResource($muscleGroup),
-            'message' => 'Muscle group updated successfully'
+            'message' => 'Группа мышц успешно обновлена'
         ]);
     }
 
@@ -80,7 +88,8 @@ final class MuscleGroupController extends Controller
         $this->muscleGroupService->delete($muscleGroup->id);
         
         return response()->json([
-            'message' => 'Muscle group deleted successfully'
+            'data' => null,
+            'message' => 'Группа мышц успешно удалена'
         ]);
     }
 }

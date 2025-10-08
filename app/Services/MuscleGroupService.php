@@ -16,7 +16,7 @@ final class MuscleGroupService
     /**
      * Get all muscle groups with optional filtering and pagination.
      */
-    public function getAll(array $filters = []): Collection|LengthAwarePaginator
+    public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new MuscleGroupFilter($filters);
         $query = MuscleGroup::query();
