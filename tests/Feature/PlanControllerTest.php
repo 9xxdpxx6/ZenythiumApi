@@ -21,7 +21,6 @@ test('can get plans list', function () {
             'data' => [
                 '*' => [
                     'id',
-                    'cycle_id',
                     'name',
                     'order',
                     'exercise_count',
@@ -59,7 +58,6 @@ test('can create a plan', function () {
         ->assertJsonStructure([
             'data' => [
                 'id',
-                'cycle_id',
                 'name',
                 'order',
                 'exercise_count',
@@ -74,7 +72,6 @@ test('can create a plan', function () {
         ])
         ->assertJson([
             'data' => [
-                'cycle_id' => $this->cycle->id,
                 'name' => 'Test Plan',
                 'order' => 1,
             ],
@@ -96,7 +93,6 @@ test('can show a plan', function () {
         ->assertJsonStructure([
             'data' => [
                 'id',
-                'cycle_id',
                 'name',
                 'order',
                 'exercise_count',
@@ -112,7 +108,6 @@ test('can show a plan', function () {
         ->assertJson([
             'data' => [
                 'id' => $this->plan->id,
-                'cycle_id' => $this->plan->cycle_id,
                 'name' => $this->plan->name,
                 'order' => $this->plan->order,
             ],
@@ -134,7 +129,6 @@ test('can update a plan', function () {
         ->assertJsonStructure([
             'data' => [
                 'id',
-                'cycle_id',
                 'name',
                 'order',
                 'exercise_count',
@@ -150,7 +144,6 @@ test('can update a plan', function () {
         ->assertJson([
             'data' => [
                 'id' => $this->plan->id,
-                'cycle_id' => $this->cycle->id,
                 'name' => 'Updated Plan',
                 'order' => 2,
             ],
@@ -271,7 +264,6 @@ test('plan can be created without order', function () {
     $response->assertStatus(201)
         ->assertJson([
             'data' => [
-                'cycle_id' => $this->cycle->id,
                 'name' => 'Test Plan Without Order',
                 'order' => null,
             ],

@@ -22,6 +22,7 @@ final class PlanRequest extends FormRequest
     public function rules(): array
     {
         $planId = $this->route('plan')?->id;
+        $cycleId = $this->input('cycle_id');
 
         return [
             'cycle_id' => [
@@ -33,7 +34,7 @@ final class PlanRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                'unique:plans,name,' . $planId . ',id,cycle_id,' . $this->input('cycle_id')
+                'unique:plans,name,' . $planId . ',id,cycle_id,' . $cycleId
             ],
             'order' => [
                 'nullable',
@@ -55,7 +56,7 @@ final class PlanRequest extends FormRequest
             'name.required' => 'Название плана обязательно.',
             'name.string' => 'Название плана должно быть строкой.',
             'name.max' => 'Название плана не может быть длиннее 255 символов.',
-            'name.unique' => 'План с таким названием уже существует.',
+            'name.unique' => 'План с таким названием уже существует в этом цикле.',
             'order.integer' => 'Порядок должен быть числом.',
             'order.min' => 'Порядок должен быть больше 0.',
         ];
