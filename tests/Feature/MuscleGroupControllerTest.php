@@ -7,11 +7,11 @@ use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
 dataset('protected_endpoints', [
-    'GET /api/muscle-groups' => ['GET', '/api/muscle-groups'],
-    'POST /api/muscle-groups' => ['POST', '/api/muscle-groups', []],
-    'GET /api/muscle-groups/{id}' => ['GET', '/api/muscle-groups/{id}'],
-    'PUT /api/muscle-groups/{id}' => ['PUT', '/api/muscle-groups/{id}', []],
-    'DELETE /api/muscle-groups/{id}' => ['DELETE', '/api/muscle-groups/{id}'],
+    'GET /api/v1/muscle-groups' => ['GET', '/api/v1/muscle-groups'],
+    'POST /api/v1/muscle-groups' => ['POST', '/api/v1/muscle-groups', []],
+    'GET /api/v1/muscle-groups/{id}' => ['GET', '/api/v1/muscle-groups/{id}'],
+    'PUT /api/v1/muscle-groups/{id}' => ['PUT', '/api/v1/muscle-groups/{id}', []],
+    'DELETE /api/v1/muscle-groups/{id}' => ['DELETE', '/api/v1/muscle-groups/{id}'],
 ]);
 
 beforeEach(function () {
@@ -46,7 +46,7 @@ describe('MuscleGroupController', function () {
                 'user_id' => User::factory()->create()->id,
             ]);
 
-            $response = $this->getJson('/api/muscle-groups');
+            $response = $this->getJson('/api/v1/muscle-groups');
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -72,7 +72,7 @@ describe('MuscleGroupController', function () {
             MuscleGroup::factory()->create(['name' => 'Back']);
             MuscleGroup::factory()->create(['name' => 'Legs']);
 
-            $response = $this->getJson('/api/muscle-groups?search=chest');
+            $response = $this->getJson('/api/v1/muscle-groups?search=chest');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -82,7 +82,7 @@ describe('MuscleGroupController', function () {
         it('supports pagination', function () {
             MuscleGroup::factory()->count(25)->create();
 
-            $response = $this->getJson('/api/muscle-groups?per_page=10');
+            $response = $this->getJson('/api/v1/muscle-groups?per_page=10');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(10);
@@ -95,7 +95,7 @@ describe('MuscleGroupController', function () {
                 'name' => 'Chest',
             ];
 
-            $response = $this->postJson('/api/muscle-groups', $data);
+            $response = $this->postJson('/api/v1/muscle-groups', $data);
 
             $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -115,7 +115,7 @@ describe('MuscleGroupController', function () {
         });
 
         it('validates required fields', function () {
-            $response = $this->postJson('/api/muscle-groups', []);
+            $response = $this->postJson('/api/v1/muscle-groups', []);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['name']);
@@ -124,7 +124,7 @@ describe('MuscleGroupController', function () {
         it('validates unique name', function () {
             MuscleGroup::factory()->create(['name' => 'Chest']);
 
-            $response = $this->postJson('/api/muscle-groups', [
+            $response = $this->postJson('/api/v1/muscle-groups', [
                 'name' => 'Chest',
             ]);
 
@@ -144,7 +144,7 @@ describe('MuscleGroupController', function () {
                 'user_id' => $this->user->id,
             ]);
 
-            $response = $this->getJson("/api/muscle-groups/{$muscleGroup->id}");
+            $response = $this->getJson("/api/v1/muscle-groups/{$muscleGroup->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -173,7 +173,7 @@ describe('MuscleGroupController', function () {
         it('updates a muscle group', function () {
             $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
 
-            $response = $this->putJson("/api/muscle-groups/{$muscleGroup->id}", [
+            $response = $this->putJson("/api/v1/muscle-groups/{$muscleGroup->id}", [
                 'name' => 'Chest Updated',
             ]);
 
@@ -201,7 +201,7 @@ describe('MuscleGroupController', function () {
             $muscleGroup1 = MuscleGroup::factory()->create(['name' => 'Chest']);
             $muscleGroup2 = MuscleGroup::factory()->create(['name' => 'Back']);
 
-            $response = $this->putJson("/api/muscle-groups/{$muscleGroup2->id}", [
+            $response = $this->putJson("/api/v1/muscle-groups/{$muscleGroup2->id}", [
                 'name' => 'Chest',
             ]);
 
@@ -214,7 +214,7 @@ describe('MuscleGroupController', function () {
         it('deletes a muscle group', function () {
             $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
 
-            $response = $this->deleteJson("/api/muscle-groups/{$muscleGroup->id}");
+            $response = $this->deleteJson("/api/v1/muscle-groups/{$muscleGroup->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure(['message']);

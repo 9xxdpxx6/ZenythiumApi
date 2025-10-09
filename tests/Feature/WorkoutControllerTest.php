@@ -8,11 +8,11 @@ use App\Models\User;
 use App\Models\Workout;
 
 dataset('protected_endpoints', [
-    'GET /api/workouts' => ['GET', '/api/workouts'],
-    'POST /api/workouts' => ['POST', '/api/workouts', []],
-    'GET /api/workouts/{id}' => ['GET', '/api/workouts/{id}'],
-    'PUT /api/workouts/{id}' => ['PUT', '/api/workouts/{id}', []],
-    'DELETE /api/workouts/{id}' => ['DELETE', '/api/workouts/{id}'],
+    'GET /api/v1/workouts' => ['GET', '/api/v1/workouts'],
+    'POST /api/v1/workouts' => ['POST', '/api/v1/workouts', []],
+    'GET /api/v1/workouts/{id}' => ['GET', '/api/v1/workouts/{id}'],
+    'PUT /api/v1/workouts/{id}' => ['PUT', '/api/v1/workouts/{id}', []],
+    'DELETE /api/v1/workouts/{id}' => ['DELETE', '/api/v1/workouts/{id}'],
 ]);
 
 beforeEach(function () {
@@ -36,7 +36,7 @@ beforeEach(function () {
 });
 
 describe('WorkoutController', function () {
-    describe('GET /api/workouts', function () {
+    describe('GET /api/v1/workouts', function () {
         it('returns all workouts for authenticated user', function () {
             $workout1 = Workout::factory()->create([
                 'plan_id' => $this->plan->id,
@@ -62,7 +62,7 @@ describe('WorkoutController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts');
+                ->getJson('/api/v1/workouts');
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -121,7 +121,7 @@ describe('WorkoutController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts?search=Test');
+                ->getJson('/api/v1/workouts?search=Test');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(2); // Test Plan + existing workout
@@ -142,7 +142,7 @@ describe('WorkoutController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts?search=Test');
+                ->getJson('/api/v1/workouts?search=Test');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -163,7 +163,7 @@ describe('WorkoutController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson("/api/workouts?plan_id={$plan1->id}");
+                ->getJson("/api/v1/workouts?plan_id={$plan1->id}");
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -181,7 +181,7 @@ describe('WorkoutController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts?completed=true');
+                ->getJson('/api/v1/workouts?completed=true');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(2); // completed + existing completed
@@ -201,7 +201,7 @@ describe('WorkoutController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts?started_at_from=2024-03-01');
+                ->getJson('/api/v1/workouts?started_at_from=2024-03-01');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(2); // April workout + existing March workout
@@ -217,7 +217,7 @@ describe('WorkoutController', function () {
             }
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts?per_page=10');
+                ->getJson('/api/v1/workouts?per_page=10');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(10);
@@ -225,7 +225,7 @@ describe('WorkoutController', function () {
         });
     });
 
-    describe('POST /api/workouts', function () {
+    describe('POST /api/v1/workouts', function () {
         it('creates a new workout', function () {
             $data = [
                 'plan_id' => $this->plan->id,
@@ -234,7 +234,7 @@ describe('WorkoutController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workouts', $data);
+                ->postJson('/api/v1/workouts', $data);
 
             $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -277,7 +277,7 @@ describe('WorkoutController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workouts', $data);
+                ->postJson('/api/v1/workouts', $data);
 
             $response->assertStatus(201);
             expect($response->json('data.finished_at'))->toBeNull();
@@ -292,7 +292,7 @@ describe('WorkoutController', function () {
 
         it('validates required fields', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workouts', []);
+                ->postJson('/api/v1/workouts', []);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['plan_id', 'started_at']);
@@ -300,7 +300,7 @@ describe('WorkoutController', function () {
 
         it('validates plan exists', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workouts', [
+                ->postJson('/api/v1/workouts', [
                     'plan_id' => 999,
                     'started_at' => '2024-03-15 10:00:00',
                 ]);
@@ -311,7 +311,7 @@ describe('WorkoutController', function () {
 
         it('validates started_at is not in future', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workouts', [
+                ->postJson('/api/v1/workouts', [
                     'plan_id' => $this->plan->id,
                     'started_at' => now()->addDay()->format('Y-m-d H:i:s'),
                 ]);
@@ -322,7 +322,7 @@ describe('WorkoutController', function () {
 
         it('validates finished_at is after started_at', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workouts', [
+                ->postJson('/api/v1/workouts', [
                     'plan_id' => $this->plan->id,
                     'started_at' => '2024-03-15 11:00:00',
                     'finished_at' => '2024-03-15 10:00:00',
@@ -333,10 +333,10 @@ describe('WorkoutController', function () {
         });
     });
 
-    describe('GET /api/workouts/{id}', function () {
+    describe('GET /api/v1/workouts/{id}', function () {
         it('returns a specific workout', function () {
             $response = $this->actingAs($this->user)
-                ->getJson("/api/workouts/{$this->workout->id}");
+                ->getJson("/api/v1/workouts/{$this->workout->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -367,7 +367,7 @@ describe('WorkoutController', function () {
 
         it('returns 404 for non-existent workout', function () {
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts/999');
+                ->getJson('/api/v1/workouts/999');
 
             $response->assertStatus(404);
         });
@@ -382,16 +382,16 @@ describe('WorkoutController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson("/api/workouts/{$otherWorkout->id}");
+                ->getJson("/api/v1/workouts/{$otherWorkout->id}");
 
             $response->assertStatus(404);
         });
     });
 
-    describe('PUT /api/workouts/{id}', function () {
+    describe('PUT /api/v1/workouts/{id}', function () {
         it('updates a workout', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/workouts/{$this->workout->id}", [
+                ->putJson("/api/v1/workouts/{$this->workout->id}", [
                     'plan_id' => $this->plan->id,
                     'started_at' => '2024-03-15 09:00:00',
                     'finished_at' => '2024-03-15 10:30:00',
@@ -432,7 +432,7 @@ describe('WorkoutController', function () {
 
         it('validates required fields on update', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/workouts/{$this->workout->id}", [
+                ->putJson("/api/v1/workouts/{$this->workout->id}", [
                     'started_at' => '2024-03-15 09:00:00',
                     // plan_id отсутствует
                 ]);
@@ -443,7 +443,7 @@ describe('WorkoutController', function () {
 
         it('validates plan exists on update', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/workouts/{$this->workout->id}", [
+                ->putJson("/api/v1/workouts/{$this->workout->id}", [
                     'plan_id' => 999,
                     'started_at' => '2024-03-15 09:00:00',
                 ]);
@@ -454,7 +454,7 @@ describe('WorkoutController', function () {
 
         it('validates finished_at is after started_at on update', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/workouts/{$this->workout->id}", [
+                ->putJson("/api/v1/workouts/{$this->workout->id}", [
                     'plan_id' => $this->plan->id,
                     'started_at' => '2024-03-15 11:00:00',
                     'finished_at' => '2024-03-15 10:00:00',
@@ -465,10 +465,10 @@ describe('WorkoutController', function () {
         });
     });
 
-    describe('DELETE /api/workouts/{id}', function () {
+    describe('DELETE /api/v1/workouts/{id}', function () {
         it('deletes a workout', function () {
             $response = $this->actingAs($this->user)
-                ->deleteJson("/api/workouts/{$this->workout->id}");
+                ->deleteJson("/api/v1/workouts/{$this->workout->id}");
 
             $response->assertStatus(200)
                 ->assertJson([
@@ -483,7 +483,7 @@ describe('WorkoutController', function () {
 
         it('returns 404 for non-existent workout', function () {
             $response = $this->actingAs($this->user)
-                ->deleteJson('/api/workouts/999');
+                ->deleteJson('/api/v1/workouts/999');
 
             $response->assertStatus(404);
         });
@@ -498,7 +498,7 @@ describe('WorkoutController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->deleteJson("/api/workouts/{$otherWorkout->id}");
+                ->deleteJson("/api/v1/workouts/{$otherWorkout->id}");
 
             $response->assertStatus(404);
         });
@@ -518,5 +518,147 @@ describe('WorkoutController', function () {
             
             $response->assertStatus(401);
         })->with('protected_endpoints');
+    });
+
+    describe('POST /api/v1/workouts/start', function () {
+        it('starts a new workout for a plan', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start', [
+                    'plan_id' => $this->plan->id,
+                ]);
+
+            $response->assertStatus(201)
+                ->assertJsonStructure([
+                    'data' => [
+                        'id',
+                        'started_at',
+                        'finished_at',
+                        'plan' => [
+                            'id',
+                            'name',
+                        ],
+                        'user' => [
+                            'id',
+                            'name',
+                        ],
+                    ],
+                    'message',
+                ]);
+
+            expect($response->json('data.started_at'))->not->toBeNull();
+            expect($response->json('data.finished_at'))->toBeNull();
+        });
+
+        it('validates plan_id is required', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start', []);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['plan_id']);
+        });
+
+        it('validates plan_id exists', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start', [
+                    'plan_id' => 99999,
+                ]);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['plan_id']);
+        });
+
+        it('requires authentication', function () {
+            $response = $this->postJson('/api/v1/workouts/start', [
+                'plan_id' => $this->plan->id,
+            ]);
+
+            $response->assertStatus(401);
+        });
+    });
+
+    describe('POST /api/v1/workouts/{workout}/finish', function () {
+        it('finishes a started workout', function () {
+            $workout = Workout::factory()->create([
+                'plan_id' => $this->plan->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subHour(),
+                'finished_at' => null,
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/workouts/{$workout->id}/finish");
+
+            $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'data' => [
+                        'id',
+                        'started_at',
+                        'finished_at',
+                        'duration_minutes',
+                    ],
+                    'message',
+                    'duration_minutes',
+                ]);
+
+            expect($response->json('data.finished_at'))->not->toBeNull();
+            expect($response->json('duration_minutes'))->toBeInt();
+        });
+
+        it('cannot finish a workout that is not started', function () {
+            $workout = Workout::factory()->create([
+                'plan_id' => $this->plan->id,
+                'user_id' => $this->user->id,
+                'started_at' => null,
+                'finished_at' => null,
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/workouts/{$workout->id}/finish");
+
+            $response->assertStatus(422)
+                ->assertJson([
+                    'message' => 'Нельзя завершить незапущенную тренировку',
+                ]);
+        });
+
+        it('cannot finish an already finished workout', function () {
+            $workout = Workout::factory()->create([
+                'plan_id' => $this->plan->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subHours(2),
+                'finished_at' => now()->subHour(),
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/workouts/{$workout->id}/finish");
+
+            $response->assertStatus(422)
+                ->assertJson([
+                    'message' => 'Тренировка уже завершена',
+                ]);
+        });
+
+        it('cannot finish workout of another user', function () {
+            $otherUser = User::factory()->create();
+            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+            $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+            $otherWorkout = Workout::factory()->create([
+                'plan_id' => $otherPlan->id,
+                'user_id' => $otherUser->id,
+                'started_at' => now()->subHour(),
+                'finished_at' => null,
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/workouts/{$otherWorkout->id}/finish");
+
+            $response->assertStatus(404);
+        });
+
+        it('requires authentication', function () {
+            $response = $this->postJson("/api/v1/workouts/{$this->workout->id}/finish");
+
+            $response->assertStatus(401);
+        });
     });
 });

@@ -8,6 +8,7 @@ use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\MetricController;
 use App\Http\Controllers\MuscleGroupController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\WorkoutSetController;
 use Illuminate\Http\Request;
@@ -19,9 +20,10 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
 Route::post('/reset-password', [AuthController::class, 'resetPassword']);
 
-// Protected routes
-Route::middleware('auth:sanctum')->group(function () {
+// API v1 routes
+Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
+    Route::get('/user/statistics', [StatisticsController::class, 'statistics']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
@@ -41,6 +43,8 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Workouts CRUD routes
     Route::apiResource('workouts', WorkoutController::class);
+    Route::post('/workouts/start', [WorkoutController::class, 'start']);
+    Route::post('/workouts/{workout}/finish', [WorkoutController::class, 'finish']);
     
     // Workout Sets CRUD routes
     Route::apiResource('workout-sets', WorkoutSetController::class);

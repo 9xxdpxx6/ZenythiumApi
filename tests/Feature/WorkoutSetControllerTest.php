@@ -12,11 +12,11 @@ use App\Models\Workout;
 use App\Models\WorkoutSet;
 
 dataset('protected_endpoints', [
-    'GET /api/workout-sets' => ['GET', '/api/workout-sets'],
-    'POST /api/workout-sets' => ['POST', '/api/workout-sets', []],
-    'GET /api/workout-sets/{id}' => ['GET', '/api/workout-sets/{id}'],
-    'PUT /api/workout-sets/{id}' => ['PUT', '/api/workout-sets/{id}', []],
-    'DELETE /api/workout-sets/{id}' => ['DELETE', '/api/workout-sets/{id}'],
+    'GET /api/v1/workout-sets' => ['GET', '/api/v1/workout-sets'],
+    'POST /api/v1/workout-sets' => ['POST', '/api/v1/workout-sets', []],
+    'GET /api/v1/workout-sets/{id}' => ['GET', '/api/v1/workout-sets/{id}'],
+    'PUT /api/v1/workout-sets/{id}' => ['PUT', '/api/v1/workout-sets/{id}', []],
+    'DELETE /api/v1/workout-sets/{id}' => ['DELETE', '/api/v1/workout-sets/{id}'],
 ]);
 
 beforeEach(function () {
@@ -69,7 +69,7 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workout-sets?workout_id=' . $this->workout->id);
+                ->getJson('/api/v1/workout-sets?workout_id=' . $this->workout->id);
             
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -112,7 +112,7 @@ describe('WorkoutSetController', function () {
 
         it('returns empty result when workout_id is not provided', function () {
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workout-sets');
+                ->getJson('/api/v1/workout-sets');
             
             $response->assertStatus(200)
                 ->assertJsonCount(0, 'data')
@@ -132,7 +132,7 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workout-sets?workout_id=' . $this->workout->id . '&weight_from=40&weight_to=70');
+                ->getJson('/api/v1/workout-sets?workout_id=' . $this->workout->id . '&weight_from=40&weight_to=70');
             
             $response->assertStatus(200)
                 ->assertJsonCount(1, 'data')
@@ -152,7 +152,7 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workout-sets?workout_id=' . $this->workout->id . '&reps_from=8&reps_to=12');
+                ->getJson('/api/v1/workout-sets?workout_id=' . $this->workout->id . '&reps_from=8&reps_to=12');
             
             $response->assertStatus(200)
                 ->assertJsonCount(1, 'data')
@@ -160,7 +160,7 @@ describe('WorkoutSetController', function () {
         });
 
         it('requires authentication', function () {
-            $response = $this->getJson('/api/workout-sets');
+            $response = $this->getJson('/api/v1/workout-sets');
             
             $response->assertStatus(401);
         });
@@ -176,7 +176,7 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', $data);
+                ->postJson('/api/v1/workout-sets', $data);
             
             $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -211,7 +211,7 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', $data);
+                ->postJson('/api/v1/workout-sets', $data);
             
             $response->assertStatus(201)
                 ->assertJsonPath('data.weight', null)
@@ -220,7 +220,7 @@ describe('WorkoutSetController', function () {
 
         it('validates required fields', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', []);
+                ->postJson('/api/v1/workout-sets', []);
             
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['workout_id', 'plan_exercise_id']);
@@ -233,7 +233,7 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', $data);
+                ->postJson('/api/v1/workout-sets', $data);
             
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['workout_id']);
@@ -246,7 +246,7 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', $data);
+                ->postJson('/api/v1/workout-sets', $data);
             
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['plan_exercise_id']);
@@ -267,7 +267,7 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', $data);
+                ->postJson('/api/v1/workout-sets', $data);
             
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['workout_id']);
@@ -286,7 +286,7 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', $data);
+                ->postJson('/api/v1/workout-sets', $data);
             
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['plan_exercise_id']);
@@ -300,7 +300,7 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', $data);
+                ->postJson('/api/v1/workout-sets', $data);
             
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['weight']);
@@ -314,14 +314,14 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->postJson('/api/workout-sets', $data);
+                ->postJson('/api/v1/workout-sets', $data);
             
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['reps']);
         });
 
         it('requires authentication', function () {
-            $response = $this->postJson('/api/workout-sets', []);
+            $response = $this->postJson('/api/v1/workout-sets', []);
             
             $response->assertStatus(401);
         });
@@ -330,7 +330,7 @@ describe('WorkoutSetController', function () {
     describe('GET /api/workout-sets/{id}', function () {
         it('returns specific workout set', function () {
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workout-sets/' . $this->workoutSet->id);
+                ->getJson('/api/v1/workout-sets/' . $this->workoutSet->id);
             
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -371,13 +371,13 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workout-sets/' . $otherWorkoutSet->id);
+                ->getJson('/api/v1/workout-sets/' . $otherWorkoutSet->id);
             
             $response->assertStatus(404);
         });
 
         it('requires authentication', function () {
-            $response = $this->getJson('/api/workout-sets/' . $this->workoutSet->id);
+            $response = $this->getJson('/api/v1/workout-sets/' . $this->workoutSet->id);
             
             $response->assertStatus(401);
         });
@@ -391,7 +391,7 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->putJson('/api/workout-sets/' . $this->workoutSet->id, $data);
+                ->putJson('/api/v1/workout-sets/' . $this->workoutSet->id, $data);
             
             $response->assertStatus(200)
                 ->assertJsonPath('data.weight', '60.00')
@@ -429,13 +429,13 @@ describe('WorkoutSetController', function () {
             ];
             
             $response = $this->actingAs($this->user)
-                ->putJson('/api/workout-sets/' . $otherWorkoutSet->id, $data);
+                ->putJson('/api/v1/workout-sets/' . $otherWorkoutSet->id, $data);
             
             $response->assertStatus(404);
         });
 
         it('requires authentication', function () {
-            $response = $this->putJson('/api/workout-sets/' . $this->workoutSet->id, []);
+            $response = $this->putJson('/api/v1/workout-sets/' . $this->workoutSet->id, []);
             
             $response->assertStatus(401);
         });
@@ -444,7 +444,7 @@ describe('WorkoutSetController', function () {
     describe('DELETE /api/workout-sets/{id}', function () {
         it('deletes workout set successfully', function () {
             $response = $this->actingAs($this->user)
-                ->deleteJson('/api/workout-sets/' . $this->workoutSet->id);
+                ->deleteJson('/api/v1/workout-sets/' . $this->workoutSet->id);
             
             $response->assertStatus(200)
                 ->assertJsonPath('data', null)
@@ -476,13 +476,13 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->deleteJson('/api/workout-sets/' . $otherWorkoutSet->id);
+                ->deleteJson('/api/v1/workout-sets/' . $otherWorkoutSet->id);
             
             $response->assertStatus(404);
         });
 
         it('requires authentication', function () {
-            $response = $this->deleteJson('/api/workout-sets/' . $this->workoutSet->id);
+            $response = $this->deleteJson('/api/v1/workout-sets/' . $this->workoutSet->id);
             
             $response->assertStatus(401);
         });
@@ -496,7 +496,7 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts/' . $this->workout->id . '/workout-sets');
+                ->getJson('/api/v1/workouts/' . $this->workout->id . '/workout-sets');
             
             $response->assertStatus(200)
                 ->assertJsonCount(3, 'data') // 2 new + 1 existing
@@ -513,7 +513,7 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->getJson('/api/workouts/' . $otherWorkout->id . '/workout-sets');
+                ->getJson('/api/v1/workouts/' . $otherWorkout->id . '/workout-sets');
             
             $response->assertStatus(404);
         });
@@ -531,7 +531,7 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->getJson('/api/plan-exercises/' . $this->planExercise->id . '/workout-sets');
+                ->getJson('/api/v1/plan-exercises/' . $this->planExercise->id . '/workout-sets');
             
             $response->assertStatus(200)
                 ->assertJsonCount(3, 'data') // 2 new + 1 existing
@@ -548,7 +548,7 @@ describe('WorkoutSetController', function () {
             ]);
             
             $response = $this->actingAs($this->user)
-                ->getJson('/api/plan-exercises/' . $otherPlanExercise->id . '/workout-sets');
+                ->getJson('/api/v1/plan-exercises/' . $otherPlanExercise->id . '/workout-sets');
             
             $response->assertStatus(404);
         });

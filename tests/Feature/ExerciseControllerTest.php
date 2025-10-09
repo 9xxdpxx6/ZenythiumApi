@@ -8,8 +8,8 @@ use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
 dataset('protected_endpoints', [
-    'GET /api/exercises' => ['GET', '/api/exercises'],
-    'POST /api/exercises' => ['POST', '/api/exercises', []],
+    'GET /api/exercises' => ['GET', '/api/v1/exercises'],
+    'POST /api/exercises' => ['POST', '/api/v1/exercises', []],
     'GET /api/exercises/{id}' => ['GET', '/api/exercises/{id}'],
     'PUT /api/exercises/{id}' => ['PUT', '/api/exercises/{id}', []],
     'DELETE /api/exercises/{id}' => ['DELETE', '/api/exercises/{id}'],
@@ -46,7 +46,7 @@ describe('ExerciseController', function () {
                 'user_id' => User::factory()->create()->id,
             ]);
 
-            $response = $this->getJson('/api/exercises');
+            $response = $this->getJson('/api/v1/exercises');
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -91,7 +91,7 @@ describe('ExerciseController', function () {
                 'user_id' => $this->user->id,
             ]);
 
-            $response = $this->getJson('/api/exercises?search=push');
+            $response = $this->getJson('/api/v1/exercises?search=push');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -105,7 +105,7 @@ describe('ExerciseController', function () {
                 'user_id' => $this->user->id,
             ]);
 
-            $response = $this->getJson('/api/exercises?per_page=10');
+            $response = $this->getJson('/api/v1/exercises?per_page=10');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(10);
@@ -124,7 +124,7 @@ describe('ExerciseController', function () {
                 'is_active' => true,
             ];
 
-            $response = $this->postJson('/api/exercises', $data);
+            $response = $this->postJson('/api/v1/exercises', $data);
 
             $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -151,7 +151,7 @@ describe('ExerciseController', function () {
         });
 
         it('validates required fields', function () {
-            $response = $this->postJson('/api/exercises', []);
+            $response = $this->postJson('/api/v1/exercises', []);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['name', 'muscle_group_id']);
@@ -166,7 +166,7 @@ describe('ExerciseController', function () {
                 'user_id' => $this->user->id,
             ]);
 
-            $response = $this->postJson('/api/exercises', [
+            $response = $this->postJson('/api/v1/exercises', [
                 'name' => 'Push-ups',
                 'muscle_group_id' => $muscleGroup->id,
             ]);
@@ -185,7 +185,7 @@ describe('ExerciseController', function () {
                 'user_id' => $otherUser->id,
             ]);
 
-            $response = $this->postJson('/api/exercises', [
+            $response = $this->postJson('/api/v1/exercises', [
                 'name' => 'Push-ups',
                 'muscle_group_id' => $muscleGroup->id,
             ]);
@@ -205,7 +205,7 @@ describe('ExerciseController', function () {
                 'user_id' => $this->user->id,
             ]);
 
-            $response = $this->getJson("/api/exercises/{$exercise->id}");
+            $response = $this->getJson("/api/v1/exercises/{$exercise->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -240,7 +240,7 @@ describe('ExerciseController', function () {
                 'user_id' => $otherUser->id,
             ]);
 
-            $response = $this->getJson("/api/exercises/{$exercise->id}");
+            $response = $this->getJson("/api/v1/exercises/{$exercise->id}");
 
             $response->assertStatus(404);
         });
@@ -256,7 +256,7 @@ describe('ExerciseController', function () {
                 'user_id' => $this->user->id,
             ]);
 
-            $response = $this->putJson("/api/exercises/{$exercise->id}", [
+            $response = $this->putJson("/api/v1/exercises/{$exercise->id}", [
                 'name' => 'Push-ups Updated',
                 'description' => 'Updated description',
                 'muscle_group_id' => $muscleGroup->id,
@@ -303,7 +303,7 @@ describe('ExerciseController', function () {
                 'user_id' => $this->user->id,
             ]);
 
-            $response = $this->putJson("/api/exercises/{$exercise2->id}", [
+            $response = $this->putJson("/api/v1/exercises/{$exercise2->id}", [
                 'name' => 'Push-ups',
                 'muscle_group_id' => $muscleGroup->id,
             ]);
@@ -323,7 +323,7 @@ describe('ExerciseController', function () {
                 'user_id' => $this->user->id,
             ]);
 
-            $response = $this->deleteJson("/api/exercises/{$exercise->id}");
+            $response = $this->deleteJson("/api/v1/exercises/{$exercise->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure(['data', 'message']);
@@ -348,7 +348,7 @@ describe('ExerciseController', function () {
                 'user_id' => $otherUser->id,
             ]);
 
-            $response = $this->deleteJson("/api/exercises/{$exercise->id}");
+            $response = $this->deleteJson("/api/v1/exercises/{$exercise->id}");
 
             $response->assertStatus(404);
         });

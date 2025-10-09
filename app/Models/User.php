@@ -8,6 +8,7 @@ namespace App\Models;
 use Illuminate\Auth\Notifications\ResetPassword as ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -103,7 +104,7 @@ final class User extends Authenticatable
     /**
      * Get the workout sets for the user.
      */
-    public function workoutSets(): HasMany
+    public function workoutSets(): HasManyThrough
     {
         return $this->hasManyThrough(WorkoutSet::class, Workout::class);
     }
@@ -113,7 +114,8 @@ final class User extends Authenticatable
      */
     public function getCurrentWeightAttribute(): ?float
     {
-        return $this->metrics()->latest('date')->value('weight');
+        $weight = $this->metrics()->latest('date')->value('weight');
+        return $weight ? (float) $weight : null;
     }
 
     /**

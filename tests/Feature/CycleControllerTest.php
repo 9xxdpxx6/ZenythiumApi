@@ -6,11 +6,11 @@ use App\Models\Cycle;
 use App\Models\User;
 
 dataset('protected_endpoints', [
-    'GET /api/cycles' => ['GET', '/api/cycles'],
-    'POST /api/cycles' => ['POST', '/api/cycles', []],
-    'GET /api/cycles/{id}' => ['GET', '/api/cycles/{id}'],
-    'PUT /api/cycles/{id}' => ['PUT', '/api/cycles/{id}', []],
-    'DELETE /api/cycles/{id}' => ['DELETE', '/api/cycles/{id}'],
+    'GET /api/v1/cycles' => ['GET', '/api/v1/cycles'],
+    'POST /api/v1/cycles' => ['POST', '/api/v1/cycles', []],
+    'GET /api/v1/cycles/{id}' => ['GET', '/api/v1/cycles/{id}'],
+    'PUT /api/v1/cycles/{id}' => ['PUT', '/api/v1/cycles/{id}', []],
+    'DELETE /api/v1/cycles/{id}' => ['DELETE', '/api/v1/cycles/{id}'],
 ]);
 
 beforeEach(function () {
@@ -43,7 +43,7 @@ describe('CycleController', function () {
             Cycle::factory()->create(['user_id' => $otherUser->id]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/cycles');
+                ->getJson('/api/v1/cycles');
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -90,7 +90,7 @@ describe('CycleController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/cycles?search=Test');
+                ->getJson('/api/v1/cycles?search=Test');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -108,7 +108,7 @@ describe('CycleController', function () {
             }
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/cycles?per_page=10');
+                ->getJson('/api/v1/cycles?per_page=10');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(10);
@@ -129,7 +129,7 @@ describe('CycleController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/cycles?start_date_from=2024-05-01');
+                ->getJson('/api/v1/cycles?start_date_from=2024-05-01');
 
             $response->assertStatus(200);
             $data = $response->json('data');
@@ -156,7 +156,7 @@ describe('CycleController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/cycles?weeks=4');
+                ->getJson('/api/v1/cycles?weeks=4');
 
             $response->assertStatus(200);
             $data = $response->json('data');
@@ -180,7 +180,7 @@ describe('CycleController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/cycles', $data);
+                ->postJson('/api/v1/cycles', $data);
 
             $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -214,7 +214,7 @@ describe('CycleController', function () {
 
         it('validates required fields', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/cycles', []);
+                ->postJson('/api/v1/cycles', []);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['name', 'start_date', 'end_date', 'weeks']);
@@ -222,7 +222,7 @@ describe('CycleController', function () {
 
         it('validates unique name per user', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/cycles', [
+                ->postJson('/api/v1/cycles', [
                     'name' => $this->cycle->name,
                     'start_date' => '2024-01-01',
                     'end_date' => '2024-01-31',
@@ -237,7 +237,7 @@ describe('CycleController', function () {
             $otherUser = User::factory()->create();
 
             $response = $this->actingAs($otherUser)
-                ->postJson('/api/cycles', [
+                ->postJson('/api/v1/cycles', [
                     'name' => $this->cycle->name,
                     'start_date' => '2024-01-01',
                     'end_date' => '2024-01-31',
@@ -249,7 +249,7 @@ describe('CycleController', function () {
 
         it('validates date relationships', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/cycles', [
+                ->postJson('/api/v1/cycles', [
                     'name' => 'Test Cycle',
                     'start_date' => '2024-01-31',
                     'end_date' => '2024-01-01',
@@ -262,7 +262,7 @@ describe('CycleController', function () {
 
         it('validates weeks range', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/cycles', [
+                ->postJson('/api/v1/cycles', [
                     'name' => 'Test Cycle',
                     'start_date' => '2024-01-01',
                     'end_date' => '2024-01-31',
@@ -275,7 +275,7 @@ describe('CycleController', function () {
 
         it('validates minimum weeks', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/cycles', [
+                ->postJson('/api/v1/cycles', [
                     'name' => 'Test Cycle',
                     'start_date' => '2024-01-01',
                     'end_date' => '2024-01-31',
@@ -290,7 +290,7 @@ describe('CycleController', function () {
     describe('GET /api/cycles/{id}', function () {
         it('returns a specific cycle', function () {
             $response = $this->actingAs($this->user)
-                ->getJson("/api/cycles/{$this->cycle->id}");
+                ->getJson("/api/v1/cycles/{$this->cycle->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -337,7 +337,7 @@ describe('CycleController', function () {
     describe('PUT /api/cycles/{id}', function () {
         it('updates a cycle', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/cycles/{$this->cycle->id}", [
+                ->putJson("/api/v1/cycles/{$this->cycle->id}", [
                     'name' => 'Updated Cycle',
                     'start_date' => '2024-01-01',
                     'end_date' => '2024-01-31',
@@ -381,7 +381,7 @@ describe('CycleController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->putJson("/api/cycles/{$cycle2->id}", [
+                ->putJson("/api/v1/cycles/{$cycle2->id}", [
                     'name' => $this->cycle->name,
                     'start_date' => '2024-01-01',
                     'end_date' => '2024-01-31',
@@ -394,7 +394,7 @@ describe('CycleController', function () {
 
         it('allows same name for same cycle on update', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/cycles/{$this->cycle->id}", [
+                ->putJson("/api/v1/cycles/{$this->cycle->id}", [
                     'name' => $this->cycle->name,
                     'start_date' => '2024-01-01',
                     'end_date' => '2024-01-31',
@@ -406,7 +406,7 @@ describe('CycleController', function () {
 
         it('validates required fields on update', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/cycles/{$this->cycle->id}", [
+                ->putJson("/api/v1/cycles/{$this->cycle->id}", [
                     'start_date' => '2024-01-01',
                     'end_date' => '2024-01-31',
                     'weeks' => 4,
@@ -421,7 +421,7 @@ describe('CycleController', function () {
     describe('DELETE /api/cycles/{id}', function () {
         it('deletes a cycle', function () {
             $response = $this->actingAs($this->user)
-                ->deleteJson("/api/cycles/{$this->cycle->id}");
+                ->deleteJson("/api/v1/cycles/{$this->cycle->id}");
 
             $response->assertStatus(200)
                 ->assertJson([

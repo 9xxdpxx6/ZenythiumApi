@@ -95,4 +95,51 @@ final class WorkoutController extends Controller
             'message' => 'Тренировка успешно удалена'
         ]);
     }
+
+    /**
+     * Start a new workout for a plan.
+     */
+    public function start(Request $request): JsonResponse
+    {
+        $request->validate([
+            'plan_id' => 'required|integer|exists:plans,id',
+        ]);
+
+        $userId = $request->user()?->id;
+        if (!$userId) {
+            return response()->json(['message' => 'Пользователь не аутентифицирован'], 401);
+        }
+
+        $workout = $this->workoutService->start($request->plan_id, $userId);
+        
+        return response()->json([
+            'data' => new WorkoutResource($workout->load(['plan.cycle', 'user'])),
+            'message' => 'Тренировка успешно запущена'
+        ], 201);
+    }
+
+    /**
+     * Finish a workout.
+     */
+    public function finish(Request $request, Workout $workout): JsonResponse
+    {
+        $userId = $request->user()?->id;
+        if (!$userId) {
+            return response()->json(['message' => 'Пользователь не аутентифицирован'], 401);
+        }
+
+        try {
+            $workout = $this->workoutService->finish($workout->id, $userId);
+            
+            return response()->json([
+                'data' => new WorkoutResource($workout),
+                'message' => 'Тренировка успешно завершена',
+                'duration_minutes' => $workout->duration_minutes
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'message' => $e->getMessage()
+            ], 422);
+        }
+    }
 }

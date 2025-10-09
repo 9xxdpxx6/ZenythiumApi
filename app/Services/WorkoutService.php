@@ -86,4 +86,37 @@ final class WorkoutService
         
         return $workout->delete();
     }
+
+    /**
+     * Start a new workout for a plan.
+     */
+    public function start(int $planId, int $userId): Workout
+    {
+        return Workout::create([
+            'plan_id' => $planId,
+            'user_id' => $userId,
+            'started_at' => now(),
+        ]);
+    }
+
+    /**
+     * Finish a workout by setting finished_at timestamp.
+     */
+    public function finish(int $workoutId, int $userId): Workout
+    {
+        $workout = Workout::where('user_id', $userId)->findOrFail($workoutId);
+        
+        // Validate that workout is started but not finished
+        if (!$workout->started_at) {
+            throw new \InvalidArgumentException('Нельзя завершить незапущенную тренировку');
+        }
+        
+        if ($workout->finished_at) {
+            throw new \InvalidArgumentException('Тренировка уже завершена');
+        }
+
+        $workout->update(['finished_at' => now()]);
+        
+        return $workout->fresh(['plan.cycle', 'user']);
+    }
 }

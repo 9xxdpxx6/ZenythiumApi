@@ -78,7 +78,7 @@ describe('Authentication', function () {
 
             $response = $this->withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->postJson('/api/logout');
+            ])->postJson('/api/v1/logout');
 
             $response->assertStatus(200)
                 ->assertJson([
@@ -95,7 +95,7 @@ describe('Authentication', function () {
 
             $response = $this->withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->getJson('/api/user');
+            ])->getJson('/api/v1/user');
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -126,7 +126,7 @@ describe('Authentication', function () {
 
             $response = $this->withHeaders([
                 'Authorization' => 'Bearer ' . $token,
-            ])->postJson('/api/change-password', $passwordData);
+            ])->postJson('/api/v1/change-password', $passwordData);
 
             $response->assertStatus(200)
                 ->assertJson([

@@ -7,11 +7,11 @@ use App\Models\Plan;
 use App\Models\User;
 
 dataset('protected_endpoints', [
-    'GET /api/plans' => ['GET', '/api/plans'],
-    'POST /api/plans' => ['POST', '/api/plans', []],
-    'GET /api/plans/{id}' => ['GET', '/api/plans/{id}'],
-    'PUT /api/plans/{id}' => ['PUT', '/api/plans/{id}', []],
-    'DELETE /api/plans/{id}' => ['DELETE', '/api/plans/{id}'],
+    'GET /api/v1/plans' => ['GET', '/api/v1/plans'],
+    'POST /api/v1/plans' => ['POST', '/api/v1/plans', []],
+    'GET /api/v1/plans/{id}' => ['GET', '/api/v1/plans/{id}'],
+    'PUT /api/v1/plans/{id}' => ['PUT', '/api/v1/plans/{id}', []],
+    'DELETE /api/v1/plans/{id}' => ['DELETE', '/api/v1/plans/{id}'],
 ]);
 
 beforeEach(function () {
@@ -41,7 +41,7 @@ describe('PlanController', function () {
             Plan::factory()->create(['cycle_id' => $otherCycle->id]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/plans');
+                ->getJson('/api/v1/plans');
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -85,7 +85,7 @@ describe('PlanController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/plans?search=Test');
+                ->getJson('/api/v1/plans?search=Test');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -96,7 +96,7 @@ describe('PlanController', function () {
             Plan::factory()->count(25)->create(['cycle_id' => $this->cycle->id]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/plans?per_page=10');
+                ->getJson('/api/v1/plans?per_page=10');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(10);
@@ -108,7 +108,7 @@ describe('PlanController', function () {
             Plan::factory()->create(['cycle_id' => $otherCycle->id]);
 
             $response = $this->actingAs($this->user)
-                ->getJson("/api/plans?cycle_id={$this->cycle->id}");
+                ->getJson("/api/v1/plans?cycle_id={$this->cycle->id}");
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -125,7 +125,7 @@ describe('PlanController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/plans', $data);
+                ->postJson('/api/v1/plans', $data);
 
             $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -156,7 +156,7 @@ describe('PlanController', function () {
 
         it('validates required fields', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/plans', []);
+                ->postJson('/api/v1/plans', []);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['cycle_id', 'name']);
@@ -164,7 +164,7 @@ describe('PlanController', function () {
 
         it('validates unique name per cycle', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/plans', [
+                ->postJson('/api/v1/plans', [
                     'cycle_id' => $this->cycle->id,
                     'name' => $this->plan->name,
                     'order' => 1,
@@ -178,7 +178,7 @@ describe('PlanController', function () {
             $otherCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/plans', [
+                ->postJson('/api/v1/plans', [
                     'cycle_id' => $otherCycle->id,
                     'name' => $this->plan->name,
                     'order' => 1,
@@ -189,7 +189,7 @@ describe('PlanController', function () {
 
         it('validates cycle_id exists', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/plans', [
+                ->postJson('/api/v1/plans', [
                     'cycle_id' => 999999,
                     'name' => 'Test Plan',
                     'order' => 1,
@@ -201,7 +201,7 @@ describe('PlanController', function () {
 
         it('validates positive order', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/plans', [
+                ->postJson('/api/v1/plans', [
                     'cycle_id' => $this->cycle->id,
                     'name' => 'Test Plan',
                     'order' => 0,
@@ -213,7 +213,7 @@ describe('PlanController', function () {
 
         it('can create plan without order', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/plans', [
+                ->postJson('/api/v1/plans', [
                     'cycle_id' => $this->cycle->id,
                     'name' => 'Plan Without Order',
                 ]);
@@ -232,7 +232,7 @@ describe('PlanController', function () {
     describe('GET /api/plans/{id}', function () {
         it('returns a specific plan', function () {
             $response = $this->actingAs($this->user)
-                ->getJson("/api/plans/{$this->plan->id}");
+                ->getJson("/api/v1/plans/{$this->plan->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -277,7 +277,7 @@ describe('PlanController', function () {
     describe('PUT /api/plans/{id}', function () {
         it('updates a plan', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/plans/{$this->plan->id}", [
+                ->putJson("/api/v1/plans/{$this->plan->id}", [
                     'cycle_id' => $this->cycle->id,
                     'name' => 'Updated Plan',
                     'order' => 2,
@@ -317,7 +317,7 @@ describe('PlanController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->putJson("/api/plans/{$plan2->id}", [
+                ->putJson("/api/v1/plans/{$plan2->id}", [
                     'cycle_id' => $this->cycle->id,
                     'name' => $this->plan->name,
                     'order' => 1,
@@ -329,7 +329,7 @@ describe('PlanController', function () {
 
         it('allows same name for same plan on update', function () {
             $response = $this->actingAs($this->user)
-                ->putJson("/api/plans/{$this->plan->id}", [
+                ->putJson("/api/v1/plans/{$this->plan->id}", [
                     'cycle_id' => $this->cycle->id,
                     'name' => $this->plan->name,
                     'order' => 1,
@@ -342,7 +342,7 @@ describe('PlanController', function () {
     describe('DELETE /api/plans/{id}', function () {
         it('deletes a plan', function () {
             $response = $this->actingAs($this->user)
-                ->deleteJson("/api/plans/{$this->plan->id}");
+                ->deleteJson("/api/v1/plans/{$this->plan->id}");
 
             $response->assertStatus(200)
                 ->assertJson([

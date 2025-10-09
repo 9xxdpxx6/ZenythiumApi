@@ -6,11 +6,11 @@ use App\Models\Metric;
 use App\Models\User;
 
 dataset('protected_endpoints', [
-    'GET /api/metrics' => ['GET', '/api/metrics'],
-    'POST /api/metrics' => ['POST', '/api/metrics', []],
-    'GET /api/metrics/{id}' => ['GET', '/api/metrics/{id}'],
-    'PUT /api/metrics/{id}' => ['PUT', '/api/metrics/{id}', []],
-    'DELETE /api/metrics/{id}' => ['DELETE', '/api/metrics/{id}'],
+    'GET /api/v1/metrics' => ['GET', '/api/v1/metrics'],
+    'POST /api/v1/metrics' => ['POST', '/api/v1/metrics', []],
+    'GET /api/v1/metrics/{id}' => ['GET', '/api/v1/metrics/{id}'],
+    'PUT /api/v1/metrics/{id}' => ['PUT', '/api/v1/metrics/{id}', []],
+    'DELETE /api/v1/metrics/{id}' => ['DELETE', '/api/v1/metrics/{id}'],
 ]);
 
 beforeEach(function () {
@@ -41,7 +41,7 @@ describe('MetricController', function () {
             ]);
 
             $response = $this->actingAs($this->user)
-                ->getJson('/api/metrics');
+                ->getJson('/api/v1/metrics');
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -74,14 +74,14 @@ describe('MetricController', function () {
         });
 
         it('returns empty result for unauthenticated user', function () {
-            $response = $this->getJson('/api/metrics');
+            $response = $this->getJson('/api/v1/metrics');
 
             $response->assertStatus(401);
         });
 
         it('filters metrics by date range', function () {
             $response = $this->actingAs($this->user)
-                ->getJson('/api/metrics?date_from=2024-03-10&date_to=2024-03-20');
+                ->getJson('/api/v1/metrics?date_from=2024-03-10&date_to=2024-03-20');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -89,7 +89,7 @@ describe('MetricController', function () {
 
         it('filters metrics by weight range', function () {
             $response = $this->actingAs($this->user)
-                ->getJson('/api/metrics?weight_from=75&weight_to=77');
+                ->getJson('/api/v1/metrics?weight_from=75&weight_to=77');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -97,7 +97,7 @@ describe('MetricController', function () {
 
         it('searches metrics by note', function () {
             $response = $this->actingAs($this->user)
-                ->getJson('/api/metrics?search=Test');
+                ->getJson('/api/v1/metrics?search=Test');
 
             $response->assertStatus(200);
             expect($response->json('data'))->toHaveCount(1);
@@ -113,7 +113,7 @@ describe('MetricController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/metrics', $data);
+                ->postJson('/api/v1/metrics', $data);
 
             $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -145,7 +145,7 @@ describe('MetricController', function () {
 
         it('validates required fields', function () {
             $response = $this->actingAs($this->user)
-                ->postJson('/api/metrics', []);
+                ->postJson('/api/v1/metrics', []);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['date', 'weight']);
@@ -158,7 +158,7 @@ describe('MetricController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/metrics', $data);
+                ->postJson('/api/v1/metrics', $data);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['date']);
@@ -171,7 +171,7 @@ describe('MetricController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/metrics', $data);
+                ->postJson('/api/v1/metrics', $data);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['weight']);
@@ -184,7 +184,7 @@ describe('MetricController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/metrics', $data);
+                ->postJson('/api/v1/metrics', $data);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['weight']);
@@ -198,7 +198,7 @@ describe('MetricController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/metrics', $data);
+                ->postJson('/api/v1/metrics', $data);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['note']);
@@ -211,7 +211,7 @@ describe('MetricController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->postJson('/api/metrics', $data);
+                ->postJson('/api/v1/metrics', $data);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['date']);
@@ -221,7 +221,7 @@ describe('MetricController', function () {
     describe('GET /api/metrics/{id}', function () {
         it('returns specific metric', function () {
             $response = $this->actingAs($this->user)
-                ->getJson("/api/metrics/{$this->metric->id}");
+                ->getJson("/api/v1/metrics/{$this->metric->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -272,7 +272,7 @@ describe('MetricController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->putJson("/api/metrics/{$this->metric->id}", $data);
+                ->putJson("/api/v1/metrics/{$this->metric->id}", $data);
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -308,7 +308,7 @@ describe('MetricController', function () {
             ];
 
             $response = $this->actingAs($this->user)
-                ->putJson("/api/metrics/{$this->metric->id}", $data);
+                ->putJson("/api/v1/metrics/{$this->metric->id}", $data);
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['date', 'weight']);
@@ -335,7 +335,7 @@ describe('MetricController', function () {
     describe('DELETE /api/metrics/{id}', function () {
         it('deletes metric', function () {
             $response = $this->actingAs($this->user)
-                ->deleteJson("/api/metrics/{$this->metric->id}");
+                ->deleteJson("/api/v1/metrics/{$this->metric->id}");
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
