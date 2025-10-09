@@ -7,6 +7,7 @@ use App\Http\Controllers\CycleController;
 use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\MuscleGroupController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\WorkoutController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -35,6 +36,9 @@ Route::middleware('auth:sanctum')->group(function () {
     
     // Plans CRUD routes
     Route::apiResource('plans', PlanController::class);
+    
+    // Workouts CRUD routes
+    Route::apiResource('workouts', WorkoutController::class);
 });
 
 // Test endpoint to verify CORS is working

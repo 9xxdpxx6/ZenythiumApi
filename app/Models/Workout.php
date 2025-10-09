@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 
 final class Workout extends Model
 {
+    use HasFactory;
     protected $fillable = [
         'plan_id',
         'user_id',
@@ -62,7 +64,7 @@ final class Workout extends Model
             return null;
         }
 
-        return $this->started_at->diffInMinutes($this->finished_at);
+        return (int) $this->started_at->diffInMinutes($this->finished_at);
     }
 
     /**
