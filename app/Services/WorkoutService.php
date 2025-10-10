@@ -50,11 +50,9 @@ final class WorkoutService
      * @param int $id ID тренировки
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return Workout Модель тренировки с загруженными связями
-     * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если тренировка не найдена
+     * @return Workout|null Модель тренировки с загруженными связями или null если не найдена
      */
-    public function getById(int $id, ?int $userId = null): Workout
+    public function getById(int $id, ?int $userId = null): ?Workout
     {
         $query = Workout::query()->with(['plan.cycle', 'user']);
 
@@ -62,7 +60,7 @@ final class WorkoutService
             $query->where('user_id', $userId);
         }
 
-        return $query->findOrFail($id);
+        return $query->find($id);
     }
 
     /**
@@ -90,12 +88,11 @@ final class WorkoutService
      * @param array $data Данные для обновления
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return Workout Обновленная модель тренировки с загруженными связями
+     * @return Workout|null Обновленная модель тренировки с загруженными связями или null если не найдена
      * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если тренировка не найдена
      * @throws \Illuminate\Database\QueryException При ошибке обновления записи
      */
-    public function update(int $id, array $data, ?int $userId = null): Workout
+    public function update(int $id, array $data, ?int $userId = null): ?Workout
     {
         $query = Workout::query();
 
@@ -103,7 +100,12 @@ final class WorkoutService
             $query->where('user_id', $userId);
         }
 
-        $workout = $query->findOrFail($id);
+        $workout = $query->find($id);
+        
+        if (!$workout) {
+            return null;
+        }
+        
         $workout->update($data);
         
         return $workout->fresh(['plan.cycle', 'user']);
@@ -115,9 +117,7 @@ final class WorkoutService
      * @param int $id ID тренировки
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return bool True если тренировка успешно удалена
-     * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если тренировка не найдена
+     * @return bool True если тренировка успешно удалена, false если не найдена
      */
     public function delete(int $id, ?int $userId = null): bool
     {
@@ -127,7 +127,11 @@ final class WorkoutService
             $query->where('user_id', $userId);
         }
 
-        $workout = $query->findOrFail($id);
+        $workout = $query->find($id);
+        
+        if (!$workout) {
+            return false;
+        }
         
         return $workout->delete();
     }
@@ -162,9 +166,13 @@ final class WorkoutService
      * @throws \InvalidArgumentException Если тренировка не запущена или уже завершена
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если тренировка не найдена
      */
-    public function finish(int $workoutId, int $userId): Workout
+    public function finish(int $workoutId, int $userId): ?Workout
     {
-        $workout = Workout::where('user_id', $userId)->findOrFail($workoutId);
+        $workout = Workout::where('user_id', $userId)->find($workoutId);
+        
+        if (!$workout) {
+            return null;
+        }
         
         // Validate that workout is started but not finished
         if (!$workout->started_at) {

@@ -35,7 +35,7 @@ final class MetricService
     /**
      * Get metric by ID.
      */
-    public function getById(int $id, ?int $userId = null): Metric
+    public function getById(int $id, ?int $userId = null): ?Metric
     {
         $query = Metric::query()->with(['user']);
 
@@ -43,7 +43,7 @@ final class MetricService
             $query->where('user_id', $userId);
         }
 
-        return $query->findOrFail($id);
+        return $query->find($id);
     }
 
     /**
@@ -57,7 +57,7 @@ final class MetricService
     /**
      * Update metric by ID.
      */
-    public function update(int $id, array $data, ?int $userId = null): Metric
+    public function update(int $id, array $data, ?int $userId = null): ?Metric
     {
         $query = Metric::query();
 
@@ -65,7 +65,12 @@ final class MetricService
             $query->where('user_id', $userId);
         }
 
-        $metric = $query->findOrFail($id);
+        $metric = $query->find($id);
+        
+        if (!$metric) {
+            return null;
+        }
+        
         $metric->update($data);
         
         return $metric->fresh(['user']);
@@ -82,7 +87,11 @@ final class MetricService
             $query->where('user_id', $userId);
         }
 
-        $metric = $query->findOrFail($id);
+        $metric = $query->find($id);
+        
+        if (!$metric) {
+            return false;
+        }
         
         return $metric->delete();
     }

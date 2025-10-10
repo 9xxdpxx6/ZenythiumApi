@@ -35,7 +35,7 @@ final class CycleService
     /**
      * Get cycle by ID.
      */
-    public function getById(int $id, ?int $userId = null): Cycle
+    public function getById(int $id, ?int $userId = null): ?Cycle
     {
         $query = Cycle::query();
 
@@ -43,7 +43,7 @@ final class CycleService
             $query->where('user_id', $userId);
         }
 
-        return $query->findOrFail($id);
+        return $query->find($id);
     }
 
     /**
@@ -57,7 +57,7 @@ final class CycleService
     /**
      * Update cycle by ID.
      */
-    public function update(int $id, array $data, ?int $userId = null): Cycle
+    public function update(int $id, array $data, ?int $userId = null): ?Cycle
     {
         $query = Cycle::query();
 
@@ -65,7 +65,12 @@ final class CycleService
             $query->where('user_id', $userId);
         }
 
-        $cycle = $query->findOrFail($id);
+        $cycle = $query->find($id);
+        
+        if (!$cycle) {
+            return null;
+        }
+        
         $cycle->update($data);
         
         return $cycle->fresh();
@@ -82,7 +87,11 @@ final class CycleService
             $query->where('user_id', $userId);
         }
 
-        $cycle = $query->findOrFail($id);
+        $cycle = $query->find($id);
+        
+        if (!$cycle) {
+            return false;
+        }
         
         return $cycle->delete();
     }

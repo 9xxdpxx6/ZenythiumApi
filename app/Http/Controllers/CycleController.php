@@ -195,6 +195,12 @@ final class CycleController extends Controller
     {
         $cycle = $this->cycleService->getById($cycle->id, $request->user()?->id);
         
+        if (!$cycle) {
+            return response()->json([
+                'message' => 'Цикл не найден'
+            ], 404);
+        }
+        
         return response()->json([
             'data' => new CycleResource($cycle),
             'message' => 'Цикл успешно получен'
@@ -260,6 +266,12 @@ final class CycleController extends Controller
     {
         $cycle = $this->cycleService->update($cycle->id, $request->validated(), $request->user()?->id);
         
+        if (!$cycle) {
+            return response()->json([
+                'message' => 'Цикл не найден'
+            ], 404);
+        }
+        
         return response()->json([
             'data' => new CycleResource($cycle),
             'message' => 'Цикл успешно обновлен'
@@ -306,7 +318,13 @@ final class CycleController extends Controller
      */
     public function destroy(Cycle $cycle, Request $request): JsonResponse
     {
-        $this->cycleService->delete($cycle->id, $request->user()?->id);
+        $deleted = $this->cycleService->delete($cycle->id, $request->user()?->id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Цикл не найден'
+            ], 404);
+        }
         
         return response()->json([
             'data' => null,

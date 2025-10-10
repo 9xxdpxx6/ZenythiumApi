@@ -199,6 +199,12 @@ final class WorkoutController extends Controller
     {
         $workout = $this->workoutService->getById($workout->id, $request->user()?->id);
         
+        if (!$workout) {
+            return response()->json([
+                'message' => 'Тренировка не найдена'
+            ], 404);
+        }
+        
         return response()->json([
             'data' => new WorkoutResource($workout),
             'message' => 'Тренировка успешно получена'
@@ -263,6 +269,12 @@ final class WorkoutController extends Controller
     {
         $workout = $this->workoutService->update($workout->id, $request->validated(), $request->user()?->id);
         
+        if (!$workout) {
+            return response()->json([
+                'message' => 'Тренировка не найдена'
+            ], 404);
+        }
+        
         return response()->json([
             'data' => new WorkoutResource($workout),
             'message' => 'Тренировка успешно обновлена'
@@ -309,7 +321,13 @@ final class WorkoutController extends Controller
      */
     public function destroy(Workout $workout, Request $request): JsonResponse
     {
-        $this->workoutService->delete($workout->id, $request->user()?->id);
+        $deleted = $this->workoutService->delete($workout->id, $request->user()?->id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Тренировка не найдена'
+            ], 404);
+        }
         
         return response()->json([
             'data' => null,
@@ -430,6 +448,12 @@ final class WorkoutController extends Controller
 
         try {
             $workout = $this->workoutService->finish($workout->id, $userId);
+            
+            if (!$workout) {
+                return response()->json([
+                    'message' => 'Тренировка не найдена'
+                ], 404);
+            }
             
             return response()->json([
                 'data' => new WorkoutResource($workout),

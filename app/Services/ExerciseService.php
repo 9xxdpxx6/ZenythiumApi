@@ -48,11 +48,9 @@ final class ExerciseService
      * @param int $id ID упражнения
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return Exercise Модель упражнения с загруженной связью группы мышц
-     * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если упражнение не найдено
+     * @return Exercise|null Модель упражнения с загруженной связью группы мышц или null если не найдено
      */
-    public function getById(int $id, ?int $userId = null): Exercise
+    public function getById(int $id, ?int $userId = null): ?Exercise
     {
         $query = Exercise::query()->with('muscleGroup');
 
@@ -60,7 +58,7 @@ final class ExerciseService
             $query->where('user_id', $userId);
         }
 
-        return $query->findOrFail($id);
+        return $query->find($id);
     }
 
     /**
@@ -88,12 +86,11 @@ final class ExerciseService
      * @param array $data Данные для обновления
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return Exercise Обновленная модель упражнения с загруженной связью группы мышц
+     * @return Exercise|null Обновленная модель упражнения с загруженной связью группы мышц или null если не найдено
      * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если упражнение не найдено
      * @throws \Illuminate\Database\QueryException При ошибке обновления записи
      */
-    public function update(int $id, array $data, ?int $userId = null): Exercise
+    public function update(int $id, array $data, ?int $userId = null): ?Exercise
     {
         $query = Exercise::query();
 
@@ -101,7 +98,12 @@ final class ExerciseService
             $query->where('user_id', $userId);
         }
 
-        $exercise = $query->findOrFail($id);
+        $exercise = $query->find($id);
+        
+        if (!$exercise) {
+            return null;
+        }
+        
         $exercise->update($data);
         
         return $exercise->fresh(['muscleGroup']);
@@ -113,9 +115,7 @@ final class ExerciseService
      * @param int $id ID упражнения
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return bool True если упражнение успешно удалено
-     * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если упражнение не найдено
+     * @return bool True если упражнение успешно удалено, false если не найдено
      */
     public function delete(int $id, ?int $userId = null): bool
     {
@@ -125,7 +125,11 @@ final class ExerciseService
             $query->where('user_id', $userId);
         }
 
-        $exercise = $query->findOrFail($id);
+        $exercise = $query->find($id);
+        
+        if (!$exercise) {
+            return false;
+        }
         
         return $exercise->delete();
     }

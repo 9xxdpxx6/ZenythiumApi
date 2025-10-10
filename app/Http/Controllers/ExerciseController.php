@@ -206,6 +206,12 @@ final class ExerciseController extends Controller
     {
         $exercise = $this->exerciseService->getById($exercise->id, $request->user()?->id);
         
+        if (!$exercise) {
+            return response()->json([
+                'message' => 'Упражнение не найдено'
+            ], 404);
+        }
+        
         return response()->json([
             'data' => new ExerciseResource($exercise),
             'message' => 'Упражнение успешно получено'
@@ -270,6 +276,12 @@ final class ExerciseController extends Controller
     {
         $exercise = $this->exerciseService->update($exercise->id, $request->validated(), $request->user()?->id);
         
+        if (!$exercise) {
+            return response()->json([
+                'message' => 'Упражнение не найдено'
+            ], 404);
+        }
+        
         return response()->json([
             'data' => new ExerciseResource($exercise),
             'message' => 'Упражнение успешно обновлено'
@@ -316,7 +328,13 @@ final class ExerciseController extends Controller
      */
     public function destroy(Exercise $exercise, Request $request): JsonResponse
     {
-        $this->exerciseService->delete($exercise->id, $request->user()?->id);
+        $deleted = $this->exerciseService->delete($exercise->id, $request->user()?->id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Упражнение не найдено'
+            ], 404);
+        }
         
         return response()->json([
             'data' => null,

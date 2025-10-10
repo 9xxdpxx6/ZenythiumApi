@@ -202,6 +202,12 @@ final class MetricController extends Controller
     {
         $metric = $this->metricService->getById($metric->id, $request->user()?->id);
         
+        if (!$metric) {
+            return response()->json([
+                'message' => 'Метрика не найдена'
+            ], 404);
+        }
+        
         return response()->json([
             'data' => new MetricResource($metric),
             'message' => 'Метрика успешно получена'
@@ -267,6 +273,12 @@ final class MetricController extends Controller
     {
         $metric = $this->metricService->update($metric->id, $request->validated(), $request->user()?->id);
         
+        if (!$metric) {
+            return response()->json([
+                'message' => 'Метрика не найдена'
+            ], 404);
+        }
+        
         return response()->json([
             'data' => new MetricResource($metric),
             'message' => 'Метрика успешно обновлена'
@@ -313,7 +325,13 @@ final class MetricController extends Controller
      */
     public function destroy(Metric $metric, Request $request): JsonResponse
     {
-        $this->metricService->delete($metric->id, $request->user()?->id);
+        $deleted = $this->metricService->delete($metric->id, $request->user()?->id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Метрика не найдена'
+            ], 404);
+        }
         
         return response()->json([
             'data' => null,
