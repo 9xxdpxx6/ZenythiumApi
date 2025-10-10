@@ -219,6 +219,22 @@ describe('CycleRequest', function () {
             
             expect($validator->passes())->toBeTrue();
         });
+
+        it('passes validation when both dates are null', function () {
+            $request = new CycleRequest();
+            $request->setUserResolver(fn() => $this->user);
+            
+            $data = [
+                'name' => 'Test Cycle',
+                'start_date' => null,
+                'end_date' => null,
+                'weeks' => 4,
+            ];
+            
+            $validator = Validator::make($data, $request->rules());
+            
+            expect($validator->passes())->toBeTrue();
+        });
     });
 
     describe('weeks validation', function () {
