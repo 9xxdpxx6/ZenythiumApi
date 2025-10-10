@@ -37,7 +37,7 @@ final class WorkoutSetService
     /**
      * Get workout set by ID.
      */
-    public function getById(int $id, ?int $userId = null): WorkoutSet
+    public function getById(int $id, ?int $userId = null): ?WorkoutSet
     {
         $query = WorkoutSet::query()->with(['workout.plan.cycle', 'workout.user', 'planExercise.exercise']);
 
@@ -47,7 +47,7 @@ final class WorkoutSetService
             });
         }
 
-        return $query->findOrFail($id);
+        return $query->find($id);
     }
 
     /**
@@ -61,7 +61,7 @@ final class WorkoutSetService
     /**
      * Update workout set by ID.
      */
-    public function update(int $id, array $data, ?int $userId = null): WorkoutSet
+    public function update(int $id, array $data, ?int $userId = null): ?WorkoutSet
     {
         $query = WorkoutSet::query();
 
@@ -71,7 +71,11 @@ final class WorkoutSetService
             });
         }
 
-        $workoutSet = $query->findOrFail($id);
+        $workoutSet = $query->find($id);
+        if (!$workoutSet) {
+            return null;
+        }
+        
         $workoutSet->update($data);
         
         return $workoutSet->fresh(['workout.plan.cycle', 'workout.user', 'planExercise.exercise']);
@@ -90,7 +94,10 @@ final class WorkoutSetService
             });
         }
 
-        $workoutSet = $query->findOrFail($id);
+        $workoutSet = $query->find($id);
+        if (!$workoutSet) {
+            return false;
+        }
         
         return $workoutSet->delete();
     }

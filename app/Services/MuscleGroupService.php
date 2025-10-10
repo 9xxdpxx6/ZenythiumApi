@@ -29,7 +29,7 @@ final class MuscleGroupService
     /**
      * Get muscle group by ID.
      */
-    public function getById(int $id, ?int $userId = null): MuscleGroup
+    public function getById(int $id, ?int $userId = null): ?MuscleGroup
     {
         $query = MuscleGroup::query();
 
@@ -44,7 +44,7 @@ final class MuscleGroupService
             }]);
         }
 
-        return $query->findOrFail($id);
+        return $query->find($id);
     }
 
     /**
@@ -58,9 +58,13 @@ final class MuscleGroupService
     /**
      * Update muscle group by ID.
      */
-    public function update(int $id, array $data): MuscleGroup
+    public function update(int $id, array $data): ?MuscleGroup
     {
-        $muscleGroup = MuscleGroup::findOrFail($id);
+        $muscleGroup = MuscleGroup::find($id);
+        if (!$muscleGroup) {
+            return null;
+        }
+        
         $muscleGroup->update($data);
         
         return $muscleGroup->fresh();
@@ -71,7 +75,10 @@ final class MuscleGroupService
      */
     public function delete(int $id): bool
     {
-        $muscleGroup = MuscleGroup::findOrFail($id);
+        $muscleGroup = MuscleGroup::find($id);
+        if (!$muscleGroup) {
+            return false;
+        }
         
         return $muscleGroup->delete();
     }

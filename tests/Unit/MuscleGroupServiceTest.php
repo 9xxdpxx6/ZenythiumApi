@@ -90,9 +90,9 @@ describe('MuscleGroupService', function () {
             expect($result->name)->toBe('Chest');
         });
 
-        it('throws exception for non-existent muscle group', function ($muscleGroupId, $scenario) {
-            expect(fn() => $this->service->getById($muscleGroupId))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        it('returns null for non-existent muscle group', function ($muscleGroupId, $scenario) {
+            $result = $this->service->getById($muscleGroupId);
+            expect($result)->toBeNull();
         })->with('exception_scenarios');
 
         it('applies user filter for exercises count', function () {
@@ -135,11 +135,11 @@ describe('MuscleGroupService', function () {
             ]);
         });
 
-        it('throws exception for non-existent muscle group', function ($muscleGroupId, $scenario) {
+        it('returns null for non-existent muscle group', function ($muscleGroupId, $scenario) {
             $data = ['name' => 'Test Muscle Group'];
             
-            expect(fn() => $this->service->update($muscleGroupId, $data))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->service->update($muscleGroupId, $data);
+            expect($result)->toBeNull();
         })->with('exception_scenarios');
     });
 
@@ -153,9 +153,9 @@ describe('MuscleGroupService', function () {
             $this->assertDatabaseMissing('muscle_groups', ['id' => $muscleGroup->id]);
         });
 
-        it('throws exception for non-existent muscle group', function ($muscleGroupId, $scenario) {
-            expect(fn() => $this->service->delete($muscleGroupId))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        it('returns false for non-existent muscle group', function ($muscleGroupId, $scenario) {
+            $result = $this->service->delete($muscleGroupId);
+            expect($result)->toBeFalse();
         })->with('exception_scenarios');
     });
 });

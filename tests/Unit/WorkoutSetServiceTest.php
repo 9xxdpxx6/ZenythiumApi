@@ -147,13 +147,13 @@ describe('WorkoutSetService', function () {
             $result = $this->workoutSetService->getById($this->workoutSet->id, $this->user->id);
             expect($result->id)->toBe($this->workoutSet->id);
             
-            expect(fn() => $this->workoutSetService->getById($otherWorkoutSet->id, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->workoutSetService->getById($otherWorkoutSet->id, $this->user->id);
+            expect($result)->toBeNull();
         });
 
-        it('throws exception for non-existent workout set', function () {
-            expect(fn() => $this->workoutSetService->getById(PHP_INT_MAX))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        it('returns null for non-existent workout set', function () {
+            $result = $this->workoutSetService->getById(PHP_INT_MAX);
+            expect($result)->toBeNull();
         });
     });
 
@@ -222,13 +222,13 @@ describe('WorkoutSetService', function () {
             
             $data = ['weight' => 100.0];
             
-            expect(fn() => $this->workoutSetService->update($otherWorkoutSet->id, $data, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->workoutSetService->update($otherWorkoutSet->id, $data, $this->user->id);
+            expect($result)->toBeNull();
         });
 
-        it('throws exception for non-existent workout set', function () {
-            expect(fn() => $this->workoutSetService->update(PHP_INT_MAX, ['weight' => 100.0]))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        it('returns null for non-existent workout set', function () {
+            $result = $this->workoutSetService->update(PHP_INT_MAX, ['weight' => 100.0]);
+            expect($result)->toBeNull();
         });
     });
 
@@ -253,13 +253,13 @@ describe('WorkoutSetService', function () {
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
             
-            expect(fn() => $this->workoutSetService->delete($otherWorkoutSet->id, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->workoutSetService->delete($otherWorkoutSet->id, $this->user->id);
+            expect($result)->toBeFalse();
         });
 
-        it('throws exception for non-existent workout set', function () {
-            expect(fn() => $this->workoutSetService->delete(PHP_INT_MAX))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        it('returns false for non-existent workout set', function () {
+            $result = $this->workoutSetService->delete(PHP_INT_MAX);
+            expect($result)->toBeFalse();
         });
     });
 

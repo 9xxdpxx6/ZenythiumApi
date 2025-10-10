@@ -49,11 +49,9 @@ final class PlanService
      * @param int $id ID плана
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return Plan Модель плана с загруженной связью цикла
-     * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если план не найден
+     * @return Plan|null Модель плана с загруженной связью цикла или null если не найден
      */
-    public function getById(int $id, ?int $userId = null): Plan
+    public function getById(int $id, ?int $userId = null): ?Plan
     {
         $query = Plan::query()->with('cycle');
 
@@ -63,7 +61,7 @@ final class PlanService
             });
         }
 
-        return $query->findOrFail($id);
+        return $query->find($id);
     }
 
     /**
@@ -90,12 +88,11 @@ final class PlanService
      * @param array $data Данные для обновления
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return Plan Обновленная модель плана с загруженной связью цикла
+     * @return Plan|null Обновленная модель плана с загруженной связью цикла или null если не найден
      * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если план не найден
      * @throws \Illuminate\Database\QueryException При ошибке обновления записи
      */
-    public function update(int $id, array $data, ?int $userId = null): Plan
+    public function update(int $id, array $data, ?int $userId = null): ?Plan
     {
         $query = Plan::query();
 
@@ -105,7 +102,11 @@ final class PlanService
             });
         }
 
-        $plan = $query->findOrFail($id);
+        $plan = $query->find($id);
+        if (!$plan) {
+            return null;
+        }
+        
         $plan->update($data);
         
         return $plan->fresh(['cycle']);
@@ -117,9 +118,7 @@ final class PlanService
      * @param int $id ID плана
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return bool True если план успешно удален
-     * 
-     * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если план не найден
+     * @return bool True если план успешно удален, false если план не найден
      */
     public function delete(int $id, ?int $userId = null): bool
     {
@@ -131,7 +130,10 @@ final class PlanService
             });
         }
 
-        $plan = $query->findOrFail($id);
+        $plan = $query->find($id);
+        if (!$plan) {
+            return false;
+        }
         
         return $plan->delete();
     }
