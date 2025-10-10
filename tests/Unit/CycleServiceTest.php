@@ -127,8 +127,6 @@ describe('CycleService', function () {
             $data = [
                 'user_id' => $this->user->id,
                 'name' => 'Minimal Cycle',
-                'start_date' => '2024-01-01',
-                'end_date' => '2024-01-31',
                 'weeks' => 1,
             ];
             
@@ -137,6 +135,8 @@ describe('CycleService', function () {
             expect($cycle)->toBeInstanceOf(Cycle::class);
             expect($cycle->name)->toBe('Minimal Cycle');
             expect($cycle->weeks)->toBe(1);
+            expect($cycle->start_date)->toBeNull();
+            expect($cycle->end_date)->toBeNull();
         });
     });
 

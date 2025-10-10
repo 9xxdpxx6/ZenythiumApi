@@ -14,8 +14,6 @@ beforeEach(function () {
 
 dataset('required_fields', [
     'name' => ['name'],
-    'start_date' => ['start_date'],
-    'end_date' => ['end_date'],
     'weeks' => ['weeks'],
 ]);
 
@@ -42,6 +40,20 @@ describe('CycleRequest', function () {
                 'name' => 'Test Cycle',
                 'start_date' => '2024-01-01',
                 'end_date' => '2024-01-31',
+                'weeks' => 4,
+            ];
+            
+            $validator = Validator::make($data, $request->rules());
+            
+            expect($validator->passes())->toBeTrue();
+        });
+
+        it('passes validation with minimal required data', function () {
+            $request = new CycleRequest();
+            $request->setUserResolver(fn() => $this->user);
+            
+            $data = [
+                'name' => 'Test Cycle',
                 'weeks' => 4,
             ];
             
@@ -295,10 +307,8 @@ describe('CycleRequest', function () {
             expect($messages['name.string'])->toBe('Название цикла должно быть строкой.');
             expect($messages['name.max'])->toBe('Название цикла не может быть длиннее 255 символов.');
             expect($messages['name.unique'])->toBe('Цикл с таким названием уже существует.');
-            expect($messages['start_date.required'])->toBe('Дата начала обязательна.');
             expect($messages['start_date.date'])->toBe('Дата начала должна быть корректной датой.');
             expect($messages['start_date.before_or_equal'])->toBe('Дата начала должна быть раньше или равна дате окончания.');
-            expect($messages['end_date.required'])->toBe('Дата окончания обязательна.');
             expect($messages['end_date.date'])->toBe('Дата окончания должна быть корректной датой.');
             expect($messages['end_date.after_or_equal'])->toBe('Дата окончания должна быть позже или равна дате начала.');
             expect($messages['weeks.required'])->toBe('Количество недель обязательно.');

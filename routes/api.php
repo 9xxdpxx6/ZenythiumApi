@@ -14,13 +14,24 @@ use App\Http\Controllers\WorkoutSetController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
-// Public authentication routes
-Route::post('/register', [AuthController::class, 'register']);
-Route::post('/login', [AuthController::class, 'login']);
-Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-Route::post('/reset-password', [AuthController::class, 'resetPassword']);
-
 // API v1 routes
+Route::prefix('v1')->group(function () {
+    // Public authentication routes
+    Route::post('/register', [AuthController::class, 'register']);
+    Route::post('/login', [AuthController::class, 'login']);
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
+    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    
+    // Test endpoint to verify CORS is working
+    Route::get('/test', function () {
+        return response()->json([
+            'message' => 'CORS is working!',
+            'timestamp' => now(),
+        ]);
+    });
+});
+
+// Protected API v1 routes
 Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
     Route::get('/user/statistics', [StatisticsController::class, 'statistics']);
@@ -43,6 +54,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(functi
     
     // Workouts CRUD routes
     Route::get('/workouts', [WorkoutController::class, 'index']);
+    Route::post('/workouts', [WorkoutController::class, 'store']);
     Route::get('/workouts/{workout}', [WorkoutController::class, 'show']);
     Route::put('/workouts/{workout}', [WorkoutController::class, 'update']);
     Route::delete('/workouts/{workout}', [WorkoutController::class, 'destroy']);
@@ -58,12 +70,4 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(functi
     // Additional WorkoutSet routes
     Route::get('/workouts/{workoutId}/workout-sets', [WorkoutSetController::class, 'getByWorkout']);
     Route::get('/plan-exercises/{planExerciseId}/workout-sets', [WorkoutSetController::class, 'getByPlanExercise']);
-});
-
-// Test endpoint to verify CORS is working
-Route::get('/test', function () {
-    return response()->json([
-        'message' => 'CORS is working!',
-        'timestamp' => now(),
-    ]);
 });

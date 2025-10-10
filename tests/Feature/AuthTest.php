@@ -19,7 +19,7 @@ describe('Authentication', function () {
                 'password_confirmation' => 'password123',
             ];
 
-            $response = $this->postJson('/api/register', $userData);
+            $response = $this->postJson('/api/v1/register', $userData);
 
             $response->assertStatus(201)
                 ->assertJsonStructure([
@@ -53,7 +53,7 @@ describe('Authentication', function () {
                 'password' => 'password123',
             ];
 
-            $response = $this->postJson('/api/login', $loginData);
+            $response = $this->postJson('/api/v1/login', $loginData);
 
             $response->assertStatus(200)
                 ->assertJsonStructure([
@@ -143,7 +143,7 @@ describe('Authentication', function () {
             // Mock the notification to prevent actual email sending
             Notification::fake();
 
-            $response = $this->postJson('/api/forgot-password', [
+            $response = $this->postJson('/api/v1/forgot-password', [
                 'email' => 'test@example.com',
             ]);
 

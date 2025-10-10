@@ -15,14 +15,14 @@
         }
     ],
     "paths": {
-        "/api/register": {
+        "/api/v1/register": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Регистрация нового пользователя",
                 "description": "Создает нового пользователя в системе и возвращает токен доступа для последующей аутентификации",
-                "operationId": "8a56853624e025573120a09a4c75d468",
+                "operationId": "6796c44e1f6079c411abbfed066c5907",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -139,14 +139,14 @@
                 }
             }
         },
-        "/api/login": {
+        "/api/v1/login": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Вход пользователя в систему",
                 "description": "Аутентифицирует пользователя по email и паролю, возвращает токен доступа",
-                "operationId": "a3b306d14572d1f4bd6c064b3233e7b8",
+                "operationId": "da2ca4d7a5cdec77b8b45a20373535cb",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -443,14 +443,14 @@
                 ]
             }
         },
-        "/api/forgot-password": {
+        "/api/v1/forgot-password": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Отправка ссылки для сброса пароля",
                 "description": "Отправляет email с ссылкой для сброса пароля на указанный адрес",
-                "operationId": "7af8817e88ba5874543ff38f188248f1",
+                "operationId": "de00b40cae86862265e2e769670e1fcd",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -546,14 +546,14 @@
                 }
             }
         },
-        "/api/reset-password": {
+        "/api/v1/reset-password": {
             "post": {
                 "tags": [
                     "Authentication"
                 ],
                 "summary": "Сброс пароля",
                 "description": "Сбрасывает пароль пользователя с использованием токена из email",
-                "operationId": "00c0aad74830221c6da409a1355ec736",
+                "operationId": "d312ced6048809073c77e54d4a2ae342",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -980,7 +980,7 @@
                             "schema": {
                                 "required": [
                                     "name",
-                                    "start_date"
+                                    "weeks"
                                 ],
                                 "properties": {
                                     "name": {
@@ -988,22 +988,22 @@
                                         "type": "string",
                                         "example": "Набор массы"
                                     },
-                                    "description": {
-                                        "description": "Описание цикла",
-                                        "type": "string",
-                                        "example": "Цикл для набора мышечной массы"
-                                    },
                                     "start_date": {
-                                        "description": "Дата начала цикла",
+                                        "description": "Дата начала цикла (необязательно)",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-01-01"
                                     },
                                     "end_date": {
-                                        "description": "Дата окончания цикла",
+                                        "description": "Дата окончания цикла (необязательно)",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-03-31"
+                                    },
+                                    "weeks": {
+                                        "description": "Количество недель в цикле",
+                                        "type": "integer",
+                                        "example": 6
                                     }
                                 },
                                 "type": "object"
@@ -1183,22 +1183,22 @@
                                         "type": "string",
                                         "example": "Набор массы"
                                     },
-                                    "description": {
-                                        "description": "Описание цикла",
-                                        "type": "string",
-                                        "example": "Цикл для набора мышечной массы"
-                                    },
                                     "start_date": {
-                                        "description": "Дата начала цикла",
+                                        "description": "Дата начала цикла (необязательно)",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-01-01"
                                     },
                                     "end_date": {
-                                        "description": "Дата окончания цикла",
+                                        "description": "Дата окончания цикла (необязательно)",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-03-31"
+                                    },
+                                    "weeks": {
+                                        "description": "Количество недель в цикле",
+                                        "type": "integer",
+                                        "example": 6
                                     }
                                 },
                                 "type": "object"
@@ -3489,6 +3489,108 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Workouts"
+                ],
+                "summary": "Создание новой тренировки",
+                "description": "Создает новую тренировку для указанного плана",
+                "operationId": "178e26acfbad21b0251b39f03536e8e5",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "plan_id",
+                                    "started_at"
+                                ],
+                                "properties": {
+                                    "plan_id": {
+                                        "description": "ID плана тренировки",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "started_at": {
+                                        "description": "Время начала тренировки",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2024-01-01 10:00:00"
+                                    },
+                                    "finished_at": {
+                                        "description": "Время окончания тренировки (необязательно)",
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2024-01-01 11:00:00"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Тренировка успешно создана",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Тренировка успешно создана"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации"
+                                        },
+                                        "errors": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

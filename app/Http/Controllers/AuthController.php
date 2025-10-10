@@ -17,7 +17,7 @@ final class AuthController extends Controller
 {
     /**
      * @OA\Post(
-     *     path="/api/register",
+     *     path="/api/v1/register",
      *     summary="Регистрация нового пользователя",
      *     description="Создает нового пользователя в системе и возвращает токен доступа для последующей аутентификации",
      *     tags={"Authentication"},
@@ -90,7 +90,7 @@ final class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/login",
+     *     path="/api/v1/login",
      *     summary="Вход пользователя в систему",
      *     description="Аутентифицирует пользователя по email и паролю, возвращает токен доступа",
      *     tags={"Authentication"},
@@ -273,7 +273,7 @@ final class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/forgot-password",
+     *     path="/api/v1/forgot-password",
      *     summary="Отправка ссылки для сброса пароля",
      *     description="Отправляет email с ссылкой для сброса пароля на указанный адрес",
      *     tags={"Authentication"},
@@ -342,7 +342,7 @@ final class AuthController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/reset-password",
+     *     path="/api/v1/reset-password",
      *     summary="Сброс пароля",
      *     description="Сбрасывает пароль пользователя с использованием токена из email",
      *     tags={"Authentication"},

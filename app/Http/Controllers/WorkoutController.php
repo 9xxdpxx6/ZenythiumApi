@@ -103,6 +103,59 @@ final class WorkoutController extends Controller
         ]);
     }
 
+    /**
+     * @OA\Post(
+     *     path="/api/v1/workouts",
+     *     summary="Создание новой тренировки",
+     *     description="Создает новую тренировку для указанного плана",
+     *     tags={"Workouts"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"plan_id","started_at"},
+     *             @OA\Property(property="plan_id", type="integer", example=1, description="ID плана тренировки"),
+     *             @OA\Property(property="started_at", type="string", format="date-time", example="2024-01-01 10:00:00", description="Время начала тренировки"),
+     *             @OA\Property(property="finished_at", type="string", format="date-time", example="2024-01-01 11:00:00", description="Время окончания тренировки (необязательно)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Тренировка успешно создана",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="message", type="string", example="Тренировка успешно создана")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function store(WorkoutRequest $request): JsonResponse
+    {
+        $data = $request->validated();
+        $data['user_id'] = $request->user()?->id;
+        
+        $workout = $this->workoutService->create($data);
+        
+        return response()->json([
+            'data' => new WorkoutResource($workout),
+            'message' => 'Тренировка успешно создана'
+        ], 201);
+    }
 
     /**
      * @OA\Get(

@@ -212,12 +212,55 @@ describe('CycleController', function () {
             ]);
         });
 
+        it('creates cycle with minimal required data', function () {
+            $data = [
+                'name' => 'Minimal Cycle',
+                'weeks' => 6,
+            ];
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/cycles', $data);
+
+            $response->assertStatus(201)
+                ->assertJsonStructure([
+                    'data' => [
+                        'id',
+                        'name',
+                        'user' => [
+                            'id',
+                            'name',
+                        ],
+                        'start_date',
+                        'end_date',
+                        'weeks',
+                        'progress_percentage',
+                        'completed_workouts_count',
+                        'created_at',
+                        'updated_at',
+                    ],
+                    'message'
+                ]);
+
+            expect($response->json('data.name'))->toBe('Minimal Cycle');
+            expect($response->json('data.weeks'))->toBe(6);
+            expect($response->json('data.start_date'))->toBeNull();
+            expect($response->json('data.end_date'))->toBeNull();
+
+            $this->assertDatabaseHas('cycles', [
+                'user_id' => $this->user->id,
+                'name' => 'Minimal Cycle',
+                'weeks' => 6,
+                'start_date' => null,
+                'end_date' => null,
+            ]);
+        });
+
         it('validates required fields', function () {
             $response = $this->actingAs($this->user)
                 ->postJson('/api/v1/cycles', []);
 
             $response->assertStatus(422)
-                ->assertJsonValidationErrors(['name', 'start_date', 'end_date', 'weeks']);
+                ->assertJsonValidationErrors(['name', 'weeks']);
         });
 
         it('validates unique name per user', function () {

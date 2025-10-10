@@ -108,11 +108,11 @@ final class CycleController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","start_date"},
+     *             required={"name","weeks"},
      *             @OA\Property(property="name", type="string", example="Набор массы", description="Название цикла"),
-     *             @OA\Property(property="description", type="string", example="Цикл для набора мышечной массы", description="Описание цикла"),
-     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла"),
-     *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла")
+     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла (необязательно)"),
+     *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла (необязательно)"),
+     *             @OA\Property(property="weeks", type="integer", example=6, description="Количество недель в цикле")
      *         )
      *     ),
      *     @OA\Response(
@@ -219,9 +219,9 @@ final class CycleController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string", example="Набор массы", description="Название цикла"),
-     *             @OA\Property(property="description", type="string", example="Цикл для набора мышечной массы", description="Описание цикла"),
-     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла"),
-     *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла")
+     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла (необязательно)"),
+     *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла (необязательно)"),
+     *             @OA\Property(property="weeks", type="integer", example=6, description="Количество недель в цикле")
      *         )
      *     ),
      *     @OA\Response(

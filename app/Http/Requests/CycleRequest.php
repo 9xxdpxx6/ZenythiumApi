@@ -32,12 +32,12 @@ final class CycleRequest extends FormRequest
                 'unique:cycles,name,' . $cycleId . ',id,user_id,' . $userId
             ],
             'start_date' => [
-                'required',
+                'nullable',
                 'date',
                 'before_or_equal:end_date'
             ],
             'end_date' => [
-                'required',
+                'nullable',
                 'date',
                 'after_or_equal:start_date'
             ],
@@ -60,10 +60,8 @@ final class CycleRequest extends FormRequest
             'name.string' => 'Название цикла должно быть строкой.',
             'name.max' => 'Название цикла не может быть длиннее 255 символов.',
             'name.unique' => 'Цикл с таким названием уже существует.',
-            'start_date.required' => 'Дата начала обязательна.',
             'start_date.date' => 'Дата начала должна быть корректной датой.',
             'start_date.before_or_equal' => 'Дата начала должна быть раньше или равна дате окончания.',
-            'end_date.required' => 'Дата окончания обязательна.',
             'end_date.date' => 'Дата окончания должна быть корректной датой.',
             'end_date.after_or_equal' => 'Дата окончания должна быть позже или равна дате начала.',
             'weeks.required' => 'Количество недель обязательно.',
