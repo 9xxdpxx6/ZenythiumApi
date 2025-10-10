@@ -15,6 +15,9 @@ final class ExerciseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Get the first user or create a default one for exercises
+        $userId = \App\Models\User::first()?->id ?? \App\Models\User::factory()->create()->id;
+        
         $exercises = [
             // Грудь
             ['name' => 'Жим штанги лежа', 'description' => 'Базовое упражнение для грудных мышц, выполняется лёжа на горизонтальной скамье.', 'muscle_group' => 'Грудь'],
@@ -77,6 +80,7 @@ final class ExerciseSeeder extends Seeder
                 ],
                 [
                     'description' => $exerciseData['description'],
+                    'user_id' => $userId,
                     'is_active' => true,
                 ]
             );

@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
         $this->call([
             MuscleGroupSeeder::class,
             ExerciseSeeder::class,
+            PlanExerciseSeeder::class,
         ]);
     }
 }
