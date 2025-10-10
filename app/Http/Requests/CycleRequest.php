@@ -21,7 +21,7 @@ final class CycleRequest extends FormRequest
      */
     public function rules(): array
     {
-        $cycleId = $this->route('cycle')?->id;
+        $cycleId = $this->route('id');
         $userId = $this->user()->id;
 
         return [

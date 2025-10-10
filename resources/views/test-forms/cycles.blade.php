@@ -35,7 +35,7 @@
                                 <form id="createForm">
                                     <div class="mb-3">
                                         <label for="createName" class="form-label">Название *</label>
-                                        <input type="text" class="form-control" id="createName" required>
+                                        <input type="text" class="form-control" id="createName">
                                     </div>
                                     <div class="mb-3">
                                         <label for="createStartDate" class="form-label">Дата начала</label>
@@ -47,7 +47,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="createWeeks" class="form-label">Количество недель *</label>
-                                        <input type="number" class="form-control" id="createWeeks" min="1" max="52" required>
+                                        <input type="number" class="form-control" id="createWeeks" min="1" max="52">
                                     </div>
                                     <button type="submit" class="btn btn-success">
                                         <i class="fas fa-plus"></i> Создать
@@ -82,11 +82,11 @@
                                 <form id="updateForm">
                                     <div class="mb-3">
                                         <label for="updateId" class="form-label">ID *</label>
-                                        <input type="number" class="form-control" id="updateId" required>
+                                        <input type="number" class="form-control" id="updateId">
                                     </div>
                                     <div class="mb-3">
                                         <label for="updateName" class="form-label">Название *</label>
-                                        <input type="text" class="form-control" id="updateName" required>
+                                        <input type="text" class="form-control" id="updateName">
                                     </div>
                                     <div class="mb-3">
                                         <label for="updateStartDate" class="form-label">Дата начала</label>
@@ -98,7 +98,7 @@
                                     </div>
                                     <div class="mb-3">
                                         <label for="updateWeeks" class="form-label">Количество недель *</label>
-                                        <input type="number" class="form-control" id="updateWeeks" min="1" max="52" required>
+                                        <input type="number" class="form-control" id="updateWeeks" min="1" max="52">
                                     </div>
                                     <button type="submit" class="btn btn-warning">
                                         <i class="fas fa-edit"></i> Обновить
@@ -116,7 +116,7 @@
                                 <form id="showForm">
                                     <div class="mb-3">
                                         <label for="showId" class="form-label">ID *</label>
-                                        <input type="number" class="form-control" id="showId" required>
+                                        <input type="number" class="form-control" id="showId">
                                     </div>
                                     <button type="submit" class="btn btn-info">
                                         <i class="fas fa-eye"></i> Показать
@@ -135,7 +135,7 @@
                                 <form id="deleteForm">
                                     <div class="mb-3">
                                         <label for="deleteId" class="form-label">ID *</label>
-                                        <input type="number" class="form-control" id="deleteId" required>
+                                        <input type="number" class="form-control" id="deleteId">
                                     </div>
                                     <button type="submit" class="btn btn-danger">
                                         <i class="fas fa-trash"></i> Удалить

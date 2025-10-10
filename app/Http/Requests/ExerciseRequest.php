@@ -35,7 +35,7 @@ final class ExerciseRequest extends FormRequest
      */
     public function rules(): array
     {
-        $exerciseId = $this->route('exercise')?->id;
+        $exerciseId = $this->route('id');
         $userId = $this->user()->id;
 
         return [

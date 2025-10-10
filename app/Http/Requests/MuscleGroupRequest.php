@@ -21,7 +21,7 @@ final class MuscleGroupRequest extends FormRequest
      */
     public function rules(): array
     {
-        $muscleGroupId = $this->route('muscle_group')?->id;
+        $muscleGroupId = $this->route('id');
 
         return [
             'name' => [

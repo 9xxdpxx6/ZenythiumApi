@@ -151,11 +151,17 @@ final class MuscleGroupController extends Controller
      *     )
      * )
      */
-    public function show(MuscleGroup $muscleGroup, Request $request): JsonResponse
+    public function show(int $id, Request $request): JsonResponse
     {
         $userId = $request->user() ? $request->user()->id : null;
         
-        $muscleGroup = $this->muscleGroupService->getById($muscleGroup->id, $userId);
+        $muscleGroup = $this->muscleGroupService->getById($id, $userId);
+        
+        if (!$muscleGroup) {
+            return response()->json([
+                'message' => 'Группа мышц не найдена'
+            ], 404);
+        }
         
         return response()->json([
             'data' => new MuscleGroupResource($muscleGroup),
@@ -208,9 +214,15 @@ final class MuscleGroupController extends Controller
      *     )
      * )
      */
-    public function update(MuscleGroupRequest $request, MuscleGroup $muscleGroup): JsonResponse
+    public function update(MuscleGroupRequest $request, int $id): JsonResponse
     {
-        $muscleGroup = $this->muscleGroupService->update($muscleGroup->id, $request->validated());
+        $muscleGroup = $this->muscleGroupService->update($id, $request->validated());
+        
+        if (!$muscleGroup) {
+            return response()->json([
+                'message' => 'Группа мышц не найдена'
+            ], 404);
+        }
         
         return response()->json([
             'data' => new MuscleGroupResource($muscleGroup),
@@ -248,9 +260,15 @@ final class MuscleGroupController extends Controller
      *     )
      * )
      */
-    public function destroy(MuscleGroup $muscleGroup): JsonResponse
+    public function destroy(int $id): JsonResponse
     {
-        $this->muscleGroupService->delete($muscleGroup->id);
+        $deleted = $this->muscleGroupService->delete($id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Группа мышц не найдена'
+            ], 404);
+        }
         
         return response()->json([
             'data' => null,

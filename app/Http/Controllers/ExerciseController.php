@@ -202,9 +202,9 @@ final class ExerciseController extends Controller
      *     )
      * )
      */
-    public function show(Exercise $exercise, Request $request): JsonResponse
+    public function show(int $id, Request $request): JsonResponse
     {
-        $exercise = $this->exerciseService->getById($exercise->id, $request->user()?->id);
+        $exercise = $this->exerciseService->getById($id, $request->user()?->id);
         
         if (!$exercise) {
             return response()->json([
@@ -272,9 +272,9 @@ final class ExerciseController extends Controller
      *     )
      * )
      */
-    public function update(ExerciseRequest $request, Exercise $exercise): JsonResponse
+    public function update(ExerciseRequest $request, int $id): JsonResponse
     {
-        $exercise = $this->exerciseService->update($exercise->id, $request->validated(), $request->user()?->id);
+        $exercise = $this->exerciseService->update($id, $request->validated(), $request->user()?->id);
         
         if (!$exercise) {
             return response()->json([
@@ -326,9 +326,9 @@ final class ExerciseController extends Controller
      *     )
      * )
      */
-    public function destroy(Exercise $exercise, Request $request): JsonResponse
+    public function destroy(int $id, Request $request): JsonResponse
     {
-        $deleted = $this->exerciseService->delete($exercise->id, $request->user()?->id);
+        $deleted = $this->exerciseService->delete($id, $request->user()?->id);
         
         if (!$deleted) {
             return response()->json([

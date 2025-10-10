@@ -41,31 +41,55 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(functi
     Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
     
     // Muscle Groups CRUD routes
-    Route::apiResource('muscle-groups', MuscleGroupController::class);
+    Route::get('/muscle-groups', [MuscleGroupController::class, 'index']);
+    Route::post('/muscle-groups', [MuscleGroupController::class, 'store']);
+    Route::get('/muscle-groups/{id}', [MuscleGroupController::class, 'show']);
+    Route::put('/muscle-groups/{id}', [MuscleGroupController::class, 'update']);
+    Route::delete('/muscle-groups/{id}', [MuscleGroupController::class, 'destroy']);
     
     // Cycles CRUD routes
-    Route::apiResource('cycles', CycleController::class);
+    Route::get('/cycles', [CycleController::class, 'index']);
+    Route::post('/cycles', [CycleController::class, 'store']);
+    Route::get('/cycles/{id}', [CycleController::class, 'show']);
+    Route::put('/cycles/{id}', [CycleController::class, 'update']);
+    Route::delete('/cycles/{id}', [CycleController::class, 'destroy']);
     
     // Exercises CRUD routes
-    Route::apiResource('exercises', ExerciseController::class);
+    Route::get('/exercises', [ExerciseController::class, 'index']);
+    Route::post('/exercises', [ExerciseController::class, 'store']);
+    Route::get('/exercises/{id}', [ExerciseController::class, 'show']);
+    Route::put('/exercises/{id}', [ExerciseController::class, 'update']);
+    Route::delete('/exercises/{id}', [ExerciseController::class, 'destroy']);
     
     // Plans CRUD routes
-    Route::apiResource('plans', PlanController::class);
+    Route::get('/plans', [PlanController::class, 'index']);
+    Route::post('/plans', [PlanController::class, 'store']);
+    Route::get('/plans/{id}', [PlanController::class, 'show']);
+    Route::put('/plans/{id}', [PlanController::class, 'update']);
+    Route::delete('/plans/{id}', [PlanController::class, 'destroy']);
     
     // Workouts CRUD routes
     Route::get('/workouts', [WorkoutController::class, 'index']);
     Route::post('/workouts', [WorkoutController::class, 'store']);
-    Route::get('/workouts/{workout}', [WorkoutController::class, 'show']);
-    Route::put('/workouts/{workout}', [WorkoutController::class, 'update']);
-    Route::delete('/workouts/{workout}', [WorkoutController::class, 'destroy']);
+    Route::get('/workouts/{id}', [WorkoutController::class, 'show']);
+    Route::put('/workouts/{id}', [WorkoutController::class, 'update']);
+    Route::delete('/workouts/{id}', [WorkoutController::class, 'destroy']);
     Route::post('/workouts/start', [WorkoutController::class, 'start']);
-    Route::post('/workouts/{workout}/finish', [WorkoutController::class, 'finish']);
+    Route::post('/workouts/{id}/finish', [WorkoutController::class, 'finish']);
     
     // Workout Sets CRUD routes
-    Route::apiResource('workout-sets', WorkoutSetController::class);
+    Route::get('/workout-sets', [WorkoutSetController::class, 'index']);
+    Route::post('/workout-sets', [WorkoutSetController::class, 'store']);
+    Route::get('/workout-sets/{id}', [WorkoutSetController::class, 'show']);
+    Route::put('/workout-sets/{id}', [WorkoutSetController::class, 'update']);
+    Route::delete('/workout-sets/{id}', [WorkoutSetController::class, 'destroy']);
     
     // Metrics CRUD routes
-    Route::apiResource('metrics', MetricController::class);
+    Route::get('/metrics', [MetricController::class, 'index']);
+    Route::post('/metrics', [MetricController::class, 'store']);
+    Route::get('/metrics/{id}', [MetricController::class, 'show']);
+    Route::put('/metrics/{id}', [MetricController::class, 'update']);
+    Route::delete('/metrics/{id}', [MetricController::class, 'destroy']);
     
     // Additional WorkoutSet routes
     Route::get('/workouts/{workoutId}/workout-sets', [WorkoutSetController::class, 'getByWorkout']);

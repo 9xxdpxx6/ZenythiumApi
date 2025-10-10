@@ -195,9 +195,9 @@ final class WorkoutController extends Controller
      *     )
      * )
      */
-    public function show(Workout $workout, Request $request): JsonResponse
+    public function show(int $id, Request $request): JsonResponse
     {
-        $workout = $this->workoutService->getById($workout->id, $request->user()?->id);
+        $workout = $this->workoutService->getById($id, $request->user()?->id);
         
         if (!$workout) {
             return response()->json([
@@ -265,9 +265,9 @@ final class WorkoutController extends Controller
      *     )
      * )
      */
-    public function update(WorkoutRequest $request, Workout $workout): JsonResponse
+    public function update(WorkoutRequest $request, int $id): JsonResponse
     {
-        $workout = $this->workoutService->update($workout->id, $request->validated(), $request->user()?->id);
+        $workout = $this->workoutService->update($id, $request->validated(), $request->user()?->id);
         
         if (!$workout) {
             return response()->json([
@@ -319,9 +319,9 @@ final class WorkoutController extends Controller
      *     )
      * )
      */
-    public function destroy(Workout $workout, Request $request): JsonResponse
+    public function destroy(int $id, Request $request): JsonResponse
     {
-        $deleted = $this->workoutService->delete($workout->id, $request->user()?->id);
+        $deleted = $this->workoutService->delete($id, $request->user()?->id);
         
         if (!$deleted) {
             return response()->json([
@@ -439,7 +439,7 @@ final class WorkoutController extends Controller
      *     )
      * )
      */
-    public function finish(Request $request, Workout $workout): JsonResponse
+    public function finish(Request $request, int $id): JsonResponse
     {
         $userId = $request->user()?->id;
         if (!$userId) {
@@ -447,7 +447,7 @@ final class WorkoutController extends Controller
         }
 
         try {
-            $workout = $this->workoutService->finish($workout->id, $userId);
+            $workout = $this->workoutService->finish($id, $userId);
             
             if (!$workout) {
                 return response()->json([

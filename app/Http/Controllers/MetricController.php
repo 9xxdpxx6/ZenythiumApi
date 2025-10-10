@@ -198,9 +198,9 @@ final class MetricController extends Controller
      *     )
      * )
      */
-    public function show(Metric $metric, Request $request): JsonResponse
+    public function show(int $id, Request $request): JsonResponse
     {
-        $metric = $this->metricService->getById($metric->id, $request->user()?->id);
+        $metric = $this->metricService->getById($id, $request->user()?->id);
         
         if (!$metric) {
             return response()->json([
@@ -269,9 +269,9 @@ final class MetricController extends Controller
      *     )
      * )
      */
-    public function update(MetricRequest $request, Metric $metric): JsonResponse
+    public function update(MetricRequest $request, int $id): JsonResponse
     {
-        $metric = $this->metricService->update($metric->id, $request->validated(), $request->user()?->id);
+        $metric = $this->metricService->update($id, $request->validated(), $request->user()?->id);
         
         if (!$metric) {
             return response()->json([
@@ -323,9 +323,9 @@ final class MetricController extends Controller
      *     )
      * )
      */
-    public function destroy(Metric $metric, Request $request): JsonResponse
+    public function destroy(int $id, Request $request): JsonResponse
     {
-        $deleted = $this->metricService->delete($metric->id, $request->user()?->id);
+        $deleted = $this->metricService->delete($id, $request->user()?->id);
         
         if (!$deleted) {
             return response()->json([

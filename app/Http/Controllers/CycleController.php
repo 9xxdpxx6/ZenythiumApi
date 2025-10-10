@@ -191,9 +191,9 @@ final class CycleController extends Controller
      *     )
      * )
      */
-    public function show(Cycle $cycle, Request $request): JsonResponse
+    public function show(int $id, Request $request): JsonResponse
     {
-        $cycle = $this->cycleService->getById($cycle->id, $request->user()?->id);
+        $cycle = $this->cycleService->getById($id, $request->user()?->id);
         
         if (!$cycle) {
             return response()->json([
@@ -262,9 +262,9 @@ final class CycleController extends Controller
      *     )
      * )
      */
-    public function update(CycleRequest $request, Cycle $cycle): JsonResponse
+    public function update(CycleRequest $request, int $id): JsonResponse
     {
-        $cycle = $this->cycleService->update($cycle->id, $request->validated(), $request->user()?->id);
+        $cycle = $this->cycleService->update($id, $request->validated(), $request->user()?->id);
         
         if (!$cycle) {
             return response()->json([
@@ -316,9 +316,9 @@ final class CycleController extends Controller
      *     )
      * )
      */
-    public function destroy(Cycle $cycle, Request $request): JsonResponse
+    public function destroy(int $id, Request $request): JsonResponse
     {
-        $deleted = $this->cycleService->delete($cycle->id, $request->user()?->id);
+        $deleted = $this->cycleService->delete($id, $request->user()?->id);
         
         if (!$deleted) {
             return response()->json([

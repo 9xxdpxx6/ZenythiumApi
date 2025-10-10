@@ -182,9 +182,15 @@ final class PlanController extends Controller
      *     )
      * )
      */
-    public function show(Plan $plan, Request $request): JsonResponse
+    public function show(int $id, Request $request): JsonResponse
     {
-        $plan = $this->planService->getById($plan->id, $request->user()?->id);
+        $plan = $this->planService->getById($id, $request->user()?->id);
+        
+        if (!$plan) {
+            return response()->json([
+                'message' => 'План не найден'
+            ], 404);
+        }
         
         return response()->json([
             'data' => new PlanResource($plan),
@@ -246,9 +252,15 @@ final class PlanController extends Controller
      *     )
      * )
      */
-    public function update(PlanRequest $request, Plan $plan): JsonResponse
+    public function update(PlanRequest $request, int $id): JsonResponse
     {
-        $plan = $this->planService->update($plan->id, $request->validated(), $request->user()?->id);
+        $plan = $this->planService->update($id, $request->validated(), $request->user()?->id);
+        
+        if (!$plan) {
+            return response()->json([
+                'message' => 'План не найден'
+            ], 404);
+        }
         
         return response()->json([
             'data' => new PlanResource($plan),
@@ -294,9 +306,15 @@ final class PlanController extends Controller
      *     )
      * )
      */
-    public function destroy(Plan $plan, Request $request): JsonResponse
+    public function destroy(int $id, Request $request): JsonResponse
     {
-        $this->planService->delete($plan->id, $request->user()?->id);
+        $deleted = $this->planService->delete($id, $request->user()?->id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'План не найден'
+            ], 404);
+        }
         
         return response()->json([
             'data' => null,

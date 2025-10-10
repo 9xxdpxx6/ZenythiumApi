@@ -187,9 +187,15 @@ final class WorkoutSetController extends Controller
      *   "message": "Подход не найден"
      * }
      */
-    public function show(WorkoutSet $workoutSet, Request $request): JsonResponse
+    public function show(int $id, Request $request): JsonResponse
     {
-        $workoutSet = $this->workoutSetService->getById($workoutSet->id, $request->user()?->id);
+        $workoutSet = $this->workoutSetService->getById($id, $request->user()?->id);
+        
+        if (!$workoutSet) {
+            return response()->json([
+                'message' => 'Подход не найден'
+            ], 404);
+        }
         
         return response()->json([
             'data' => new WorkoutSetResource($workoutSet),
@@ -231,9 +237,15 @@ final class WorkoutSetController extends Controller
      *   "errors": {"weight": ["Вес должен быть положительным числом"]}
      * }
      */
-    public function update(WorkoutSetRequest $request, WorkoutSet $workoutSet): JsonResponse
+    public function update(WorkoutSetRequest $request, int $id): JsonResponse
     {
-        $workoutSet = $this->workoutSetService->update($workoutSet->id, $request->validated(), $request->user()?->id);
+        $workoutSet = $this->workoutSetService->update($id, $request->validated(), $request->user()?->id);
+        
+        if (!$workoutSet) {
+            return response()->json([
+                'message' => 'Подход не найден'
+            ], 404);
+        }
         
         return response()->json([
             'data' => new WorkoutSetResource($workoutSet),
@@ -261,9 +273,15 @@ final class WorkoutSetController extends Controller
      *   "message": "Подход не найден"
      * }
      */
-    public function destroy(WorkoutSet $workoutSet, Request $request): JsonResponse
+    public function destroy(int $id, Request $request): JsonResponse
     {
-        $this->workoutSetService->delete($workoutSet->id, $request->user()?->id);
+        $deleted = $this->workoutSetService->delete($id, $request->user()?->id);
+        
+        if (!$deleted) {
+            return response()->json([
+                'message' => 'Подход не найден'
+            ], 404);
+        }
         
         return response()->json([
             'data' => null,
