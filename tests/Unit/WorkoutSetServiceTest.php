@@ -13,7 +13,7 @@ use App\Models\WorkoutSet;
 use App\Services\WorkoutSetService;
 
 dataset('exception_scenarios', [
-    'non_existent' => [999999, 'non-existent workout set'],
+    'non_existent' => [PHP_INT_MAX, 'non-existent workout set'],
     'other_user' => [null, 'workout set from other user'],
 ]);
 
@@ -152,7 +152,7 @@ describe('WorkoutSetService', function () {
         });
 
         it('throws exception for non-existent workout set', function () {
-            expect(fn() => $this->workoutSetService->getById(999999))
+            expect(fn() => $this->workoutSetService->getById(PHP_INT_MAX))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
         });
     });
@@ -227,7 +227,7 @@ describe('WorkoutSetService', function () {
         });
 
         it('throws exception for non-existent workout set', function () {
-            expect(fn() => $this->workoutSetService->update(999999, ['weight' => 100.0]))
+            expect(fn() => $this->workoutSetService->update(PHP_INT_MAX, ['weight' => 100.0]))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
         });
     });
@@ -258,7 +258,7 @@ describe('WorkoutSetService', function () {
         });
 
         it('throws exception for non-existent workout set', function () {
-            expect(fn() => $this->workoutSetService->delete(999999))
+            expect(fn() => $this->workoutSetService->delete(PHP_INT_MAX))
                 ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
         });
     });

@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Services\PlanService;
 
 dataset('exception_scenarios', [
-    'non_existent' => [999999, 'non-existent plan'],
+    'non_existent' => [PHP_INT_MAX, 'non-existent plan'],
     'other_user' => [null, 'plan from other user'],
 ]);
 

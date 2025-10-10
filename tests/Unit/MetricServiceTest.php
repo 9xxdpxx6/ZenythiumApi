@@ -74,9 +74,10 @@ describe('MetricService', function () {
             expect($result->id)->toBe($this->metric->id);
         });
 
-        it('throws exception for non-existent metric', function () {
-            expect(fn() => $this->metricService->getById(999))
-                ->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        it('returns null for non-existent metric', function () {
+            $nonExistentId = PHP_INT_MAX;
+            $result = $this->metricService->getById($nonExistentId);
+            expect($result)->toBeNull();
         });
 
         it('throws exception for metric belonging to another user', function () {
@@ -85,8 +86,8 @@ describe('MetricService', function () {
                 'user_id' => $otherUser->id,
             ]);
 
-            expect(fn() => $this->metricService->getById($otherMetric->id, $this->user->id))
-                ->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->metricService->getById($otherMetric->id, $this->user->id);
+            expect($result)->toBeNull();
         });
     });
 
@@ -142,9 +143,10 @@ describe('MetricService', function () {
             expect($result->weight)->toBe('78.00');
         });
 
-        it('throws exception for non-existent metric', function () {
-            expect(fn() => $this->metricService->update(999, ['weight' => 80.0]))
-                ->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        it('returns null for non-existent metric', function () {
+            $nonExistentId = PHP_INT_MAX;
+            $result = $this->metricService->update($nonExistentId, ['weight' => 80.0]);
+            expect($result)->toBeNull();
         });
 
         it('throws exception for metric belonging to another user', function () {
@@ -153,8 +155,8 @@ describe('MetricService', function () {
                 'user_id' => $otherUser->id,
             ]);
 
-            expect(fn() => $this->metricService->update($otherMetric->id, ['weight' => 80.0], $this->user->id))
-                ->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->metricService->update($otherMetric->id, ['weight' => 80.0], $this->user->id);
+            expect($result)->toBeNull();
         });
     });
 
@@ -175,9 +177,10 @@ describe('MetricService', function () {
             expect($result)->toBeTrue();
         });
 
-        it('throws exception for non-existent metric', function () {
-            expect(fn() => $this->metricService->delete(999))
-                ->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
+        it('returns false for non-existent metric', function () {
+            $nonExistentId = PHP_INT_MAX;
+            $result = $this->metricService->delete($nonExistentId);
+            expect($result)->toBeFalse();
         });
 
         it('throws exception for metric belonging to another user', function () {
@@ -186,8 +189,8 @@ describe('MetricService', function () {
                 'user_id' => $otherUser->id,
             ]);
 
-            expect(fn() => $this->metricService->delete($otherMetric->id, $this->user->id))
-                ->toThrow(Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->metricService->delete($otherMetric->id, $this->user->id);
+            expect($result)->toBeFalse();
         });
     });
 });

@@ -14,7 +14,7 @@ dataset('required_fields', [
 ]);
 
 dataset('invalid_muscle_group_ids', [
-    'non_existent' => [999999],
+    'non_existent' => [PHP_INT_MAX],
     'non_integer' => ['not-a-number'],
 ]);
 

@@ -8,7 +8,7 @@ use App\Models\User;
 use App\Services\ExerciseService;
 
 dataset('exception_scenarios', [
-    'non_existent' => [999999, 'non-existent exercise'],
+    'non_existent' => [PHP_INT_MAX, 'non-existent exercise'],
     'other_user' => [null, 'exercise from other user'],
 ]);
 
@@ -179,8 +179,8 @@ describe('ExerciseService', function () {
                 $exerciseId = $exercise->id;
             }
             
-            expect(fn() => $this->service->getById($exerciseId, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->service->getById($exerciseId, $this->user->id);
+            expect($result)->toBeNull();
         })->with('exception_scenarios');
     });
 
@@ -248,8 +248,8 @@ describe('ExerciseService', function () {
                 $exerciseId = $exercise->id;
             }
             
-            expect(fn() => $this->service->update($exerciseId, $data, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->service->update($exerciseId, $data, $this->user->id);
+            expect($result)->toBeNull();
         })->with('exception_scenarios');
     });
 
@@ -282,8 +282,8 @@ describe('ExerciseService', function () {
                 $exerciseId = $exercise->id;
             }
             
-            expect(fn() => $this->service->delete($exerciseId, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->service->delete($exerciseId, $this->user->id);
+            expect($result)->toBeFalse();
         })->with('exception_scenarios');
     });
 });

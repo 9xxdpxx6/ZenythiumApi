@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Services\MuscleGroupService;
 
 dataset('exception_scenarios', [
-    'non_existent' => [999999, 'non-existent muscle group'],
+    'non_existent' => [PHP_INT_MAX, 'non-existent muscle group'],
 ]);
 
 beforeEach(function () {

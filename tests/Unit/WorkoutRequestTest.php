@@ -91,7 +91,7 @@ describe('WorkoutRequest', function () {
             $request->setUserResolver(fn() => $this->user);
             
             $data = [
-                'plan_id' => 999,
+                'plan_id' => PHP_INT_MAX,
                 'started_at' => '2024-03-15 10:00:00',
             ];
             

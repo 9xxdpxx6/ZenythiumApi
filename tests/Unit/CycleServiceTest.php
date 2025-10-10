@@ -7,7 +7,7 @@ use App\Models\User;
 use App\Services\CycleService;
 
 dataset('exception_scenarios', [
-    'non_existent' => [999999, 'non-existent cycle'],
+    'non_existent' => [PHP_INT_MAX, 'non-existent cycle'],
     'other_user' => [null, 'cycle from other user'],
 ]);
 
@@ -87,15 +87,15 @@ describe('CycleService', function () {
             expect($cycle->id)->toBe($this->cycle->id);
         });
 
-        it('throws exception for invalid cycle access', function ($cycleId, $scenario) {
+        it('returns null for invalid cycle access', function ($cycleId, $scenario) {
             if ($scenario === 'cycle from other user') {
                 $otherUser = User::factory()->create();
                 $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
                 $cycleId = $otherCycle->id;
             }
             
-            expect(fn() => $this->cycleService->getById($cycleId, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->cycleService->getById($cycleId, $this->user->id);
+            expect($result)->toBeNull();
         })->with('exception_scenarios');
     });
 
@@ -179,8 +179,8 @@ describe('CycleService', function () {
                 $cycleId = $otherCycle->id;
             }
             
-            expect(fn() => $this->cycleService->update($cycleId, $data, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->cycleService->update($cycleId, $data, $this->user->id);
+            expect($result)->toBeNull();
         })->with('exception_scenarios');
     });
 
@@ -212,8 +212,8 @@ describe('CycleService', function () {
                 $cycleId = $otherCycle->id;
             }
             
-            expect(fn() => $this->cycleService->delete($cycleId, $this->user->id))
-                ->toThrow(\Illuminate\Database\Eloquent\ModelNotFoundException::class);
+            $result = $this->cycleService->delete($cycleId, $this->user->id);
+            expect($result)->toBeFalse();
         })->with('exception_scenarios');
     });
 });
