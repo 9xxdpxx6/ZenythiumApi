@@ -18,7 +18,57 @@ final class PlanController extends Controller
     ) {}
 
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/api/v1/plans",
+     *     summary="Получение списка планов тренировок",
+     *     description="Возвращает пагинированный список планов тренировок текущего пользователя с возможностью фильтрации",
+     *     tags={"Plans"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Номер страницы",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Количество элементов на странице",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15)
+     *     ),
+     *     @OA\Parameter(
+     *         name="cycle_id",
+     *         in="query",
+     *         description="Фильтр по ID цикла",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="query",
+     *         description="Фильтр по названию плана",
+     *         required=false,
+     *         @OA\Schema(type="string", example="силовая")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Планы успешно получены",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="message", type="string", example="Планы успешно получены"),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -42,7 +92,45 @@ final class PlanController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/api/v1/plans",
+     *     summary="Создание нового плана тренировок",
+     *     description="Создает новый план тренировок для текущего пользователя",
+     *     tags={"Plans"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name","cycle_id"},
+     *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
+     *             @OA\Property(property="description", type="string", example="План для развития силы", description="Описание плана"),
+     *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="План успешно создан",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="message", type="string", example="План успешно создан")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function store(PlanRequest $request): JsonResponse
     {
@@ -57,7 +145,42 @@ final class PlanController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * @OA\Get(
+     *     path="/api/v1/plans/{plan}",
+     *     summary="Получение конкретного плана тренировок",
+     *     description="Возвращает детальную информацию о плане тренировок по ID",
+     *     tags={"Plans"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="plan",
+     *         in="path",
+     *         description="ID плана",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="План успешно получен",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="message", type="string", example="План успешно получен")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="План не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="План не найден")
+     *         )
+     *     )
+     * )
      */
     public function show(Plan $plan, Request $request): JsonResponse
     {
@@ -70,7 +193,58 @@ final class PlanController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Put(
+     *     path="/api/v1/plans/{plan}",
+     *     summary="Обновление плана тренировок",
+     *     description="Обновляет информацию о существующем плане тренировок",
+     *     tags={"Plans"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="plan",
+     *         in="path",
+     *         description="ID плана",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
+     *             @OA\Property(property="description", type="string", example="План для развития силы", description="Описание плана"),
+     *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="План успешно обновлен",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="message", type="string", example="План успешно обновлен")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="План не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="План не найден")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function update(PlanRequest $request, Plan $plan): JsonResponse
     {
@@ -83,7 +257,42 @@ final class PlanController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Delete(
+     *     path="/api/v1/plans/{plan}",
+     *     summary="Удаление плана тренировок",
+     *     description="Удаляет план тренировок и все связанные с ним упражнения и тренировки",
+     *     tags={"Plans"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="plan",
+     *         in="path",
+     *         description="ID плана",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="План успешно удален",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="null", example=null),
+     *             @OA\Property(property="message", type="string", example="План успешно удален")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="План не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="План не найден")
+     *         )
+     *     )
+     * )
      */
     public function destroy(Plan $plan, Request $request): JsonResponse
     {

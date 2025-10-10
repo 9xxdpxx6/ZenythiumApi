@@ -6,10 +6,18 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Форма запроса для упражнений
+ * 
+ * Содержит правила валидации для создания и обновления упражнений.
+ * Проверяет уникальность названия упражнения для пользователя и корректность группы мышц.
+ */
 final class ExerciseRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Определить, авторизован ли пользователь для выполнения запроса
+     * 
+     * @return bool True - пользователь авторизован
      */
     public function authorize(): bool
     {
@@ -17,7 +25,13 @@ final class ExerciseRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Получить правила валидации для запроса
+     * 
+     * @return array Массив правил валидации:
+     * - name: обязательная строка до 255 символов, уникальная для пользователя
+     * - description: опциональная строка до 1000 символов
+     * - muscle_group_id: обязательное целое число, должно существовать в таблице muscle_groups
+     * - is_active: опциональное булево значение
      */
     public function rules(): array
     {

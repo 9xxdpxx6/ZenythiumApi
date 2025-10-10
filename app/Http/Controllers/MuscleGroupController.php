@@ -18,7 +18,42 @@ final class MuscleGroupController extends Controller
     ) {}
 
     /**
-     * Display a listing of the resource.
+     * @OA\Get(
+     *     path="/api/v1/muscle-groups",
+     *     summary="Получение списка групп мышц",
+     *     description="Возвращает пагинированный список групп мышц с возможностью фильтрации. Доступно как аутентифицированным, так и неаутентифицированным пользователям",
+     *     tags={"Muscle Groups"},
+     *     @OA\Parameter(
+     *         name="page",
+     *         in="query",
+     *         description="Номер страницы",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="per_page",
+     *         in="query",
+     *         description="Количество элементов на странице",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15)
+     *     ),
+     *     @OA\Parameter(
+     *         name="name",
+     *         in="query",
+     *         description="Фильтр по названию группы мышц",
+     *         required=false,
+     *         @OA\Schema(type="string", example="грудь")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Группы мышц успешно получены",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="message", type="string", example="Группы мышц успешно получены"),
+     *             @OA\Property(property="meta", type="object")
+     *         )
+     *     )
+     * )
      */
     public function index(Request $request): JsonResponse
     {
@@ -45,7 +80,36 @@ final class MuscleGroupController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
+     * @OA\Post(
+     *     path="/api/v1/muscle-groups",
+     *     summary="Создание новой группы мышц",
+     *     description="Создает новую группу мышц. Доступно всем пользователям",
+     *     tags={"Muscle Groups"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Грудь", description="Название группы мышц"),
+     *             @OA\Property(property="description", type="string", example="Мышцы грудной клетки", description="Описание группы мышц")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Группа мышц успешно создана",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="message", type="string", example="Группа мышц успешно создана")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function store(MuscleGroupRequest $request): JsonResponse
     {
@@ -58,7 +122,34 @@ final class MuscleGroupController extends Controller
     }
 
     /**
-     * Display the specified resource.
+     * @OA\Get(
+     *     path="/api/v1/muscle-groups/{muscleGroup}",
+     *     summary="Получение конкретной группы мышц",
+     *     description="Возвращает детальную информацию о группе мышц по ID. Доступно как аутентифицированным, так и неаутентифицированным пользователям",
+     *     tags={"Muscle Groups"},
+     *     @OA\Parameter(
+     *         name="muscleGroup",
+     *         in="path",
+     *         description="ID группы мышц",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Группа мышц успешно получена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="message", type="string", example="Группа мышц успешно получена")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Группа мышц не найдена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Группа мышц не найдена")
+     *         )
+     *     )
+     * )
      */
     public function show(MuscleGroup $muscleGroup, Request $request): JsonResponse
     {
@@ -73,7 +164,49 @@ final class MuscleGroupController extends Controller
     }
 
     /**
-     * Update the specified resource in storage.
+     * @OA\Put(
+     *     path="/api/v1/muscle-groups/{muscleGroup}",
+     *     summary="Обновление группы мышц",
+     *     description="Обновляет информацию о существующей группе мышц",
+     *     tags={"Muscle Groups"},
+     *     @OA\Parameter(
+     *         name="muscleGroup",
+     *         in="path",
+     *         description="ID группы мышц",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Грудь", description="Название группы мышц"),
+     *             @OA\Property(property="description", type="string", example="Мышцы грудной клетки", description="Описание группы мышц")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Группа мышц успешно обновлена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="message", type="string", example="Группа мышц успешно обновлена")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Группа мышц не найдена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Группа мышц не найдена")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function update(MuscleGroupRequest $request, MuscleGroup $muscleGroup): JsonResponse
     {
@@ -86,7 +219,34 @@ final class MuscleGroupController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
+     * @OA\Delete(
+     *     path="/api/v1/muscle-groups/{muscleGroup}",
+     *     summary="Удаление группы мышц",
+     *     description="Удаляет группу мышц и все связанные с ней упражнения",
+     *     tags={"Muscle Groups"},
+     *     @OA\Parameter(
+     *         name="muscleGroup",
+     *         in="path",
+     *         description="ID группы мышц",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Группа мышц успешно удалена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="null", example=null),
+     *             @OA\Property(property="message", type="string", example="Группа мышц успешно удалена")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Группа мышц не найдена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Группа мышц не найдена")
+     *         )
+     *     )
+     * )
      */
     public function destroy(MuscleGroup $muscleGroup): JsonResponse
     {

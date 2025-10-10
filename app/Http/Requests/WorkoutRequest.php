@@ -6,10 +6,18 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
+/**
+ * Форма запроса для тренировок
+ * 
+ * Содержит правила валидации для создания и обновления тренировок.
+ * Проверяет корректность данных плана, времени начала и окончания тренировки.
+ */
 final class WorkoutRequest extends FormRequest
 {
     /**
-     * Determine if the user is authorized to make this request.
+     * Определить, авторизован ли пользователь для выполнения запроса
+     * 
+     * @return bool True - пользователь авторизован
      */
     public function authorize(): bool
     {
@@ -17,7 +25,12 @@ final class WorkoutRequest extends FormRequest
     }
 
     /**
-     * Get the validation rules that apply to the request.
+     * Получить правила валидации для запроса
+     * 
+     * @return array Массив правил валидации:
+     * - plan_id: обязательное целое число, должно существовать в таблице plans
+     * - started_at: обязательная дата, не может быть в будущем
+     * - finished_at: опциональная дата, должна быть после started_at
      */
     public function rules(): array
     {
@@ -41,7 +54,9 @@ final class WorkoutRequest extends FormRequest
     }
 
     /**
-     * Get custom messages for validator errors.
+     * Получить пользовательские сообщения для ошибок валидации
+     * 
+     * @return array Массив сообщений об ошибках на русском языке
      */
     public function messages(): array
     {

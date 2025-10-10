@@ -10,6 +10,27 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Support\Facades\DB;
 
+/**
+ * Модель тренировки
+ * 
+ * Представляет тренировку пользователя, связанную с планом тренировок.
+ * Содержит информацию о времени начала и окончания, а также вычисляемые атрибуты.
+ * 
+ * @property int $id ID тренировки
+ * @property int $plan_id ID плана тренировки
+ * @property int $user_id ID пользователя
+ * @property \Carbon\Carbon|null $started_at Время начала тренировки
+ * @property \Carbon\Carbon|null $finished_at Время окончания тренировки
+ * @property int|null $duration_minutes Продолжительность тренировки в минутах (вычисляемый атрибут)
+ * @property int $exercise_count Количество упражнений в тренировке (вычисляемый атрибут)
+ * @property float $total_volume Общий объем тренировки (вес × повторения) (вычисляемый атрибут)
+ * @property \Carbon\Carbon $created_at Время создания записи
+ * @property \Carbon\Carbon $updated_at Время последнего обновления записи
+ * 
+ * @property-read \App\Models\Plan $plan План тренировки
+ * @property-read \App\Models\User $user Пользователь
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\WorkoutSet[] $workoutSets Подходы тренировки
+ */
 final class Workout extends Model
 {
     use HasFactory;
@@ -32,7 +53,9 @@ final class Workout extends Model
     ];
 
     /**
-     * Get the plan that owns the workout.
+     * Получить план тренировки
+     * 
+     * @return BelongsTo Связь с моделью Plan
      */
     public function plan(): BelongsTo
     {
@@ -40,7 +63,9 @@ final class Workout extends Model
     }
 
     /**
-     * Get the user that owns the workout.
+     * Получить пользователя тренировки
+     * 
+     * @return BelongsTo Связь с моделью User
      */
     public function user(): BelongsTo
     {
@@ -48,7 +73,9 @@ final class Workout extends Model
     }
 
     /**
-     * Get the workout sets for the workout.
+     * Получить подходы тренировки
+     * 
+     * @return HasMany Связь с коллекцией WorkoutSet
      */
     public function workoutSets(): HasMany
     {
@@ -56,7 +83,12 @@ final class Workout extends Model
     }
 
     /**
-     * Get the workout duration in minutes.
+     * Получить продолжительность тренировки в минутах
+     * 
+     * Вычисляет разность между временем начала и окончания тренировки.
+     * Возвращает null если тренировка не завершена.
+     * 
+     * @return int|null Продолжительность в минутах или null
      */
     public function getDurationMinutesAttribute(): ?int
     {
@@ -68,7 +100,11 @@ final class Workout extends Model
     }
 
     /**
-     * Get the number of exercises in the workout.
+     * Получить количество упражнений в тренировке
+     * 
+     * Подсчитывает уникальные упражнения по plan_exercise_id.
+     * 
+     * @return int Количество различных упражнений
      */
     public function getExerciseCountAttribute(): int
     {
@@ -76,7 +112,11 @@ final class Workout extends Model
     }
 
     /**
-     * Get the total volume of the workout (weight × reps).
+     * Получить общий объем тренировки
+     * 
+     * Вычисляет сумму произведений веса на количество повторений для всех подходов.
+     * 
+     * @return float Общий объем (вес × повторения)
      */
     public function getTotalVolumeAttribute(): float
     {

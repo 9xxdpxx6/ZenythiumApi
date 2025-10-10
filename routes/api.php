@@ -42,7 +42,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(functi
     Route::apiResource('plans', PlanController::class);
     
     // Workouts CRUD routes
-    Route::apiResource('workouts', WorkoutController::class);
+    Route::get('/workouts', [WorkoutController::class, 'index']);
+    Route::get('/workouts/{workout}', [WorkoutController::class, 'show']);
+    Route::put('/workouts/{workout}', [WorkoutController::class, 'update']);
+    Route::delete('/workouts/{workout}', [WorkoutController::class, 'destroy']);
     Route::post('/workouts/start', [WorkoutController::class, 'start']);
     Route::post('/workouts/{workout}/finish', [WorkoutController::class, 'finish']);
     

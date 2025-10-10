@@ -12,7 +12,38 @@ use Illuminate\Support\Facades\DB;
 final class StatisticsController extends Controller
 {
     /**
-     * Get user statistics.
+     * @OA\Get(
+     *     path="/api/v1/user/statistics",
+     *     summary="Получение статистики пользователя",
+     *     description="Возвращает комплексную статистику тренировок и прогресса пользователя. Включает общее количество тренировок, время тренировок, объемы, изменения веса и частоту тренировок",
+     *     tags={"Statistics"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Статистика пользователя успешно получена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="total_workouts", type="integer", example=45),
+     *                 @OA\Property(property="completed_workouts", type="integer", example=42),
+     *                 @OA\Property(property="total_training_time", type="integer", example=3150),
+     *                 @OA\Property(property="total_volume", type="integer", example=125000),
+     *                 @OA\Property(property="current_weight", type="number", format="float", example=75.5),
+     *                 @OA\Property(property="active_cycles_count", type="integer", example=2),
+     *                 @OA\Property(property="weight_change_30_days", type="number", format="float", example=2.5),
+     *                 @OA\Property(property="training_frequency_4_weeks", type="number", format="float", example=3.2),
+     *                 @OA\Property(property="training_streak_days", type="integer", example=7)
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Статистика пользователя успешно получена")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Пользователь не аутентифицирован")
+     *         )
+     *     )
+     * )
      */
     public function statistics(Request $request): JsonResponse
     {
