@@ -58,22 +58,25 @@ final class Cycle extends Model
     }
 
     /**
-     * Get the progress percentage of the cycle.
+     * Get the progress percentage of the cycle based on completed workouts.
      */
     public function getProgressPercentageAttribute(): int
     {
-        if (!$this->start_date || !$this->end_date) {
+        // Если нет планов в цикле или не указано количество недель, прогресс 0%
+        $totalPlans = $this->plans()->count();
+        if ($totalPlans === 0 || $this->weeks <= 0) {
             return 0;
         }
 
-        $totalDays = $this->start_date->diffInDays($this->end_date);
-        if ($totalDays === 0) {
-            return 100;
-        }
-
-        $passedDays = $this->start_date->diffInDays(now());
+        // Считаем количество завершенных тренировок
+        $completedWorkouts = $this->workouts()->whereNotNull('finished_at')->count();
         
-        return min(100, max(0, (int) round(($passedDays / $totalDays) * 100)));
+        // Общее количество запланированных тренировок = количество недель × количество планов
+        // Базовая логика: каждый план выполняется раз в неделю
+        $totalScheduledWorkouts = $this->weeks * $totalPlans;
+        
+        // Прогресс = (завершенные тренировки / общее количество запланированных тренировок) * 100
+        return min(100, max(0, (int) round(($completedWorkouts / $totalScheduledWorkouts) * 100)));
     }
 
     /**
