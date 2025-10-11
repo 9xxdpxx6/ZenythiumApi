@@ -8,6 +8,7 @@ use App\Http\Controllers\ExerciseController;
 use App\Http\Controllers\MetricController;
 use App\Http\Controllers\MuscleGroupController;
 use App\Http\Controllers\PlanController;
+use App\Http\Controllers\PlanExerciseController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\WorkoutSetController;
@@ -67,6 +68,12 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(functi
     Route::get('/plans/{id}', [PlanController::class, 'show']);
     Route::put('/plans/{id}', [PlanController::class, 'update']);
     Route::delete('/plans/{id}', [PlanController::class, 'destroy']);
+    
+    // Plan Exercises management routes
+    Route::get('/plans/{plan}/exercises', [PlanExerciseController::class, 'index']);
+    Route::post('/plans/{plan}/exercises', [PlanExerciseController::class, 'store']);
+    Route::put('/plans/{plan}/exercises/{planExercise}', [PlanExerciseController::class, 'update']);
+    Route::delete('/plans/{plan}/exercises/{planExercise}', [PlanExerciseController::class, 'destroy']);
     
     // Workouts CRUD routes
     Route::get('/workouts', [WorkoutController::class, 'index']);

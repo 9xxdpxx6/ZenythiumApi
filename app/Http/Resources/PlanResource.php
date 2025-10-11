@@ -23,6 +23,23 @@ final class PlanResource extends JsonResource
                 'id' => $this->cycle->id,
                 'name' => $this->cycle->name,
             ],
+            'exercises' => $this->whenLoaded('planExercises', function () {
+                return $this->planExercises->map(function ($planExercise) {
+                    return [
+                        'id' => $planExercise->id,
+                        'order' => $planExercise->order,
+                        'exercise' => [
+                            'id' => $planExercise->exercise->id,
+                            'name' => $planExercise->exercise->name,
+                            'description' => $planExercise->exercise->description,
+                            'muscle_group' => [
+                                'id' => $planExercise->exercise->muscleGroup->id,
+                                'name' => $planExercise->exercise->muscleGroup->name,
+                            ],
+                        ],
+                    ];
+                });
+            }),
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),
         ];
