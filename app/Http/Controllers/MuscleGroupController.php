@@ -11,6 +11,17 @@ use App\Services\MuscleGroupService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @OA\Schema(
+ *     schema="MuscleGroupResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="Грудь"),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
+ *     @OA\Property(property="exercises_count", type="integer", example=5)
+ * )
+ */
 final class MuscleGroupController extends Controller
 {
     public function __construct(
@@ -44,13 +55,34 @@ final class MuscleGroupController extends Controller
      *         required=false,
      *         @OA\Schema(type="string", example="грудь")
      *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Поле для сортировки",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"id", "name", "created_at"}, example="name")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_order",
+     *         in="query",
+     *         description="Порядок сортировки",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="asc")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Группы мышц успешно получены",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/MuscleGroupResource")),
      *             @OA\Property(property="message", type="string", example="Группы мышц успешно получены"),
-     *             @OA\Property(property="meta", type="object")
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="last_page", type="integer", example=2),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer", example=25),
+     *                 @OA\Property(property="from", type="integer", example=1),
+     *                 @OA\Property(property="to", type="integer", example=15)
+     *             )
      *         )
      *     )
      * )

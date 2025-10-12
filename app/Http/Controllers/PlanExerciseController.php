@@ -12,6 +12,25 @@ use App\Services\PlanExerciseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @OA\Schema(
+ *     schema="PlanExerciseResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="order", type="integer", example=1),
+ *     @OA\Property(property="exercise", type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="name", type="string", example="Жим лежа"),
+ *         @OA\Property(property="description", type="string", example="Базовое упражнение для развития грудных мышц"),
+ *         @OA\Property(property="muscle_group", type="object",
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="name", type="string", example="Грудь")
+ *         )
+ *     ),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
+ * )
+ */
 final class PlanExerciseController extends Controller
 {
     public function __construct(
@@ -36,7 +55,7 @@ final class PlanExerciseController extends Controller
      *         response=200,
      *         description="Упражнения плана успешно получены",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/PlanExerciseResource")),
      *             @OA\Property(property="message", type="string", example="Упражнения плана успешно получены")
      *         )
      *     ),

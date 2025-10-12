@@ -52,6 +52,66 @@
                             </div>
                         </div>
 
+                        <!-- Filters -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-filter"></i> Фильтры</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="filterForm">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="filterSearch" class="form-label">Поиск по заметке/пользователю</label>
+                                            <input type="text" class="form-control" id="filterSearch" placeholder="Введите заметку или имя пользователя">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterUserId" class="form-label">ID пользователя</label>
+                                            <input type="number" class="form-control" id="filterUserId" placeholder="ID пользователя">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterDateFrom" class="form-label">Дата от</label>
+                                            <input type="date" class="form-control" id="filterDateFrom">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterDateTo" class="form-label">Дата до</label>
+                                            <input type="date" class="form-control" id="filterDateTo">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterWeightFrom" class="form-label">Вес от (кг)</label>
+                                            <input type="number" class="form-control" id="filterWeightFrom" step="0.01" min="0" max="1000">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterWeightTo" class="form-label">Вес до (кг)</label>
+                                            <input type="number" class="form-control" id="filterWeightTo" step="0.01" min="0" max="1000">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterSortBy" class="form-label">Сортировка по</label>
+                                            <select class="form-control" id="filterSortBy">
+                                                <option value="date">Дата</option>
+                                                <option value="weight">Вес</option>
+                                                <option value="created_at">Дата создания</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterSortOrder" class="form-label">Порядок сортировки</label>
+                                            <select class="form-control" id="filterSortOrder">
+                                                <option value="desc">По убыванию</option>
+                                                <option value="asc">По возрастанию</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Применить фильтры
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                            <i class="fas fa-times"></i> Очистить
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         <!-- List -->
                         <div class="card mb-4">
                             <div class="card-header d-flex justify-content-between align-items-center">
@@ -173,9 +233,19 @@
         }
 
         // Load List
-        async function loadList() {
+        async function loadList(filters = {}) {
             try {
-                const response = await fetch(`${API_BASE}/metrics`, {
+                const queryParams = new URLSearchParams();
+                
+                // Add filters to query params
+                Object.keys(filters).forEach(key => {
+                    if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
+                        queryParams.append(key, filters[key]);
+                    }
+                });
+                
+                const url = `${API_BASE}/metrics${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+                const response = await fetch(url, {
                     headers: getAuthHeaders()
                 });
 
@@ -223,6 +293,30 @@
 
         // Refresh List
         document.getElementById('refreshList').addEventListener('click', loadList);
+
+        // Filter Form
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const filters = {
+                search: document.getElementById('filterSearch').value,
+                user_id: document.getElementById('filterUserId').value,
+                date_from: document.getElementById('filterDateFrom').value,
+                date_to: document.getElementById('filterDateTo').value,
+                weight_from: document.getElementById('filterWeightFrom').value,
+                weight_to: document.getElementById('filterWeightTo').value,
+                sort_by: document.getElementById('filterSortBy').value,
+                sort_order: document.getElementById('filterSortOrder').value
+            };
+            
+            loadList(filters);
+        });
+
+        // Clear Filters
+        function clearFilters() {
+            document.getElementById('filterForm').reset();
+            loadList();
+        }
 
         // Create
         document.getElementById('createForm').addEventListener('submit', async function(e) {

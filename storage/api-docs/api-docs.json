@@ -915,6 +915,39 @@
                             "format": "date",
                             "example": "2024-01-31"
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Поле для сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "name",
+                                "start_date",
+                                "end_date",
+                                "weeks",
+                                "progress_percentage",
+                                "created_at"
+                            ],
+                            "example": "start_date"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Порядок сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
+                        }
                     }
                 ],
                 "responses": {
@@ -927,7 +960,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/CycleResource"
                                             }
                                         },
                                         "message": {
@@ -935,6 +968,32 @@
                                             "example": "Циклы успешно получены"
                                         },
                                         "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -1412,6 +1471,37 @@
                             "type": "string",
                             "example": "жим"
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Поле для сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "name",
+                                "muscle_group_id",
+                                "is_active",
+                                "created_at"
+                            ],
+                            "example": "name"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Порядок сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "asc"
+                        }
                     }
                 ],
                 "responses": {
@@ -1424,7 +1514,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/ExerciseResource"
                                             }
                                         },
                                         "message": {
@@ -1448,6 +1538,14 @@
                                                 "total": {
                                                     "type": "integer",
                                                     "example": 25
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
                                                 }
                                             },
                                             "type": "object"
@@ -1988,6 +2086,36 @@
                             "format": "float",
                             "example": 80
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Поле для сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "date",
+                                "weight",
+                                "created_at"
+                            ],
+                            "example": "date"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Порядок сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
+                        }
                     }
                 ],
                 "responses": {
@@ -2000,7 +2128,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/MetricResource"
                                             }
                                         },
                                         "message": {
@@ -2008,6 +2136,32 @@
                                             "example": "Метрики успешно получены"
                                         },
                                         "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -2479,6 +2633,35 @@
                             "type": "string",
                             "example": "грудь"
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Поле для сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "name",
+                                "created_at"
+                            ],
+                            "example": "name"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Порядок сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "asc"
+                        }
                     }
                 ],
                 "responses": {
@@ -2491,7 +2674,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/MuscleGroupResource"
                                             }
                                         },
                                         "message": {
@@ -2499,6 +2682,32 @@
                                             "example": "Группы мышц успешно получены"
                                         },
                                         "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -2846,6 +3055,37 @@
                             "type": "string",
                             "example": "силовая"
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Поле для сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "name",
+                                "order",
+                                "exercise_count",
+                                "created_at"
+                            ],
+                            "example": "order"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Порядок сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "asc"
+                        }
                     }
                 ],
                 "responses": {
@@ -2858,7 +3098,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/PlanResource"
                                             }
                                         },
                                         "message": {
@@ -2866,6 +3106,32 @@
                                             "example": "Планы успешно получены"
                                         },
                                         "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -3311,7 +3577,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/PlanExerciseResource"
                                             }
                                         },
                                         "message": {
@@ -3854,6 +4120,39 @@
                             "format": "date",
                             "example": "2024-01-31"
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Поле для сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "started_at",
+                                "finished_at",
+                                "duration_minutes",
+                                "exercise_count",
+                                "total_volume",
+                                "created_at"
+                            ],
+                            "example": "started_at"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Порядок сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
+                        }
                     }
                 ],
                 "responses": {
@@ -3866,7 +4165,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/WorkoutResource"
                                             }
                                         },
                                         "message": {
@@ -3890,6 +4189,14 @@
                                                 "total": {
                                                     "type": "integer",
                                                     "example": 45
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
                                                 }
                                             },
                                             "type": "object"
@@ -4572,6 +4879,36 @@
                             "format": "float",
                             "example": 100
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Поле для сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "id",
+                                "weight",
+                                "reps",
+                                "created_at"
+                            ],
+                            "example": "created_at"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Порядок сортировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
+                        }
                     }
                 ],
                 "responses": {
@@ -4584,7 +4921,7 @@
                                         "data": {
                                             "type": "array",
                                             "items": {
-                                                "type": "object"
+                                                "$ref": "#/components/schemas/WorkoutSetResource"
                                             }
                                         },
                                         "message": {
@@ -4592,6 +4929,32 @@
                                             "example": "Подходы успешно получены"
                                         },
                                         "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },
@@ -4737,6 +5100,515 @@
         }
     },
     "components": {
+        "schemas": {
+            "CycleResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Программа на массу"
+                    },
+                    "user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Иван Петров"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-12-31"
+                    },
+                    "weeks": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "progress_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 75.5
+                    },
+                    "completed_workouts_count": {
+                        "type": "integer",
+                        "example": 8
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "ExerciseResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Жим лежа"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Базовое упражнение для развития грудных мышц"
+                    },
+                    "user_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "muscle_group": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Грудь"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "MetricResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-01"
+                    },
+                    "weight": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 75.5
+                    },
+                    "note": {
+                        "type": "string",
+                        "example": "Утренний вес"
+                    },
+                    "user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Иван Петров"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "MuscleGroupResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Грудь"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "exercises_count": {
+                        "type": "integer",
+                        "example": 5
+                    }
+                },
+                "type": "object"
+            },
+            "PlanResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Силовая тренировка"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "exercise_count": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "cycle": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Программа на массу"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "exercises": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "exercise": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Жим лежа"
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "Базовое упражнение"
+                                        },
+                                        "muscle_group": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Грудь"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "PlanExerciseResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "exercise": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Жим лежа"
+                            },
+                            "description": {
+                                "type": "string",
+                                "example": "Базовое упражнение для развития грудных мышц"
+                            },
+                            "muscle_group": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Грудь"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "WorkoutResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "started_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T10:00:00.000000Z"
+                    },
+                    "finished_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T11:30:00.000000Z"
+                    },
+                    "duration_minutes": {
+                        "type": "integer",
+                        "example": 90
+                    },
+                    "exercise_count": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "total_volume": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 2500.5
+                    },
+                    "plan": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Программа на массу"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Иван Петров"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "WorkoutSetResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "weight": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 80
+                    },
+                    "reps": {
+                        "type": "integer",
+                        "example": 10
+                    },
+                    "workout": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "started_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2024-01-01T10:00:00.000000Z"
+                            },
+                            "finished_at": {
+                                "type": "string",
+                                "format": "date-time",
+                                "example": "2024-01-01T11:30:00.000000Z"
+                            },
+                            "duration_minutes": {
+                                "type": "integer",
+                                "example": 90
+                            },
+                            "exercise_count": {
+                                "type": "integer",
+                                "example": 5
+                            },
+                            "total_volume": {
+                                "type": "number",
+                                "format": "float",
+                                "example": 2500.5
+                            },
+                            "plan": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Программа на массу"
+                                    }
+                                },
+                                "type": "object"
+                            },
+                            "user": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Иван Петров"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "plan_exercise": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "order": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "exercise": {
+                                "properties": {
+                                    "id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "name": {
+                                        "type": "string",
+                                        "example": "Жим лежа"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Базовое упражнение"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            }
+        },
         "securitySchemes": {
             "sanctum": {
                 "type": "apiKey",

@@ -11,6 +11,25 @@ use App\Services\CycleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @OA\Schema(
+ *     schema="CycleResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="Программа на массу"),
+ *     @OA\Property(property="user", type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="name", type="string", example="Иван Петров")
+ *     ),
+ *     @OA\Property(property="start_date", type="string", format="date", example="2024-01-01"),
+ *     @OA\Property(property="end_date", type="string", format="date", example="2024-12-31"),
+ *     @OA\Property(property="weeks", type="integer", example=12),
+ *     @OA\Property(property="progress_percentage", type="number", format="float", example=75.5),
+ *     @OA\Property(property="completed_workouts_count", type="integer", example=8),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
+ * )
+ */
 final class CycleController extends Controller
 {
     public function __construct(
@@ -59,13 +78,34 @@ final class CycleController extends Controller
      *         required=false,
      *         @OA\Schema(type="string", format="date", example="2024-01-31")
      *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Поле для сортировки",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"id", "name", "start_date", "end_date", "weeks", "progress_percentage", "created_at"}, example="start_date")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_order",
+     *         in="query",
+     *         description="Порядок сортировки",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Циклы успешно получены",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/CycleResource")),
      *             @OA\Property(property="message", type="string", example="Циклы успешно получены"),
-     *             @OA\Property(property="meta", type="object")
+     *             @OA\Property(property="meta", type="object",
+     *                 @OA\Property(property="current_page", type="integer", example=1),
+     *                 @OA\Property(property="last_page", type="integer", example=2),
+     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="total", type="integer", example=25),
+     *                 @OA\Property(property="from", type="integer", example=1),
+     *                 @OA\Property(property="to", type="integer", example=15)
+     *             )
      *         )
      *     ),
      *     @OA\Response(

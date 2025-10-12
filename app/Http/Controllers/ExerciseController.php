@@ -11,6 +11,23 @@ use App\Services\ExerciseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
+/**
+ * @OA\Schema(
+ *     schema="ExerciseResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="name", type="string", example="Жим лежа"),
+ *     @OA\Property(property="description", type="string", example="Базовое упражнение для развития грудных мышц"),
+ *     @OA\Property(property="user_id", type="integer", example=1),
+ *     @OA\Property(property="muscle_group", type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="name", type="string", example="Грудь")
+ *     ),
+ *     @OA\Property(property="is_active", type="boolean", example=true),
+ *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
+ * )
+ */
 final class ExerciseController extends Controller
 {
     public function __construct(
@@ -52,17 +69,33 @@ final class ExerciseController extends Controller
      *         required=false,
      *         @OA\Schema(type="string", example="жим")
      *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Поле для сортировки",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"id", "name", "muscle_group_id", "is_active", "created_at"}, example="name")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_order",
+     *         in="query",
+     *         description="Порядок сортировки",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="asc")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Упражнения успешно получены",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/ExerciseResource")),
      *             @OA\Property(property="message", type="string", example="Упражнения успешно получены"),
      *             @OA\Property(property="meta", type="object",
      *                 @OA\Property(property="current_page", type="integer", example=1),
      *                 @OA\Property(property="last_page", type="integer", example=2),
      *                 @OA\Property(property="per_page", type="integer", example=15),
-     *                 @OA\Property(property="total", type="integer", example=25)
+     *                 @OA\Property(property="total", type="integer", example=25),
+     *                 @OA\Property(property="from", type="integer", example=1),
+     *                 @OA\Property(property="to", type="integer", example=15)
      *             )
      *         )
      *     ),

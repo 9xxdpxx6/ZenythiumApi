@@ -92,6 +92,80 @@
                             </div>
                         </div>
 
+                        <!-- Filters -->
+                        <div class="card mb-4">
+                            <div class="card-header">
+                                <h5><i class="fas fa-filter"></i> Фильтры</h5>
+                            </div>
+                            <div class="card-body">
+                                <form id="filterForm">
+                                    <div class="row g-3">
+                                        <div class="col-md-6">
+                                            <label for="filterSearch" class="form-label">Поиск по плану/пользователю</label>
+                                            <input type="text" class="form-control" id="filterSearch" placeholder="Введите название плана или имя пользователя">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterUserId" class="form-label">ID пользователя</label>
+                                            <input type="number" class="form-control" id="filterUserId" placeholder="ID пользователя">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterPlanId" class="form-label">План</label>
+                                            <select class="form-control" id="filterPlanId">
+                                                <option value="">Все планы</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterCompleted" class="form-label">Статус завершения</label>
+                                            <select class="form-control" id="filterCompleted">
+                                                <option value="">Все</option>
+                                                <option value="true">Завершенные</option>
+                                                <option value="false">Незавершенные</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterStartedAtFrom" class="form-label">Начало от</label>
+                                            <input type="datetime-local" class="form-control" id="filterStartedAtFrom">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterStartedAtTo" class="form-label">Начало до</label>
+                                            <input type="datetime-local" class="form-control" id="filterStartedAtTo">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterFinishedAtFrom" class="form-label">Окончание от</label>
+                                            <input type="datetime-local" class="form-control" id="filterFinishedAtFrom">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterFinishedAtTo" class="form-label">Окончание до</label>
+                                            <input type="datetime-local" class="form-control" id="filterFinishedAtTo">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterSortBy" class="form-label">Сортировка по</label>
+                                            <select class="form-control" id="filterSortBy">
+                                                <option value="started_at">Время начала</option>
+                                                <option value="finished_at">Время окончания</option>
+                                                <option value="created_at">Дата создания</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterSortOrder" class="form-label">Порядок сортировки</label>
+                                            <select class="form-control" id="filterSortOrder">
+                                                <option value="desc">По убыванию</option>
+                                                <option value="asc">По возрастанию</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div class="mt-3">
+                                        <button type="submit" class="btn btn-primary">
+                                            <i class="fas fa-search"></i> Применить фильтры
+                                        </button>
+                                        <button type="button" class="btn btn-outline-secondary" onclick="clearFilters()">
+                                            <i class="fas fa-times"></i> Очистить
+                                        </button>
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+
                         <!-- List -->
                         <div class="card mb-4">
                             <div class="card-header d-flex justify-content-between align-items-center">
@@ -243,9 +317,19 @@
         }
 
         // Load List
-        async function loadList() {
+        async function loadList(filters = {}) {
             try {
-                const response = await fetch(`${API_BASE}/workouts`, {
+                const queryParams = new URLSearchParams();
+                
+                // Add filters to query params
+                Object.keys(filters).forEach(key => {
+                    if (filters[key] !== '' && filters[key] !== null && filters[key] !== undefined) {
+                        queryParams.append(key, filters[key]);
+                    }
+                });
+                
+                const url = `${API_BASE}/workouts${queryParams.toString() ? '?' + queryParams.toString() : ''}`;
+                const response = await fetch(url, {
                     headers: getAuthHeaders()
                 });
 
@@ -299,6 +383,32 @@
 
         // Refresh List
         document.getElementById('refreshList').addEventListener('click', loadList);
+
+        // Filter Form
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const filters = {
+                search: document.getElementById('filterSearch').value,
+                user_id: document.getElementById('filterUserId').value,
+                plan_id: document.getElementById('filterPlanId').value,
+                completed: document.getElementById('filterCompleted').value,
+                started_at_from: document.getElementById('filterStartedAtFrom').value,
+                started_at_to: document.getElementById('filterStartedAtTo').value,
+                finished_at_from: document.getElementById('filterFinishedAtFrom').value,
+                finished_at_to: document.getElementById('filterFinishedAtTo').value,
+                sort_by: document.getElementById('filterSortBy').value,
+                sort_order: document.getElementById('filterSortOrder').value
+            };
+            
+            loadList(filters);
+        });
+
+        // Clear Filters
+        function clearFilters() {
+            document.getElementById('filterForm').reset();
+            loadList();
+        }
 
         // Create
         document.getElementById('createForm').addEventListener('submit', async function(e) {
