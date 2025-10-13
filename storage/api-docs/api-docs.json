@@ -3308,7 +3308,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/PlanResource"
+                                            "$ref": "#/components/schemas/PlanDetailResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -5302,100 +5302,6 @@
                 },
                 "type": "object"
             },
-            "PlanResource": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "name": {
-                        "type": "string",
-                        "example": "Силовая тренировка"
-                    },
-                    "order": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "is_active": {
-                        "type": "boolean",
-                        "example": true
-                    },
-                    "exercise_count": {
-                        "type": "integer",
-                        "example": 5
-                    },
-                    "cycle": {
-                        "properties": {
-                            "id": {
-                                "type": "integer",
-                                "example": 1
-                            },
-                            "name": {
-                                "type": "string",
-                                "example": "Программа на массу"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "exercises": {
-                        "type": "array",
-                        "items": {
-                            "properties": {
-                                "id": {
-                                    "type": "integer",
-                                    "example": 1
-                                },
-                                "order": {
-                                    "type": "integer",
-                                    "example": 1
-                                },
-                                "exercise": {
-                                    "properties": {
-                                        "id": {
-                                            "type": "integer",
-                                            "example": 1
-                                        },
-                                        "name": {
-                                            "type": "string",
-                                            "example": "Жим лежа"
-                                        },
-                                        "description": {
-                                            "type": "string",
-                                            "example": "Базовое упражнение"
-                                        },
-                                        "muscle_group": {
-                                            "properties": {
-                                                "id": {
-                                                    "type": "integer",
-                                                    "example": 1
-                                                },
-                                                "name": {
-                                                    "type": "string",
-                                                    "example": "Грудь"
-                                                }
-                                            },
-                                            "type": "object"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            },
-                            "type": "object"
-                        }
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2024-01-01T00:00:00.000000Z"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2024-01-01T00:00:00.000000Z"
-                    }
-                },
-                "type": "object"
-            },
             "PlanExerciseResource": {
                 "properties": {
                     "id": {
@@ -5616,6 +5522,148 @@
                                     }
                                 },
                                 "type": "object"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "PlanDetailResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Силовая тренировка"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "exercise_count": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "cycle": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Программа на массу"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "exercises": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "exercise": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Жим лежа"
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "Базовое упражнение"
+                                        },
+                                        "muscle_group": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Грудь"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "PlanResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Силовая тренировка"
+                    },
+                    "order": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "exercise_count": {
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "cycle": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Программа на массу"
                             }
                         },
                         "type": "object"

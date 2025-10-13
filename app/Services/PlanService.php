@@ -54,7 +54,7 @@ final class PlanService
      */
     public function getById(int $id, ?int $userId = null): ?Plan
     {
-        $query = Plan::query()->with('cycle');
+        $query = Plan::query()->with(['cycle', 'planExercises.exercise.muscleGroup']);
 
         if ($userId) {
             $query->whereHas('cycle', function ($q) use ($userId) {

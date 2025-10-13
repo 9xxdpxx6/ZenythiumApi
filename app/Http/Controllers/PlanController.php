@@ -6,41 +6,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\PlanRequest;
 use App\Http\Resources\PlanResource;
+use App\Http\Resources\PlanDetailResource;
 use App\Models\Plan;
 use App\Services\PlanService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * @OA\Schema(
- *     schema="PlanResource",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="Силовая тренировка"),
- *     @OA\Property(property="order", type="integer", example=1),
- *     @OA\Property(property="is_active", type="boolean", example=true),
- *     @OA\Property(property="exercise_count", type="integer", example=5),
- *     @OA\Property(property="cycle", type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="name", type="string", example="Программа на массу")
- *     ),
- *     @OA\Property(property="exercises", type="array", @OA\Items(type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="order", type="integer", example=1),
- *         @OA\Property(property="exercise", type="object",
- *             @OA\Property(property="id", type="integer", example=1),
- *             @OA\Property(property="name", type="string", example="Жим лежа"),
- *             @OA\Property(property="description", type="string", example="Базовое упражнение"),
- *             @OA\Property(property="muscle_group", type="object",
- *                 @OA\Property(property="id", type="integer", example=1),
- *                 @OA\Property(property="name", type="string", example="Грудь")
- *             )
- *         )
- *     )),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
- * )
- */
 final class PlanController extends Controller
 {
     public function __construct(
@@ -107,7 +78,7 @@ final class PlanController extends Controller
      *         response=200,
      *         description="Планы успешно получены",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/PlanResource")),
+     *             @OA\Property(property="data", type="array", items=@OA\Items(ref="#/components/schemas/PlanResource")),
      *             @OA\Property(property="message", type="string", example="Планы успешно получены"),
      *             @OA\Property(property="meta", type="object",
      *                 @OA\Property(property="current_page", type="integer", example=1),
@@ -221,7 +192,7 @@ final class PlanController extends Controller
      *         response=200,
      *         description="План успешно получен",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", ref="#/components/schemas/PlanResource"),
+     *             @OA\Property(property="data", ref="#/components/schemas/PlanDetailResource"),
      *             @OA\Property(property="message", type="string", example="План успешно получен")
      *         )
      *     ),
@@ -252,7 +223,7 @@ final class PlanController extends Controller
         }
         
         return response()->json([
-            'data' => new PlanResource($plan),
+            'data' => new PlanDetailResource($plan),
             'message' => 'План успешно получен'
         ]);
     }
