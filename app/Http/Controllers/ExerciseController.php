@@ -215,7 +215,7 @@ final class ExerciseController extends Controller
      *         response=200,
      *         description="Упражнение успешно получено",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/ExerciseResource"),
      *             @OA\Property(property="message", type="string", example="Упражнение успешно получено")
      *         )
      *     ),

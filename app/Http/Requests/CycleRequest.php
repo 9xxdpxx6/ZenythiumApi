@@ -34,13 +34,11 @@ final class CycleRequest extends FormRequest
             'start_date' => [
                 'nullable',
                 'date',
-                'required_with:end_date',
                 'before_or_equal:end_date'
             ],
             'end_date' => [
                 'nullable',
                 'date',
-                'required_with:start_date',
                 'after_or_equal:start_date'
             ],
             'weeks' => [

@@ -150,8 +150,8 @@ final class CycleController extends Controller
      *         @OA\JsonContent(
      *             required={"name","weeks"},
      *             @OA\Property(property="name", type="string", example="Набор массы", description="Название цикла"),
-     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла (необязательно)"),
-     *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла (необязательно)"),
+     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла (необязательно, но если указана, то end_date обязательна)"),
+     *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла (необязательно, но если указана start_date, то обязательна)"),
      *             @OA\Property(property="weeks", type="integer", example=6, description="Количество недель в цикле")
      *         )
      *     ),
@@ -159,7 +159,7 @@ final class CycleController extends Controller
      *         response=201,
      *         description="Цикл успешно создан",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CycleResource"),
      *             @OA\Property(property="message", type="string", example="Цикл успешно создан")
      *         )
      *     ),
@@ -211,7 +211,7 @@ final class CycleController extends Controller
      *         response=200,
      *         description="Цикл успешно получен",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CycleResource"),
      *             @OA\Property(property="message", type="string", example="Цикл успешно получен")
      *         )
      *     ),
@@ -265,8 +265,8 @@ final class CycleController extends Controller
      *         required=true,
      *         @OA\JsonContent(
      *             @OA\Property(property="name", type="string", example="Набор массы", description="Название цикла"),
-     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла (необязательно)"),
-     *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла (необязательно)"),
+     *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла (необязательно, но если указана, то end_date обязательна)"),
+     *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла (необязательно, но если указана start_date, то обязательна)"),
      *             @OA\Property(property="weeks", type="integer", example=6, description="Количество недель в цикле")
      *         )
      *     ),
@@ -274,7 +274,7 @@ final class CycleController extends Controller
      *         response=200,
      *         description="Цикл успешно обновлен",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CycleResource"),
      *             @OA\Property(property="message", type="string", example="Цикл успешно обновлен")
      *         )
      *     ),

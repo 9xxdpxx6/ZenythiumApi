@@ -25,10 +25,11 @@ final class PlanExerciseRequest extends FormRequest
     public function rules(): array
     {
         $planId = $this->route('plan');
+        $isUpdate = $this->route('planExercise') !== null;
         
         return [
             'exercise_id' => [
-                'required',
+                $isUpdate ? 'sometimes' : 'required',
                 'integer',
                 'exists:exercises,id',
                 Rule::unique('plan_exercises')->where(function ($query) use ($planId) {

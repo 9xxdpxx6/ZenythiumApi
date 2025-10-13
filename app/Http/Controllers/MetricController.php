@@ -215,7 +215,7 @@ final class MetricController extends Controller
      *         response=200,
      *         description="Метрика успешно получена",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/MetricResource"),
      *             @OA\Property(property="message", type="string", example="Метрика успешно получена")
      *         )
      *     ),

@@ -170,7 +170,7 @@ final class MuscleGroupController extends Controller
      *         response=200,
      *         description="Группа мышц успешно получена",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/MuscleGroupResource"),
      *             @OA\Property(property="message", type="string", example="Группа мышц успешно получена")
      *         )
      *     ),

@@ -14,7 +14,7 @@ describe('PlanExerciseService', function () {
     beforeEach(function () {
         $this->service = new PlanExerciseService();
         $this->user = User::factory()->create();
-        $this->muscleGroup = MuscleGroup::factory()->create(['user_id' => $this->user->id]);
+        $this->muscleGroup = MuscleGroup::factory()->create();
         $this->exercise = Exercise::factory()->create(['user_id' => $this->user->id, 'muscle_group_id' => $this->muscleGroup->id]);
         $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
         $this->plan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
@@ -163,7 +163,7 @@ describe('PlanExerciseService', function () {
 
         it('returns null for exercise belonging to another user', function () {
             $otherUser = User::factory()->create();
-            $otherMuscleGroup = MuscleGroup::factory()->create(['user_id' => $otherUser->id]);
+            $otherMuscleGroup = MuscleGroup::factory()->create();
             $otherExercise = Exercise::factory()->create(['user_id' => $otherUser->id, 'muscle_group_id' => $otherMuscleGroup->id]);
 
             $data = [
@@ -228,7 +228,7 @@ describe('PlanExerciseService', function () {
             $otherUser = User::factory()->create();
             $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
             $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
-            $otherMuscleGroup = MuscleGroup::factory()->create(['user_id' => $otherUser->id]);
+            $otherMuscleGroup = MuscleGroup::factory()->create();
             $otherExercise = Exercise::factory()->create(['user_id' => $otherUser->id, 'muscle_group_id' => $otherMuscleGroup->id]);
             $otherPlanExercise = PlanExercise::factory()->create([
                 'plan_id' => $otherPlan->id,
@@ -280,7 +280,7 @@ describe('PlanExerciseService', function () {
             $otherUser = User::factory()->create();
             $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
             $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
-            $otherMuscleGroup = MuscleGroup::factory()->create(['user_id' => $otherUser->id]);
+            $otherMuscleGroup = MuscleGroup::factory()->create();
             $otherExercise = Exercise::factory()->create(['user_id' => $otherUser->id, 'muscle_group_id' => $otherMuscleGroup->id]);
             $otherPlanExercise = PlanExercise::factory()->create([
                 'plan_id' => $otherPlan->id,

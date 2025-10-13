@@ -41,6 +41,10 @@ final class PlanRequest extends FormRequest
                 'integer',
                 'min:1'
             ],
+            'is_active' => [
+                'nullable',
+                'boolean'
+            ],
         ];
     }
 
@@ -59,6 +63,7 @@ final class PlanRequest extends FormRequest
             'name.unique' => 'План с таким названием уже существует в этом цикле.',
             'order.integer' => 'Порядок должен быть числом.',
             'order.min' => 'Порядок должен быть больше 0.',
+            'is_active.boolean' => 'Статус активности должен быть логическим значением.',
         ];
     }
 

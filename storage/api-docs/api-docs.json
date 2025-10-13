@@ -1048,13 +1048,13 @@
                                         "example": "Набор массы"
                                     },
                                     "start_date": {
-                                        "description": "Дата начала цикла (необязательно)",
+                                        "description": "Дата начала цикла (необязательно, но если указана, то end_date обязательна)",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-01-01"
                                     },
                                     "end_date": {
-                                        "description": "Дата окончания цикла (необязательно)",
+                                        "description": "Дата окончания цикла (необязательно, но если указана start_date, то обязательна)",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-03-31"
@@ -1078,7 +1078,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/CycleResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -1161,7 +1161,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/CycleResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -1243,13 +1243,13 @@
                                         "example": "Набор массы"
                                     },
                                     "start_date": {
-                                        "description": "Дата начала цикла (необязательно)",
+                                        "description": "Дата начала цикла (необязательно, но если указана, то end_date обязательна)",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-01-01"
                                     },
                                     "end_date": {
-                                        "description": "Дата окончания цикла (необязательно)",
+                                        "description": "Дата окончания цикла (необязательно, но если указана start_date, то обязательна)",
                                         "type": "string",
                                         "format": "date",
                                         "example": "2024-03-31"
@@ -1273,7 +1273,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/CycleResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -1759,7 +1759,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/ExerciseResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -2331,7 +2331,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/MetricResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -2820,7 +2820,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/MuscleGroupResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -3047,13 +3047,23 @@
                         }
                     },
                     {
-                        "name": "name",
+                        "name": "search",
                         "in": "query",
                         "description": "Фильтр по названию плана",
                         "required": false,
                         "schema": {
                             "type": "string",
                             "example": "силовая"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Фильтр по статусу активности",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
                         }
                     },
                     {
@@ -3067,6 +3077,7 @@
                                 "id",
                                 "name",
                                 "order",
+                                "is_active",
                                 "exercise_count",
                                 "created_at"
                             ],
@@ -3185,15 +3196,20 @@
                                         "type": "string",
                                         "example": "Силовая тренировка"
                                     },
-                                    "description": {
-                                        "description": "Описание плана",
-                                        "type": "string",
-                                        "example": "План для развития силы"
-                                    },
                                     "cycle_id": {
                                         "description": "ID цикла тренировок",
                                         "type": "integer",
                                         "example": 1
+                                    },
+                                    "order": {
+                                        "description": "Порядок плана",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "is_active": {
+                                        "description": "Статус активности плана",
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 },
                                 "type": "object"
@@ -3292,7 +3308,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/PlanResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -3373,15 +3389,20 @@
                                         "type": "string",
                                         "example": "Силовая тренировка"
                                     },
-                                    "description": {
-                                        "description": "Описание плана",
-                                        "type": "string",
-                                        "example": "План для развития силы"
-                                    },
                                     "cycle_id": {
                                         "description": "ID цикла тренировок",
                                         "type": "integer",
                                         "example": 1
+                                    },
+                                    "order": {
+                                        "description": "Порядок плана",
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "is_active": {
+                                        "description": "Статус активности плана",
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 },
                                 "type": "object"
@@ -4361,7 +4382,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/WorkoutResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -5294,6 +5315,10 @@
                     "order": {
                         "type": "integer",
                         "example": 1
+                    },
+                    "is_active": {
+                        "type": "boolean",
+                        "example": true
                     },
                     "exercise_count": {
                         "type": "integer",

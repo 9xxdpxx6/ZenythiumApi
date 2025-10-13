@@ -17,10 +17,12 @@ final class Plan extends Model
         'cycle_id',
         'name',
         'order',
+        'is_active',
     ];
 
     protected $casts = [
         'order' => 'integer',
+        'is_active' => 'boolean',
     ];
 
     protected $appends = [

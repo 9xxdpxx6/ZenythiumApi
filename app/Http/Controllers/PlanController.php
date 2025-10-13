@@ -18,6 +18,7 @@ use Illuminate\Http\Request;
  *     @OA\Property(property="id", type="integer", example=1),
  *     @OA\Property(property="name", type="string", example="Силовая тренировка"),
  *     @OA\Property(property="order", type="integer", example=1),
+ *     @OA\Property(property="is_active", type="boolean", example=true),
  *     @OA\Property(property="exercise_count", type="integer", example=5),
  *     @OA\Property(property="cycle", type="object",
  *         @OA\Property(property="id", type="integer", example=1),
@@ -74,19 +75,26 @@ final class PlanController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer", example=1)
      *     ),
-     *     @OA\Parameter(
-     *         name="name",
-     *         in="query",
-     *         description="Фильтр по названию плана",
-     *         required=false,
-     *         @OA\Schema(type="string", example="силовая")
-     *     ),
+ *     @OA\Parameter(
+ *         name="search",
+ *         in="query",
+ *         description="Фильтр по названию плана",
+ *         required=false,
+ *         @OA\Schema(type="string", example="силовая")
+ *     ),
+ *     @OA\Parameter(
+ *         name="is_active",
+ *         in="query",
+ *         description="Фильтр по статусу активности",
+ *         required=false,
+ *         @OA\Schema(type="boolean", example=true)
+ *     ),
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Поле для сортировки",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id", "name", "order", "exercise_count", "created_at"}, example="order")
+     *         @OA\Schema(type="string", enum={"id", "name", "order", "is_active", "exercise_count", "created_at"}, example="order")
      *     ),
      *     @OA\Parameter(
      *         name="sort_order",
@@ -151,10 +159,11 @@ final class PlanController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","cycle_id"},
-     *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
-     *             @OA\Property(property="description", type="string", example="План для развития силы", description="Описание плана"),
-     *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок")
+ *             required={"name","cycle_id"},
+ *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
+ *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок"),
+ *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
+ *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана")
      *         )
      *     ),
      *     @OA\Response(
@@ -212,7 +221,7 @@ final class PlanController extends Controller
      *         response=200,
      *         description="План успешно получен",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/PlanResource"),
      *             @OA\Property(property="message", type="string", example="План успешно получен")
      *         )
      *     ),
@@ -264,11 +273,12 @@ final class PlanController extends Controller
      *     ),
      *     @OA\RequestBody(
      *         required=true,
-     *         @OA\JsonContent(
-     *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
-     *             @OA\Property(property="description", type="string", example="План для развития силы", description="Описание плана"),
-     *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок")
-     *         )
+ *         @OA\JsonContent(
+ *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
+ *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок"),
+ *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
+ *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана")
+ *         )
      *     ),
      *     @OA\Response(
      *         response=200,

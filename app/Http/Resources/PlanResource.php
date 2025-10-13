@@ -18,6 +18,7 @@ final class PlanResource extends JsonResource
             'id' => $this->id,
             'name' => $this->name,
             'order' => $this->order,
+            'is_active' => $this->is_active,
             'exercise_count' => $this->exercise_count,
             'cycle' => [
                 'id' => $this->cycle->id,

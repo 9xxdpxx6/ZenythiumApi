@@ -20,7 +20,8 @@ final class PlanService
      * @param array $filters Массив фильтров для поиска планов
      * @param int|null $filters['user_id'] ID пользователя (обязательно для безопасности)
      * @param int|null $filters['cycle_id'] ID цикла тренировок
-     * @param string|null $filters['name'] Название плана (поиск по частичному совпадению)
+     * @param string|null $filters['search'] Название плана (поиск по частичному совпадению)
+     * @param bool|null $filters['is_active'] Статус активности плана
      * @param int $filters['page'] Номер страницы (по умолчанию 1)
      * @param int $filters['per_page'] Количество элементов на странице (по умолчанию 15)
      * 
@@ -69,8 +70,9 @@ final class PlanService
      * 
      * @param array $data Данные для создания плана
      * @param string $data['name'] Название плана
-     * @param string|null $data['description'] Описание плана
      * @param int $data['cycle_id'] ID цикла тренировок
+     * @param int|null $data['order'] Порядок плана
+     * @param bool|null $data['is_active'] Статус активности плана
      * 
      * @return Plan Созданная модель плана
      * 

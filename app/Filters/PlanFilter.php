@@ -14,6 +14,7 @@ final class PlanFilter extends BaseFilter
         $this->applyUserFilter($query);
         $this->applyCycleFilter($query);
         $this->applyOrderFilter($query);
+        $this->applyActiveFilter($query);
         $this->applySortingFilter($query);
         $this->applyDateRangeFilter($query);
 
@@ -50,6 +51,13 @@ final class PlanFilter extends BaseFilter
     {
         if ($this->hasFilter('order')) {
             $query->where('order', $this->getFilter('order'));
+        }
+    }
+
+    private function applyActiveFilter(Builder $query): void
+    {
+        if ($this->hasFilter('is_active')) {
+            $query->where('is_active', $this->getFilter('is_active'));
         }
     }
 

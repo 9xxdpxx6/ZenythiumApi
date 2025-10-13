@@ -47,6 +47,14 @@
                                         <label for="createOrder" class="form-label">Порядок</label>
                                         <input type="number" class="form-control" id="createOrder" min="1">
                                     </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="createIsActive" checked>
+                                            <label class="form-check-label" for="createIsActive">
+                                                Активен
+                                            </label>
+                                        </div>
+                                    </div>
                                     <button type="submit" class="btn btn-success">
                                         <i class="fas fa-plus"></i> Создать
                                     </button>
@@ -81,6 +89,14 @@
                                             <input type="number" class="form-control" id="filterOrder" min="1" placeholder="Порядок плана">
                                         </div>
                                         <div class="col-md-6">
+                                            <label for="filterIsActive" class="form-label">Статус активности</label>
+                                            <select class="form-control" id="filterIsActive">
+                                                <option value="">Все</option>
+                                                <option value="1">Активные</option>
+                                                <option value="0">Неактивные</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
                                             <label for="filterDateFrom" class="form-label">Дата создания от</label>
                                             <input type="date" class="form-control" id="filterDateFrom">
                                         </div>
@@ -93,6 +109,7 @@
                                             <select class="form-control" id="filterSortBy">
                                                 <option value="order">Порядок</option>
                                                 <option value="name">Название</option>
+                                                <option value="is_active">Статус активности</option>
                                                 <option value="created_at">Дата создания</option>
                                             </select>
                                         </div>
@@ -157,6 +174,14 @@
                                     <div class="mb-3">
                                         <label for="updateOrder" class="form-label">Порядок</label>
                                         <input type="number" class="form-control" id="updateOrder" min="1">
+                                    </div>
+                                    <div class="mb-3">
+                                        <div class="form-check">
+                                            <input class="form-check-input" type="checkbox" id="updateIsActive">
+                                            <label class="form-check-label" for="updateIsActive">
+                                                Активен
+                                            </label>
+                                        </div>
                                     </div>
                                     <button type="submit" class="btn btn-warning">
                                         <i class="fas fa-edit"></i> Обновить
@@ -295,6 +320,7 @@
                                             <th>Название</th>
                                             <th>Цикл</th>
                                             <th>Порядок</th>
+                                            <th>Статус</th>
                                             <th>Упражнений</th>
                                             <th>Создано</th>
                                         </tr>
@@ -306,6 +332,7 @@
                                                 <td>${item.name}</td>
                                                 <td>${item.cycle ? item.cycle.name : '-'}</td>
                                                 <td>${item.order || '-'}</td>
+                                                <td><span class="badge ${item.is_active ? 'bg-success' : 'bg-secondary'}">${item.is_active ? 'Активен' : 'Неактивен'}</span></td>
                                                 <td>${item.exercise_count}</td>
                                                 <td>${new Date(item.created_at).toLocaleString('ru-RU')}</td>
                                             </tr>
@@ -337,6 +364,7 @@
                 user_id: document.getElementById('filterUserId').value,
                 cycle_id: document.getElementById('filterCycleId').value,
                 order: document.getElementById('filterOrder').value,
+                is_active: document.getElementById('filterIsActive').value,
                 date_from: document.getElementById('filterDateFrom').value,
                 date_to: document.getElementById('filterDateTo').value,
                 sort_by: document.getElementById('filterSortBy').value,
@@ -359,7 +387,8 @@
             const formData = {
                 cycle_id: parseInt(document.getElementById('createCycleId').value),
                 name: document.getElementById('createName').value,
-                order: document.getElementById('createOrder').value ? parseInt(document.getElementById('createOrder').value) : null
+                order: document.getElementById('createOrder').value ? parseInt(document.getElementById('createOrder').value) : null,
+                is_active: document.getElementById('createIsActive').checked
             };
 
             try {
@@ -374,6 +403,7 @@
                 
                 if (response.ok) {
                     document.getElementById('createForm').reset();
+                    document.getElementById('createIsActive').checked = true;
                     loadList();
                 }
             } catch (error) {
@@ -389,7 +419,8 @@
             const formData = {
                 cycle_id: parseInt(document.getElementById('updateCycleId').value),
                 name: document.getElementById('updateName').value,
-                order: document.getElementById('updateOrder').value ? parseInt(document.getElementById('updateOrder').value) : null
+                order: document.getElementById('updateOrder').value ? parseInt(document.getElementById('updateOrder').value) : null,
+                is_active: document.getElementById('updateIsActive').checked
             };
 
             try {
@@ -433,6 +464,7 @@
                             <strong>Название:</strong> ${data.data.name}<br>
                             <strong>Цикл:</strong> ${data.data.cycle ? data.data.cycle.name : 'Не указан'}<br>
                             <strong>Порядок:</strong> ${data.data.order || 'Не указан'}<br>
+                            <strong>Статус:</strong> ${data.data.is_active ? 'Активен' : 'Неактивен'}<br>
                             <strong>Количество упражнений:</strong> ${data.data.exercise_count}<br>
                             <strong>Создано:</strong> ${new Date(data.data.created_at).toLocaleString('ru-RU')}<br>
                             <strong>Обновлено:</strong> ${new Date(data.data.updated_at).toLocaleString('ru-RU')}
