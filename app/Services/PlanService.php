@@ -32,7 +32,7 @@ final class PlanService
     public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new PlanFilter($filters);
-        $query = Plan::query()->with('cycle');
+        $query = Plan::query()->with(['cycle', 'planExercises.exercise']);
         
         // Если user_id не передан, возвращаем пустой результат для безопасности
         if (!isset($filters['user_id']) || $filters['user_id'] === null) {

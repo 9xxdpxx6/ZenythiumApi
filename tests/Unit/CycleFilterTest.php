@@ -428,7 +428,7 @@ describe('CycleFilter', function () {
                 'start_date' => '2024-02-01',
             ]);
             
-            $filter = new CycleFilter(['sort_by' => 'name', 'sort_direction' => 'asc']);
+            $filter = new CycleFilter(['sort_by' => 'name', 'sort_order' => 'asc']);
             $query = Cycle::query();
             
             $filter->apply($query);

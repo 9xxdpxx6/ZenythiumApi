@@ -546,7 +546,7 @@ final class StatisticsController extends Controller
             ])
             ->groupBy('exercises.id', 'exercises.name', 'muscle_groups.name')
             ->orderByDesc('total_sets')
-            ->limit(10)
+            ->limit(5)
             ->get()
             ->map(function ($item) {
                 return [

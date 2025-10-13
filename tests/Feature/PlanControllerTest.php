@@ -55,6 +55,12 @@ describe('PlanController', function () {
                                 'id',
                                 'name',
                             ],
+                            'exercises' => [
+                                '*' => [
+                                    'id',
+                                    'name',
+                                ],
+                            ],
                             'created_at',
                             'updated_at',
                         ]
@@ -137,6 +143,12 @@ describe('PlanController', function () {
                         'cycle' => [
                             'id',
                             'name',
+                        ],
+                        'exercises' => [
+                            '*' => [
+                                'id',
+                                'name',
+                            ],
                         ],
                         'created_at',
                         'updated_at',
@@ -245,6 +257,12 @@ describe('PlanController', function () {
                             'id',
                             'name',
                         ],
+                        'exercises' => [
+                            '*' => [
+                                'id',
+                                'name',
+                            ],
+                        ],
                         'created_at',
                         'updated_at',
                     ],
@@ -293,6 +311,12 @@ describe('PlanController', function () {
                         'cycle' => [
                             'id',
                             'name',
+                        ],
+                        'exercises' => [
+                            '*' => [
+                                'id',
+                                'name',
+                            ],
                         ],
                         'created_at',
                         'updated_at',

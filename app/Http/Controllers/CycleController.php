@@ -134,7 +134,8 @@ final class CycleController extends Controller
      *             @OA\Property(property="name", type="string", example="Набор массы", description="Название цикла"),
      *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла (необязательно, но если указана, то end_date обязательна)"),
      *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла (необязательно, но если указана start_date, то обязательна)"),
-     *             @OA\Property(property="weeks", type="integer", example=6, description="Количество недель в цикле")
+     *             @OA\Property(property="weeks", type="integer", example=6, description="Количество недель в цикле"),
+     *             @OA\Property(property="plan_ids", type="array", @OA\Items(type="integer"), example={1,2,3}, description="Массив ID существующих планов для привязки к циклу (необязательно)")
      *         )
      *     ),
      *     @OA\Response(
@@ -249,7 +250,8 @@ final class CycleController extends Controller
      *             @OA\Property(property="name", type="string", example="Набор массы", description="Название цикла"),
      *             @OA\Property(property="start_date", type="string", format="date", example="2024-01-01", description="Дата начала цикла (необязательно, но если указана, то end_date обязательна)"),
      *             @OA\Property(property="end_date", type="string", format="date", example="2024-03-31", description="Дата окончания цикла (необязательно, но если указана start_date, то обязательна)"),
-     *             @OA\Property(property="weeks", type="integer", example=6, description="Количество недель в цикле")
+     *             @OA\Property(property="weeks", type="integer", example=6, description="Количество недель в цикле"),
+     *             @OA\Property(property="plan_ids", type="array", @OA\Items(type="integer"), example={1,2,3}, description="Массив ID существующих планов для привязки к циклу (необязательно)")
      *         )
      *     ),
      *     @OA\Response(

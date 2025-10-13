@@ -1063,6 +1063,18 @@
                                         "description": "Количество недель в цикле",
                                         "type": "integer",
                                         "example": 6
+                                    },
+                                    "plan_ids": {
+                                        "description": "Массив ID существующих планов для привязки к циклу (необязательно)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -1258,6 +1270,18 @@
                                         "description": "Количество недель в цикле",
                                         "type": "integer",
                                         "example": 6
+                                    },
+                                    "plan_ids": {
+                                        "description": "Массив ID существующих планов для привязки к циклу (необязательно)",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -6232,6 +6256,22 @@
                             }
                         },
                         "type": "object"
+                    },
+                    "exercises": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Жим лежа"
+                                }
+                            },
+                            "type": "object"
+                        }
                     },
                     "created_at": {
                         "type": "string",

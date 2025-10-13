@@ -47,6 +47,15 @@ final class CycleRequest extends FormRequest
                 'min:1',
                 'max:52'
             ],
+            'plan_ids' => [
+                'nullable',
+                'array',
+                'max:20' // Ограничиваем количество планов
+            ],
+            'plan_ids.*' => [
+                'integer',
+                'exists:plans,id'
+            ],
         ];
     }
 
@@ -68,6 +77,10 @@ final class CycleRequest extends FormRequest
             'weeks.integer' => 'Количество недель должно быть числом.',
             'weeks.min' => 'Количество недель должно быть больше 0.',
             'weeks.max' => 'Количество недель не может быть больше 52.',
+            'plan_ids.array' => 'Планы должны быть переданы в виде массива.',
+            'plan_ids.max' => 'Нельзя привязать больше 20 планов к одному циклу.',
+            'plan_ids.*.integer' => 'ID плана должен быть числом.',
+            'plan_ids.*.exists' => 'Один или несколько планов не найдены.',
         ];
     }
 
@@ -79,5 +92,21 @@ final class CycleRequest extends FormRequest
         $this->merge([
             'user_id' => $this->user()->id,
         ]);
+    }
+
+    /**
+     * Configure the validator instance.
+     */
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            $data = $validator->getData();
+            $startDate = $data['start_date'] ?? null;
+            $endDate = $data['end_date'] ?? null;
+            
+            if ($startDate && $endDate && $startDate > $endDate) {
+                $validator->errors()->add('start_date', 'Дата начала должна быть раньше или равна дате окончания.');
+            }
+        });
     }
 }

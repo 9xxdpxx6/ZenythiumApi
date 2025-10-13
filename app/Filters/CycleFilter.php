@@ -72,6 +72,23 @@ final class CycleFilter extends BaseFilter
 
     private function applySortingFilter(Builder $query): void
     {
-        parent::applySorting($query, 'start_date', 'desc');
+        // Если не указана кастомная сортировка, применяем дефолтную
+        if (!$this->hasFilter('sort_by')) {
+            $today = now()->format('Y-m-d');
+            $query->orderByRaw("
+                CASE 
+                    WHEN (start_date IS NULL OR start_date <= '{$today}') 
+                         AND (end_date IS NULL OR end_date >= '{$today}') 
+                    THEN 0  -- Активные циклы
+                    ELSE 1   -- Завершенные циклы
+                END ASC,
+                created_at DESC
+            ");
+        } else {
+            // Применяем кастомную сортировку
+            $sortBy = $this->getFilter('sort_by');
+            $sortOrder = $this->getFilter('sort_order', 'asc');
+            $query->orderBy($sortBy, $sortOrder);
+        }
     }
 }
