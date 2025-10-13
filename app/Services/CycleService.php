@@ -20,7 +20,7 @@ final class CycleService
     public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new CycleFilter($filters);
-        $query = Cycle::query();
+        $query = Cycle::query()->withCount('plans');
         
         // Если user_id не передан, возвращаем пустой результат для безопасности
         if (!isset($filters['user_id']) || $filters['user_id'] === null) {
@@ -37,7 +37,9 @@ final class CycleService
      */
     public function getById(int $id, ?int $userId = null): ?Cycle
     {
-        $query = Cycle::query();
+        $query = Cycle::query()->with(['plans' => function ($query) {
+            $query->orderBy('order');
+        }]);
 
         if ($userId) {
             $query->where('user_id', $userId);

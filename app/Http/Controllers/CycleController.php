@@ -6,30 +6,12 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\CycleRequest;
 use App\Http\Resources\CycleResource;
+use App\Http\Resources\CycleDetailResource;
 use App\Models\Cycle;
 use App\Services\CycleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
-/**
- * @OA\Schema(
- *     schema="CycleResource",
- *     type="object",
- *     @OA\Property(property="id", type="integer", example=1),
- *     @OA\Property(property="name", type="string", example="Программа на массу"),
- *     @OA\Property(property="user", type="object",
- *         @OA\Property(property="id", type="integer", example=1),
- *         @OA\Property(property="name", type="string", example="Иван Петров")
- *     ),
- *     @OA\Property(property="start_date", type="string", format="date", example="2024-01-01"),
- *     @OA\Property(property="end_date", type="string", format="date", example="2024-12-31"),
- *     @OA\Property(property="weeks", type="integer", example=12),
- *     @OA\Property(property="progress_percentage", type="number", format="float", example=75.5),
- *     @OA\Property(property="completed_workouts_count", type="integer", example=8),
- *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
- *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
- * )
- */
 final class CycleController extends Controller
 {
     public function __construct(
@@ -211,7 +193,7 @@ final class CycleController extends Controller
      *         response=200,
      *         description="Цикл успешно получен",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", ref="#/components/schemas/CycleResource"),
+     *             @OA\Property(property="data", ref="#/components/schemas/CycleDetailResource"),
      *             @OA\Property(property="message", type="string", example="Цикл успешно получен")
      *         )
      *     ),
@@ -242,7 +224,7 @@ final class CycleController extends Controller
         }
         
         return response()->json([
-            'data' => new CycleResource($cycle),
+            'data' => new CycleDetailResource($cycle),
             'message' => 'Цикл успешно получен'
         ]);
     }

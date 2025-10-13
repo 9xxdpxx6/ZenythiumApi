@@ -36,6 +36,10 @@ Route::prefix('v1')->group(function () {
 Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
     Route::get('/user/statistics', [StatisticsController::class, 'statistics']);
+    Route::get('/user/exercise-statistics', [StatisticsController::class, 'exerciseStatistics']);
+    Route::get('/user/time-analytics', [StatisticsController::class, 'timeAnalytics']);
+    Route::get('/user/muscle-group-statistics', [StatisticsController::class, 'muscleGroupStatistics']);
+    Route::get('/user/records', [StatisticsController::class, 'records']);
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);

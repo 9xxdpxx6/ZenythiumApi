@@ -1161,7 +1161,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "$ref": "#/components/schemas/CycleResource"
+                                            "$ref": "#/components/schemas/CycleDetailResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -4041,8 +4041,9 @@
                                                     "example": 3.2
                                                 },
                                                 "training_streak_days": {
+                                                    "description": "Количество подряд выполненных тренировок без пропусков в циклах",
                                                     "type": "integer",
-                                                    "example": 7
+                                                    "example": 12
                                                 }
                                             },
                                             "type": "object"
@@ -4050,6 +4051,465 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Статистика пользователя успешно получена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Пользователь не аутентифицирован"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/exercise-statistics": {
+            "get": {
+                "tags": [
+                    "Statistics"
+                ],
+                "summary": "Получение детальной статистики по упражнениям",
+                "description": "Возвращает детальную статистику по упражнениям пользователя: топ упражнений, прогресс по весам, количество подходов",
+                "operationId": "6a1d267268907e27573094095cf62feb",
+                "responses": {
+                    "200": {
+                        "description": "Статистика по упражнениям успешно получена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "top_exercises": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "exercise_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "muscle_group": {
+                                                                "type": "string"
+                                                            },
+                                                            "total_sets": {
+                                                                "type": "integer"
+                                                            },
+                                                            "total_volume": {
+                                                                "type": "number"
+                                                            },
+                                                            "max_weight": {
+                                                                "type": "number"
+                                                            },
+                                                            "avg_weight": {
+                                                                "type": "number"
+                                                            },
+                                                            "last_performed": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "exercise_progress": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "exercise_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "muscle_group": {
+                                                                "type": "string"
+                                                            },
+                                                            "weight_progression": {
+                                                                "type": "array",
+                                                                "items": {
+                                                                    "properties": {
+                                                                        "date": {
+                                                                            "type": "string",
+                                                                            "format": "date"
+                                                                        },
+                                                                        "max_weight": {
+                                                                            "type": "number"
+                                                                        },
+                                                                        "total_volume": {
+                                                                            "type": "number"
+                                                                        }
+                                                                    },
+                                                                    "type": "object"
+                                                                }
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Статистика по упражнениям успешно получена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Пользователь не аутентифицирован"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/time-analytics": {
+            "get": {
+                "tags": [
+                    "Statistics"
+                ],
+                "summary": "Получение временной аналитики тренировок",
+                "description": "Возвращает временную аналитику тренировок: графики по дням недели, месяцам, тренды",
+                "operationId": "17cb6f54a8d3d62e672efa7c566f627b",
+                "responses": {
+                    "200": {
+                        "description": "Временная аналитика успешно получена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "weekly_pattern": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "day_of_week": {
+                                                                "type": "string"
+                                                            },
+                                                            "workout_count": {
+                                                                "type": "integer"
+                                                            },
+                                                            "avg_duration": {
+                                                                "type": "number"
+                                                            },
+                                                            "total_volume": {
+                                                                "type": "number"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "monthly_trends": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "month": {
+                                                                "type": "string"
+                                                            },
+                                                            "workout_count": {
+                                                                "type": "integer"
+                                                            },
+                                                            "total_volume": {
+                                                                "type": "number"
+                                                            },
+                                                            "avg_duration": {
+                                                                "type": "number"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "volume_trends": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "week": {
+                                                                "type": "string"
+                                                            },
+                                                            "total_volume": {
+                                                                "type": "number"
+                                                            },
+                                                            "workout_count": {
+                                                                "type": "integer"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Временная аналитика успешно получена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Пользователь не аутентифицирован"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/muscle-group-statistics": {
+            "get": {
+                "tags": [
+                    "Statistics"
+                ],
+                "summary": "Получение статистики по мышечным группам",
+                "description": "Возвращает статистику по мышечным группам: объем работы, частота тренировок, дисбаланс",
+                "operationId": "78a76bb33d69a81e2b7e9f979cb5659f",
+                "responses": {
+                    "200": {
+                        "description": "Статистика по мышечным группам успешно получена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "muscle_group_stats": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "muscle_group_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "total_volume": {
+                                                                "type": "number"
+                                                            },
+                                                            "workout_count": {
+                                                                "type": "integer"
+                                                            },
+                                                            "exercise_count": {
+                                                                "type": "integer"
+                                                            },
+                                                            "avg_volume_per_workout": {
+                                                                "type": "number"
+                                                            },
+                                                            "last_trained": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "balance_analysis": {
+                                                    "properties": {
+                                                        "most_trained": {
+                                                            "type": "string"
+                                                        },
+                                                        "least_trained": {
+                                                            "type": "string"
+                                                        },
+                                                        "balance_score": {
+                                                            "type": "number"
+                                                        },
+                                                        "recommendations": {
+                                                            "type": "array",
+                                                            "items": {
+                                                                "type": "string"
+                                                            }
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Статистика по мышечным группам успешно получена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Пользователь не аутентифицирован"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/records": {
+            "get": {
+                "tags": [
+                    "Statistics"
+                ],
+                "summary": "Получение рекордов пользователя",
+                "description": "Возвращает личные рекорды пользователя: максимальные веса, объемы, лучшие результаты",
+                "operationId": "c76c5096a8a61ca34772f61b5f456b48",
+                "responses": {
+                    "200": {
+                        "description": "Рекорды пользователя успешно получены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "personal_records": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "properties": {
+                                                            "exercise_name": {
+                                                                "type": "string"
+                                                            },
+                                                            "muscle_group": {
+                                                                "type": "string"
+                                                            },
+                                                            "max_weight": {
+                                                                "type": "number"
+                                                            },
+                                                            "max_reps": {
+                                                                "type": "integer"
+                                                            },
+                                                            "max_volume": {
+                                                                "type": "number"
+                                                            },
+                                                            "achieved_date": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            }
+                                                        },
+                                                        "type": "object"
+                                                    }
+                                                },
+                                                "workout_records": {
+                                                    "properties": {
+                                                        "max_volume_workout": {
+                                                            "properties": {
+                                                                "date": {
+                                                                    "type": "string",
+                                                                    "format": "date"
+                                                                },
+                                                                "total_volume": {
+                                                                    "type": "number"
+                                                                },
+                                                                "duration_minutes": {
+                                                                    "type": "integer"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "longest_workout": {
+                                                            "properties": {
+                                                                "date": {
+                                                                    "type": "string",
+                                                                    "format": "date"
+                                                                },
+                                                                "duration_minutes": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "total_volume": {
+                                                                    "type": "number"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        },
+                                                        "most_exercises_workout": {
+                                                            "properties": {
+                                                                "date": {
+                                                                    "type": "string",
+                                                                    "format": "date"
+                                                                },
+                                                                "exercise_count": {
+                                                                    "type": "integer"
+                                                                },
+                                                                "total_volume": {
+                                                                    "type": "number"
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Рекорды пользователя успешно получены"
                                         }
                                     },
                                     "type": "object"
@@ -5122,65 +5582,6 @@
     },
     "components": {
         "schemas": {
-            "CycleResource": {
-                "properties": {
-                    "id": {
-                        "type": "integer",
-                        "example": 1
-                    },
-                    "name": {
-                        "type": "string",
-                        "example": "Программа на массу"
-                    },
-                    "user": {
-                        "properties": {
-                            "id": {
-                                "type": "integer",
-                                "example": 1
-                            },
-                            "name": {
-                                "type": "string",
-                                "example": "Иван Петров"
-                            }
-                        },
-                        "type": "object"
-                    },
-                    "start_date": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "2024-01-01"
-                    },
-                    "end_date": {
-                        "type": "string",
-                        "format": "date",
-                        "example": "2024-12-31"
-                    },
-                    "weeks": {
-                        "type": "integer",
-                        "example": 12
-                    },
-                    "progress_percentage": {
-                        "type": "number",
-                        "format": "float",
-                        "example": 75.5
-                    },
-                    "completed_workouts_count": {
-                        "type": "integer",
-                        "example": 8
-                    },
-                    "created_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2024-01-01T00:00:00.000000Z"
-                    },
-                    "updated_at": {
-                        "type": "string",
-                        "format": "date-time",
-                        "example": "2024-01-01T00:00:00.000000Z"
-                    }
-                },
-                "type": "object"
-            },
             "ExerciseResource": {
                 "properties": {
                     "id": {
@@ -5525,6 +5926,170 @@
                             }
                         },
                         "type": "object"
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "CycleDetailResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Программа на массу"
+                    },
+                    "user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Иван Петров"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-12-31"
+                    },
+                    "weeks": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "progress_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 75.5
+                    },
+                    "completed_workouts_count": {
+                        "type": "integer",
+                        "example": 8
+                    },
+                    "plans_count": {
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "plans": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "name": {
+                                    "type": "string",
+                                    "example": "Силовая тренировка"
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "is_active": {
+                                    "type": "boolean",
+                                    "example": true
+                                },
+                                "exercise_count": {
+                                    "type": "integer",
+                                    "example": 5
+                                },
+                                "created_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "2024-01-01T00:00:00.000000Z"
+                                },
+                                "updated_at": {
+                                    "type": "string",
+                                    "format": "date-time",
+                                    "example": "2024-01-01T00:00:00.000000Z"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "CycleResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "type": "string",
+                        "example": "Программа на массу"
+                    },
+                    "user": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Иван Петров"
+                            }
+                        },
+                        "type": "object"
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-12-31"
+                    },
+                    "weeks": {
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "progress_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 75.5
+                    },
+                    "completed_workouts_count": {
+                        "type": "integer",
+                        "example": 8
+                    },
+                    "plans_count": {
+                        "type": "integer",
+                        "example": 3
                     },
                     "created_at": {
                         "type": "string",
