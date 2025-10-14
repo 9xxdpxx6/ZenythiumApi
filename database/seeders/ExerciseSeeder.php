@@ -81,7 +81,7 @@ final class ExerciseSeeder extends Seeder
                 [
                     'description' => $exerciseData['description'],
                     'user_id' => $userId,
-                    'is_active' => true,
+                    'is_active' => fake()->boolean(70), // 70% вероятность быть активным
                 ]
             );
         }

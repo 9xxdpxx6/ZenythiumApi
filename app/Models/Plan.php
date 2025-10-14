@@ -42,7 +42,7 @@ final class Plan extends Model
      */
     public function planExercises(): HasMany
     {
-        return $this->hasMany(PlanExercise::class);
+        return $this->hasMany(PlanExercise::class)->orderBy('order');
     }
 
     /**

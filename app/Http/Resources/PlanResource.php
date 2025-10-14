@@ -20,12 +20,13 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *         @OA\Property(property="id", type="integer", example=1),
  *         @OA\Property(property="name", type="string", example="Программа на массу")
  *     ),
- *     @OA\Property(property="exercises", type="array", 
- *         @OA\Items(type="object",
- *             @OA\Property(property="id", type="integer", example=1),
- *             @OA\Property(property="name", type="string", example="Жим лежа")
- *         )
- *     ),
+     *     @OA\Property(property="exercises", type="array", 
+     *         @OA\Items(type="object",
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="name", type="string", example="Жим лежа"),
+     *             @OA\Property(property="order", type="integer", example=1)
+     *         )
+     *     ),
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
  * )
@@ -51,6 +52,7 @@ final class PlanResource extends JsonResource
                 return [
                     'id' => $planExercise->exercise->id,
                     'name' => $planExercise->exercise->name,
+                    'order' => $planExercise->order,
                 ];
             }),
             'created_at' => $this->created_at?->toISOString(),

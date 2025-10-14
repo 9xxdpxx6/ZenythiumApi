@@ -6403,6 +6403,10 @@
                                 "name": {
                                     "type": "string",
                                     "example": "Жим лежа"
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "example": 1
                                 }
                             },
                             "type": "object"
