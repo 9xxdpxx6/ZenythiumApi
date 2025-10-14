@@ -3,7 +3,10 @@
 declare(strict_types=1);
 
 use App\Models\Cycle;
+use App\Models\Exercise;
+use App\Models\MuscleGroup;
 use App\Models\Plan;
+use App\Models\PlanExercise;
 use App\Models\User;
 use App\Services\PlanService;
 
@@ -17,6 +20,12 @@ beforeEach(function () {
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
     $this->plan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
     $this->planService = new PlanService();
+    
+    // Создаем упражнения для тестирования
+    $muscleGroup = MuscleGroup::factory()->create();
+    $this->exercise1 = Exercise::factory()->create(['user_id' => $this->user->id, 'muscle_group_id' => $muscleGroup->id]);
+    $this->exercise2 = Exercise::factory()->create(['user_id' => $this->user->id, 'muscle_group_id' => $muscleGroup->id]);
+    $this->exercise3 = Exercise::factory()->create(['user_id' => $this->user->id, 'muscle_group_id' => $muscleGroup->id]);
 });
 
 describe('PlanService', function () {
@@ -137,6 +146,61 @@ describe('PlanService', function () {
             expect($plan->name)->toBe('Plan Without Order');
             expect($plan->order)->toBeNull();
         });
+
+        it('creates plan with exercise_ids', function () {
+            $data = [
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Plan With Exercises',
+                'order' => 1,
+                'exercise_ids' => [$this->exercise1->id, $this->exercise2->id],
+            ];
+            
+            $plan = $this->planService->create($data);
+            
+            expect($plan)->toBeInstanceOf(Plan::class);
+            expect($plan->name)->toBe('Plan With Exercises');
+            
+            // Проверяем, что упражнения добавлены в план
+            $planExercises = PlanExercise::where('plan_id', $plan->id)->orderBy('order')->get();
+            expect($planExercises)->toHaveCount(2);
+            expect($planExercises->pluck('exercise_id')->toArray())->toBe([$this->exercise1->id, $this->exercise2->id]);
+            expect($planExercises->pluck('order')->toArray())->toBe([1, 2]);
+        });
+
+        it('creates plan with empty exercise_ids', function () {
+            $data = [
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Plan Without Exercises',
+                'order' => 1,
+                'exercise_ids' => [],
+            ];
+            
+            $plan = $this->planService->create($data);
+            
+            expect($plan)->toBeInstanceOf(Plan::class);
+            expect($plan->name)->toBe('Plan Without Exercises');
+            
+            // Проверяем, что упражнения не добавлены
+            $planExercises = PlanExercise::where('plan_id', $plan->id)->get();
+            expect($planExercises)->toHaveCount(0);
+        });
+
+        it('creates plan without exercise_ids', function () {
+            $data = [
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Plan Without Exercise Field',
+                'order' => 1,
+            ];
+            
+            $plan = $this->planService->create($data);
+            
+            expect($plan)->toBeInstanceOf(Plan::class);
+            expect($plan->name)->toBe('Plan Without Exercise Field');
+            
+            // Проверяем, что упражнения не добавлены
+            $planExercises = PlanExercise::where('plan_id', $plan->id)->get();
+            expect($planExercises)->toHaveCount(0);
+        });
     });
 
     describe('update', function () {
@@ -183,6 +247,66 @@ describe('PlanService', function () {
             $result = $this->planService->update($planId, $data, $this->user->id);
             expect($result)->toBeNull();
         })->with('exception_scenarios');
+
+        it('updates plan with exercise_ids', function () {
+            // Сначала добавляем упражнения к плану
+            PlanExercise::create(['plan_id' => $this->plan->id, 'exercise_id' => $this->exercise1->id, 'order' => 1]);
+            
+            $data = [
+                'name' => 'Updated Plan With Exercises',
+                'exercise_ids' => [$this->exercise2->id, $this->exercise3->id],
+            ];
+            
+            $plan = $this->planService->update($this->plan->id, $data, $this->user->id);
+            
+            expect($plan)->toBeInstanceOf(Plan::class);
+            expect($plan->name)->toBe('Updated Plan With Exercises');
+            
+            // Проверяем, что старые упражнения удалены, а новые добавлены
+            $planExercises = PlanExercise::where('plan_id', $plan->id)->orderBy('order')->get();
+            expect($planExercises)->toHaveCount(2);
+            expect($planExercises->pluck('exercise_id')->toArray())->toBe([$this->exercise2->id, $this->exercise3->id]);
+            expect($planExercises->pluck('order')->toArray())->toBe([1, 2]);
+        });
+
+        it('updates plan with empty exercise_ids', function () {
+            // Сначала добавляем упражнения к плану
+            PlanExercise::create(['plan_id' => $this->plan->id, 'exercise_id' => $this->exercise1->id, 'order' => 1]);
+            PlanExercise::create(['plan_id' => $this->plan->id, 'exercise_id' => $this->exercise2->id, 'order' => 2]);
+            
+            $data = [
+                'name' => 'Updated Plan Without Exercises',
+                'exercise_ids' => [],
+            ];
+            
+            $plan = $this->planService->update($this->plan->id, $data, $this->user->id);
+            
+            expect($plan)->toBeInstanceOf(Plan::class);
+            expect($plan->name)->toBe('Updated Plan Without Exercises');
+            
+            // Проверяем, что все упражнения удалены
+            $planExercises = PlanExercise::where('plan_id', $plan->id)->get();
+            expect($planExercises)->toHaveCount(0);
+        });
+
+        it('updates plan without exercise_ids field', function () {
+            // Сначала добавляем упражнения к плану
+            PlanExercise::create(['plan_id' => $this->plan->id, 'exercise_id' => $this->exercise1->id, 'order' => 1]);
+            
+            $data = [
+                'name' => 'Updated Plan Without Exercise Field',
+            ];
+            
+            $plan = $this->planService->update($this->plan->id, $data, $this->user->id);
+            
+            expect($plan)->toBeInstanceOf(Plan::class);
+            expect($plan->name)->toBe('Updated Plan Without Exercise Field');
+            
+            // Проверяем, что упражнения остались без изменений
+            $planExercises = PlanExercise::where('plan_id', $plan->id)->get();
+            expect($planExercises)->toHaveCount(1);
+            expect($planExercises->first()->exercise_id)->toBe($this->exercise1->id);
+        });
     });
 
     describe('delete', function () {

@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 use App\Http\Requests\PlanRequest;
 use App\Models\Cycle;
+use App\Models\Exercise;
+use App\Models\MuscleGroup;
 use App\Models\Plan;
 use App\Models\User;
 use Illuminate\Support\Facades\Validator;
@@ -32,10 +34,30 @@ dataset('valid_orders', [
     'string_number' => ['1'],
 ]);
 
+dataset('invalid_exercise_ids', [
+    'non_array' => ['not-an-array'],
+    'non_integer_elements' => [['not-a-number', 'also-not-a-number']],
+    'non_existent_exercises' => [[999999, 999998]],
+]);
+
+dataset('valid_exercise_ids', function () {
+    return [
+        'empty_array' => [[]],
+        'single_exercise' => [[1]],
+        'multiple_exercises' => [[1, 2, 3]],
+    ];
+});
+
 beforeEach(function () {
     $this->user = User::factory()->create();
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
     $this->plan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
+    
+    // Создаем упражнения для тестирования
+    $muscleGroup = MuscleGroup::factory()->create();
+    $this->exercise1 = Exercise::factory()->create(['user_id' => $this->user->id, 'muscle_group_id' => $muscleGroup->id]);
+    $this->exercise2 = Exercise::factory()->create(['user_id' => $this->user->id, 'muscle_group_id' => $muscleGroup->id]);
+    $this->exercise3 = Exercise::factory()->create(['user_id' => $this->user->id, 'muscle_group_id' => $muscleGroup->id]);
 });
 
 describe('PlanRequest', function () {
@@ -280,6 +302,82 @@ describe('PlanRequest', function () {
             expect($messages['name.unique'])->toBe('План с таким названием уже существует в этом цикле.');
             expect($messages['order.integer'])->toBe('Порядок должен быть числом.');
             expect($messages['order.min'])->toBe('Порядок должен быть больше 0.');
+            expect($messages['exercise_ids.array'])->toBe('Упражнения должны быть массивом.');
+            expect($messages['exercise_ids.*.integer'])->toBe('ID упражнения должен быть числом.');
+            expect($messages['exercise_ids.*.exists'])->toBe('Упражнение не найдено.');
+        });
+    });
+
+    describe('exercise_ids validation', function () {
+        it('passes validation with valid exercise_ids', function ($exerciseIds) {
+            $request = new PlanRequest();
+            $request->setUserResolver(fn() => $this->user);
+            
+            $data = [
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Test Plan',
+                'order' => 1,
+                'exercise_ids' => $exerciseIds,
+            ];
+            
+            $validator = Validator::make($data, $request->rules());
+            
+            expect($validator->passes())->toBeTrue();
+        })->with('valid_exercise_ids');
+
+        it('fails validation with invalid exercise_ids', function ($exerciseIds) {
+            $request = new PlanRequest();
+            $request->setUserResolver(fn() => $this->user);
+            
+            $data = [
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Test Plan',
+                'order' => 1,
+                'exercise_ids' => $exerciseIds,
+            ];
+            
+            $validator = Validator::make($data, $request->rules());
+            
+            expect($validator->fails())->toBeTrue();
+            
+            // Для массива с невалидными элементами ошибки будут в exercise_ids.*
+            if (is_array($exerciseIds)) {
+                expect($validator->errors()->has('exercise_ids.0'))->toBeTrue();
+            } else {
+                expect($validator->errors()->has('exercise_ids'))->toBeTrue();
+            }
+        })->with('invalid_exercise_ids');
+
+        it('passes validation with existing exercise_ids', function () {
+            $request = new PlanRequest();
+            $request->setUserResolver(fn() => $this->user);
+            
+            $data = [
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Test Plan',
+                'order' => 1,
+                'exercise_ids' => [$this->exercise1->id, $this->exercise2->id],
+            ];
+            
+            $validator = Validator::make($data, $request->rules());
+            
+            expect($validator->passes())->toBeTrue();
+        });
+
+        it('passes validation without exercise_ids', function () {
+            $request = new PlanRequest();
+            $request->setUserResolver(fn() => $this->user);
+            
+            $data = [
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Test Plan',
+                'order' => 1,
+                // exercise_ids отсутствует
+            ];
+            
+            $validator = Validator::make($data, $request->rules());
+            
+            expect($validator->passes())->toBeTrue();
         });
     });
 
