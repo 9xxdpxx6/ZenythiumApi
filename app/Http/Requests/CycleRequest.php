@@ -33,13 +33,11 @@ final class CycleRequest extends FormRequest
             ],
             'start_date' => [
                 'nullable',
-                'date',
-                'before_or_equal:end_date'
+                'date'
             ],
             'end_date' => [
                 'nullable',
-                'date',
-                'after_or_equal:start_date'
+                'date'
             ],
             'weeks' => [
                 'required',
@@ -91,6 +89,9 @@ final class CycleRequest extends FormRequest
     {
         $this->merge([
             'user_id' => $this->user()->id,
+            // Явно конвертируем пустые строки в null для полей дат
+            'start_date' => $this->input('start_date') === '' ? null : $this->input('start_date'),
+            'end_date' => $this->input('end_date') === '' ? null : $this->input('end_date'),
         ]);
     }
 
@@ -100,12 +101,18 @@ final class CycleRequest extends FormRequest
     public function withValidator($validator)
     {
         $validator->after(function ($validator) {
-            $data = $validator->getData();
-            $startDate = $data['start_date'] ?? null;
-            $endDate = $data['end_date'] ?? null;
+            // Используем данные из Form Request, а не из валидатора
+            $startDate = $this->input('start_date');
+            $endDate = $this->input('end_date');
             
+            // Если есть дата окончания, но нет даты начала - ошибка
+            if ($endDate && !$startDate) {
+                $validator->errors()->add('end_date', 'Дата окончания не может быть установлена без даты начала.');
+            }
+            
+            // Если есть обе даты, но дата окончания раньше даты начала - ошибка
             if ($startDate && $endDate && $startDate > $endDate) {
-                $validator->errors()->add('start_date', 'Дата начала должна быть раньше или равна дате окончания.');
+                $validator->errors()->add('end_date', 'Дата окончания не может быть раньше даты начала.');
             }
         });
     }

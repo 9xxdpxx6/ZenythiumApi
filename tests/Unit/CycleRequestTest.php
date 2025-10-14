@@ -187,22 +187,6 @@ describe('CycleRequest', function () {
             expect($validator->errors()->has('end_date'))->toBeTrue();
         });
 
-        it('fails validation when start_date is after end_date', function () {
-            $request = new CycleRequest();
-            $request->setUserResolver(fn() => $this->user);
-            
-            $data = [
-                'name' => 'Test Cycle',
-                'start_date' => '2024-01-31',
-                'end_date' => '2024-01-01',
-                'weeks' => 4,
-            ];
-            
-            $validator = Validator::make($data, $request->rules());
-            
-            expect($validator->fails())->toBeTrue();
-            expect($validator->errors()->has('start_date'))->toBeTrue();
-        });
 
         it('passes validation when start_date equals end_date', function () {
             $request = new CycleRequest();

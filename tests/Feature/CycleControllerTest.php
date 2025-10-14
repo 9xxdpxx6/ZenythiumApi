@@ -300,7 +300,7 @@ describe('CycleController', function () {
                 ]);
 
             $response->assertStatus(422)
-                ->assertJsonValidationErrors(['start_date']);
+                ->assertJsonValidationErrors(['end_date']);
         });
 
         it('validates weeks range', function () {
