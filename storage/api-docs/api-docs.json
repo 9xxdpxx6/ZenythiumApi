@@ -3636,6 +3636,11 @@
                                         "description": "Название для копии (необязательно)",
                                         "type": "string",
                                         "example": "Силовая тренировка (копия)"
+                                    },
+                                    "is_active": {
+                                        "description": "Статус активности плана (необязательно)",
+                                        "type": "boolean",
+                                        "example": true
                                     }
                                 },
                                 "type": "object"

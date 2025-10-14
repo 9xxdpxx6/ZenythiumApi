@@ -378,7 +378,8 @@ final class PlanController extends Controller
      *         required=false,
      *         @OA\JsonContent(
      *             @OA\Property(property="cycle_id", type="integer", example=2, description="ID цикла для новой копии (необязательно)"),
-     *             @OA\Property(property="name", type="string", example="Силовая тренировка (копия)", description="Название для копии (необязательно)")
+     *             @OA\Property(property="name", type="string", example="Силовая тренировка (копия)", description="Название для копии (необязательно)"),
+     *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана (необязательно)")
      *         )
      *     ),
      *     @OA\Response(
@@ -421,7 +422,8 @@ final class PlanController extends Controller
             $id, 
             $data['cycle_id'] ?? null, 
             $request->user()?->id,
-            $data['name'] ?? null
+            $data['name'] ?? null,
+            $data['is_active'] ?? null
         );
         
         if (!$newPlan) {

@@ -48,6 +48,10 @@ final class PlanRequest extends FormRequest
                 'max:255',
                 'unique:plans,name,NULL,id,cycle_id,' . ($cycleId ?? 'NULL')
             ],
+            'is_active' => [
+                'nullable',
+                'boolean'
+            ],
         ];
     }
 

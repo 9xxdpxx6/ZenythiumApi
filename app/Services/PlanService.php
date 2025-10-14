@@ -168,7 +168,7 @@ final class PlanService
      * 
      * @throws \Illuminate\Database\QueryException При ошибке создания записи
      */
-    public function duplicate(int $id, ?int $newCycleId = null, ?int $userId = null, ?string $newName = null): ?Plan
+    public function duplicate(int $id, ?int $newCycleId = null, ?int $userId = null, ?string $newName = null, ?bool $isActive = null): ?Plan
     {
         // Получаем исходный план с проверкой доступа
         $originalPlan = $this->getById($id, $userId);
@@ -195,7 +195,7 @@ final class PlanService
             'cycle_id' => $newCycleId,
             'name' => $copyName,
             'order' => $originalPlan->order,
-            'is_active' => $originalPlan->is_active,
+            'is_active' => $isActive ?? $originalPlan->is_active,
         ]);
 
         // Копируем упражнения плана
