@@ -19,7 +19,7 @@ final class ExerciseService
      * @param array $filters Массив фильтров для поиска упражнений
      * @param int|null $filters['user_id'] ID пользователя (обязательно для безопасности)
      * @param int|null $filters['muscle_group_id'] ID группы мышц
-     * @param string|null $filters['name'] Название упражнения (поиск по частичному совпадению)
+     * @param string|null $filters['search'] Поиск по названию и описанию упражнения (поиск по частичному совпадению)
      * @param int $filters['page'] Номер страницы (по умолчанию 1)
      * @param int $filters['per_page'] Количество элементов на странице (по умолчанию 15)
      * 

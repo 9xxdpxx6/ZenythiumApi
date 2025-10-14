@@ -1487,9 +1487,9 @@
                         }
                     },
                     {
-                        "name": "name",
+                        "name": "search",
                         "in": "query",
-                        "description": "Фильтр по названию упражнения",
+                        "description": "Поиск по названию и описанию упражнения",
                         "required": false,
                         "schema": {
                             "type": "string",

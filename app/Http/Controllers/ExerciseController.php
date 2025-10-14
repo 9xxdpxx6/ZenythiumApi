@@ -63,9 +63,9 @@ final class ExerciseController extends Controller
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Parameter(
-     *         name="name",
+     *         name="search",
      *         in="query",
-     *         description="Фильтр по названию упражнения",
+     *         description="Поиск по названию и описанию упражнения",
      *         required=false,
      *         @OA\Schema(type="string", example="жим")
      *     ),
