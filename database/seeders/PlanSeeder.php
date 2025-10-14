@@ -116,6 +116,42 @@ final class PlanSeeder extends Seeder
             }
         }
 
+        // Создаем standalone планы (без цикла)
+        $standalonePlans = [
+            [
+                'name' => 'Базовый план для начинающих',
+                'order' => null,
+            ],
+            [
+                'name' => 'План для похудения',
+                'order' => null,
+            ],
+            [
+                'name' => 'План для набора массы',
+                'order' => null,
+            ],
+            [
+                'name' => 'План для поддержания формы',
+                'order' => null,
+            ],
+            [
+                'name' => 'План для восстановления',
+                'order' => null,
+            ],
+        ];
+
+        foreach ($standalonePlans as $planData) {
+            Plan::firstOrCreate(
+                [
+                    'name' => $planData['name'],
+                    'cycle_id' => null,
+                ],
+                [
+                    'order' => $planData['order'],
+                ]
+            );
+        }
+
         $this->command->info('Plan seeder completed successfully.');
     }
 }

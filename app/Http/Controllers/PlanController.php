@@ -46,6 +46,13 @@ final class PlanController extends Controller
      *         required=false,
      *         @OA\Schema(type="integer", example=1)
      *     ),
+     *     @OA\Parameter(
+     *         name="standalone",
+     *         in="query",
+     *         description="Фильтр по типу планов: true - только standalone планы (без цикла), false - только планы с циклом",
+     *         required=false,
+     *         @OA\Schema(type="boolean", example=true)
+     *     ),
  *     @OA\Parameter(
  *         name="search",
  *         in="query",
@@ -130,11 +137,11 @@ final class PlanController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
- *             required={"name","cycle_id"},
- *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
- *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок"),
- *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
- *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана")
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
+     *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок (необязательно)"),
+     *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
+     *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана")
      *         )
      *     ),
      *     @OA\Response(
@@ -244,12 +251,12 @@ final class PlanController extends Controller
      *     ),
      *     @OA\RequestBody(
      *         required=true,
- *         @OA\JsonContent(
- *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
- *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок"),
- *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
- *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана")
- *         )
+     *         @OA\JsonContent(
+     *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
+     *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок (необязательно)"),
+     *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
+     *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана")
+     *         )
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -351,5 +358,81 @@ final class PlanController extends Controller
             'data' => null,
             'message' => 'План успешно удален'
         ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/plans/{plan}/duplicate",
+     *     summary="Создание копии плана тренировок",
+     *     description="Создает копию существующего плана тренировок в указанном цикле",
+     *     tags={"Plans"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="plan",
+     *         in="path",
+     *         description="ID исходного плана",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=false,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="cycle_id", type="integer", example=2, description="ID цикла для новой копии (необязательно)"),
+     *             @OA\Property(property="name", type="string", example="Силовая тренировка (копия)", description="Название для копии (необязательно)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="План успешно скопирован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/PlanResource"),
+     *             @OA\Property(property="message", type="string", example="План успешно скопирован")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="План или цикл не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="План не найден")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function duplicate(PlanRequest $request, int $id): JsonResponse
+    {
+        $data = $request->validated();
+        
+        $newPlan = $this->planService->duplicate(
+            $id, 
+            $data['cycle_id'] ?? null, 
+            $request->user()?->id,
+            $data['name'] ?? null
+        );
+        
+        if (!$newPlan) {
+            return response()->json([
+                'message' => 'План не найден или цикл недоступен'
+            ], 404);
+        }
+        
+        return response()->json([
+            'data' => new PlanResource($newPlan),
+            'message' => 'План успешно скопирован'
+        ], 201);
     }
 }

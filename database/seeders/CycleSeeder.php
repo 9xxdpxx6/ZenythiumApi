@@ -20,34 +20,36 @@ final class CycleSeeder extends Seeder
         $userId = User::first()?->id ?? User::factory()->create()->id;
 
         $cycles = [
+            // Активные циклы (без даты завершения)
             [
                 'name' => 'Базовый цикл набора массы',
                 'start_date' => Carbon::now()->subWeeks(2),
-                'end_date' => Carbon::now()->addWeeks(10),
+                'end_date' => null, // Активный цикл
                 'weeks' => 12,
             ],
             [
                 'name' => 'Цикл силовой подготовки',
                 'start_date' => Carbon::now()->subWeeks(1),
-                'end_date' => Carbon::now()->addWeeks(8),
+                'end_date' => null, // Активный цикл
                 'weeks' => 9,
             ],
+            // Завершенные циклы
             [
                 'name' => 'Цикл сушки и рельефа',
-                'start_date' => Carbon::now(),
-                'end_date' => Carbon::now()->addWeeks(6),
+                'start_date' => Carbon::now()->subWeeks(8),
+                'end_date' => Carbon::now()->subWeeks(2),
                 'weeks' => 6,
             ],
             [
                 'name' => 'Поддерживающий цикл',
-                'start_date' => Carbon::now()->addWeeks(1),
-                'end_date' => Carbon::now()->addWeeks(5),
+                'start_date' => Carbon::now()->subWeeks(6),
+                'end_date' => Carbon::now()->subWeeks(2),
                 'weeks' => 4,
             ],
             [
                 'name' => 'Цикл восстановления',
-                'start_date' => Carbon::now()->addWeeks(2),
-                'end_date' => Carbon::now()->addWeeks(4),
+                'start_date' => Carbon::now()->subWeeks(4),
+                'end_date' => Carbon::now()->subWeeks(2),
                 'weeks' => 2,
             ],
         ];

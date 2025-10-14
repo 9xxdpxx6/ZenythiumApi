@@ -173,6 +173,125 @@ describe('PlanFilter', function () {
         });
     });
 
+    describe('standalone filter', function () {
+        it('filters standalone plans (without cycle)', function () {
+            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
+            
+            $filter = new PlanFilter(['standalone' => true, 'user_id' => $this->user->id]);
+            $query = Plan::query();
+            
+            $filter->apply($query);
+            
+            $results = $query->get();
+            
+            expect($results)->toHaveCount(1);
+            expect($results->first()->id)->toBe($standalonePlan->id);
+            expect($results->first()->cycle_id)->toBeNull();
+        });
+
+        it('filters standalone plans with string true', function () {
+            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
+            
+            $filter = new PlanFilter(['standalone' => 'true', 'user_id' => $this->user->id]);
+            $query = Plan::query();
+            
+            $filter->apply($query);
+            
+            $results = $query->get();
+            
+            expect($results)->toHaveCount(1);
+            expect($results->first()->id)->toBe($standalonePlan->id);
+        });
+
+        it('filters standalone plans with string 1', function () {
+            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
+            
+            $filter = new PlanFilter(['standalone' => '1', 'user_id' => $this->user->id]);
+            $query = Plan::query();
+            
+            $filter->apply($query);
+            
+            $results = $query->get();
+            
+            expect($results)->toHaveCount(1);
+            expect($results->first()->id)->toBe($standalonePlan->id);
+        });
+
+        it('filters plans with cycle (not standalone)', function () {
+            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $otherCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            $cyclePlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+            
+            $filter = new PlanFilter(['standalone' => false]);
+            $query = Plan::query();
+            
+            $filter->apply($query);
+            
+            $results = $query->get();
+            
+            // Проверяем только созданные планы (исключаем $this->plan)
+            $createdPlans = $results->whereIn('id', [$cyclePlan->id, $this->plan->id]);
+            
+            expect($createdPlans)->toHaveCount(2);
+            expect($createdPlans->pluck('cycle_id')->toArray())->not->toContain(null);
+        });
+
+        it('filters plans with cycle using string false', function () {
+            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $otherCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            $cyclePlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+            
+            $filter = new PlanFilter(['standalone' => 'false']);
+            $query = Plan::query();
+            
+            $filter->apply($query);
+            
+            $results = $query->get();
+            
+            // Проверяем только созданные планы (исключаем $this->plan)
+            $createdPlans = $results->whereIn('id', [$cyclePlan->id, $this->plan->id]);
+            
+            expect($createdPlans)->toHaveCount(2);
+            expect($createdPlans->pluck('cycle_id')->toArray())->not->toContain(null);
+        });
+
+        it('filters plans with cycle using string 0', function () {
+            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $otherCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            $cyclePlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+            
+            $filter = new PlanFilter(['standalone' => '0']);
+            $query = Plan::query();
+            
+            $filter->apply($query);
+            
+            $results = $query->get();
+            
+            // Проверяем только созданные планы (исключаем $this->plan)
+            $createdPlans = $results->whereIn('id', [$cyclePlan->id, $this->plan->id]);
+            
+            expect($createdPlans)->toHaveCount(2);
+            expect($createdPlans->pluck('cycle_id')->toArray())->not->toContain(null);
+        });
+
+        it('ignores standalone filter when not provided', function () {
+            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
+            
+            $filter = new PlanFilter([]);
+            $query = Plan::query();
+            
+            $filter->apply($query);
+            
+            $results = $query->get();
+            
+            expect($results)->toHaveCount(3); // $this->plan + $standalonePlan + $cyclePlan
+        });
+    });
+
     describe('order filter', function () {
         it('filters plans by order', function () {
             $plan1 = Plan::factory()->create([
@@ -361,6 +480,36 @@ describe('PlanFilter', function () {
             expect($results)->toHaveCount(1);
             expect($results->first()->name)->toBe('Test Plan');
             expect($results->first()->order)->toBe(1);
+        });
+
+        it('applies standalone filter with other filters', function () {
+            $standalonePlan = Plan::factory()->create([
+                'cycle_id' => null,
+                'name' => 'Standalone Test Plan',
+                'order' => 1,
+            ]);
+            
+            $cyclePlan = Plan::factory()->create([
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Cycle Test Plan',
+                'order' => 1,
+            ]);
+            
+            $filter = new PlanFilter([
+                'search' => 'Test',
+                'standalone' => true,
+                'user_id' => $this->user->id,
+            ]);
+            
+            $query = Plan::query();
+            
+            $filter->apply($query);
+            
+            $results = $query->get();
+            
+            expect($results)->toHaveCount(1);
+            expect($results->first()->name)->toBe('Standalone Test Plan');
+            expect($results->first()->cycle_id)->toBeNull();
         });
     });
 

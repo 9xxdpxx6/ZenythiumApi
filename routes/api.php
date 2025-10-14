@@ -72,6 +72,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:60,1'])->group(functi
     Route::get('/plans/{id}', [PlanController::class, 'show']);
     Route::put('/plans/{id}', [PlanController::class, 'update']);
     Route::delete('/plans/{id}', [PlanController::class, 'destroy']);
+    Route::post('/plans/{id}/duplicate', [PlanController::class, 'duplicate'])->name('plans.duplicate');
     
     // Plan Exercises management routes
     Route::get('/plans/{plan}/exercises', [PlanExerciseController::class, 'index']);

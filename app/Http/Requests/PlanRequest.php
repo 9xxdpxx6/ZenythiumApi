@@ -21,12 +21,47 @@ final class PlanRequest extends FormRequest
      */
     public function rules(): array
     {
+        // Определяем правила в зависимости от маршрута
+        if ($this->routeIs('plans.duplicate')) {
+            return $this->duplicateRules();
+        }
+
+        return $this->defaultRules();
+    }
+
+    /**
+     * Правила валидации для копирования плана
+     */
+    private function duplicateRules(): array
+    {
+        $cycleId = $this->input('cycle_id');
+
+        return [
+            'cycle_id' => [
+                'nullable',
+                'integer',
+                'exists:cycles,id'
+            ],
+            'name' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:plans,name,NULL,id,cycle_id,' . ($cycleId ?? 'NULL')
+            ],
+        ];
+    }
+
+    /**
+     * Правила валидации по умолчанию (создание/обновление)
+     */
+    private function defaultRules(): array
+    {
         $planId = $this->route('id') ?? 'NULL';
         $cycleId = $this->input('cycle_id');
 
         return [
             'cycle_id' => [
-                'required',
+                'nullable',
                 'integer',
                 'exists:cycles,id'
             ],
@@ -34,7 +69,7 @@ final class PlanRequest extends FormRequest
                 'required',
                 'string',
                 'max:255',
-                'unique:plans,name,' . $planId . ',id,cycle_id,' . $cycleId
+                'unique:plans,name,' . $planId . ',id,cycle_id,' . ($cycleId ?? 'NULL')
             ],
             'order' => [
                 'nullable',
@@ -54,7 +89,6 @@ final class PlanRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'cycle_id.required' => 'Цикл обязателен.',
             'cycle_id.integer' => 'Цикл должен быть числом.',
             'cycle_id.exists' => 'Выбранный цикл не существует.',
             'name.required' => 'Название плана обязательно.',

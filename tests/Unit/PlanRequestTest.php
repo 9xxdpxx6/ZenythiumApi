@@ -9,7 +9,6 @@ use App\Models\User;
 use Illuminate\Support\Facades\Validator;
 
 dataset('required_fields', [
-    'cycle_id' => ['cycle_id'],
     'name' => ['name'],
 ]);
 
@@ -273,7 +272,6 @@ describe('PlanRequest', function () {
             $messages = $request->messages();
             
             expect($messages)->toBeArray();
-            expect($messages['cycle_id.required'])->toBe('Цикл обязателен.');
             expect($messages['cycle_id.integer'])->toBe('Цикл должен быть числом.');
             expect($messages['cycle_id.exists'])->toBe('Выбранный цикл не существует.');
             expect($messages['name.required'])->toBe('Название плана обязательно.');

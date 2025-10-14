@@ -3071,6 +3071,16 @@
                         }
                     },
                     {
+                        "name": "standalone",
+                        "in": "query",
+                        "description": "Фильтр по типу планов: true - только standalone планы (без цикла), false - только планы с циклом",
+                        "required": false,
+                        "schema": {
+                            "type": "boolean",
+                            "example": true
+                        }
+                    },
+                    {
                         "name": "search",
                         "in": "query",
                         "description": "Фильтр по названию плана",
@@ -3211,8 +3221,7 @@
                         "application/json": {
                             "schema": {
                                 "required": [
-                                    "name",
-                                    "cycle_id"
+                                    "name"
                                 ],
                                 "properties": {
                                     "name": {
@@ -3221,7 +3230,7 @@
                                         "example": "Силовая тренировка"
                                     },
                                     "cycle_id": {
-                                        "description": "ID цикла тренировок",
+                                        "description": "ID цикла тренировок (необязательно)",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -3414,7 +3423,7 @@
                                         "example": "Силовая тренировка"
                                     },
                                     "cycle_id": {
-                                        "description": "ID цикла тренировок",
+                                        "description": "ID цикла тренировок (необязательно)",
                                         "type": "integer",
                                         "example": 1
                                     },
@@ -3577,6 +3586,127 @@
                                         "message": {
                                             "type": "string",
                                             "example": "План не найден"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/plans/{plan}/duplicate": {
+            "post": {
+                "tags": [
+                    "Plans"
+                ],
+                "summary": "Создание копии плана тренировок",
+                "description": "Создает копию существующего плана тренировок в указанном цикле",
+                "operationId": "a9375803d69338c8546d1b9adcc6389d",
+                "parameters": [
+                    {
+                        "name": "plan",
+                        "in": "path",
+                        "description": "ID исходного плана",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": false,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "cycle_id": {
+                                        "description": "ID цикла для новой копии (необязательно)",
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "name": {
+                                        "description": "Название для копии (необязательно)",
+                                        "type": "string",
+                                        "example": "Силовая тренировка (копия)"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "План успешно скопирован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/PlanResource"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "План успешно скопирован"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "План или цикл не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "План не найден"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации"
+                                        },
+                                        "errors": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"

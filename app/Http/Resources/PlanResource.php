@@ -43,10 +43,10 @@ final class PlanResource extends JsonResource
             'order' => $this->order,
             'is_active' => $this->is_active,
             'exercise_count' => $this->exercise_count,
-            'cycle' => [
+            'cycle' => $this->cycle ? [
                 'id' => $this->cycle->id,
                 'name' => $this->cycle->name,
-            ],
+            ] : null,
             'exercises' => $this->planExercises->map(function ($planExercise) {
                 return [
                     'id' => $planExercise->exercise->id,

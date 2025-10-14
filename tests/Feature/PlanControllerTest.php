@@ -120,6 +120,29 @@ describe('PlanController', function () {
             expect($response->json('data'))->toHaveCount(1);
             expect($response->json('data.0.id'))->toBe($this->plan->id);
         });
+
+        it('supports standalone filtering', function () {
+            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
+
+            // Тест фильтрации standalone планов
+            $response = $this->actingAs($this->user)
+                ->getJson('/api/v1/plans?standalone=true');
+
+            $response->assertStatus(200);
+            expect($response->json('data'))->toHaveCount(1);
+            expect($response->json('data.0.id'))->toBe($standalonePlan->id);
+            expect($response->json('data.0.cycle'))->toBeNull();
+
+            // Тест фильтрации планов с циклом
+            $response = $this->actingAs($this->user)
+                ->getJson('/api/v1/plans?standalone=false');
+
+            $response->assertStatus(200);
+            expect($response->json('data'))->toHaveCount(2); // $this->plan + $cyclePlan
+            expect($response->json('data.0.cycle'))->not->toBeNull();
+            expect($response->json('data.1.cycle'))->not->toBeNull();
+        });
     });
 
     describe('POST /api/plans', function () {
@@ -171,7 +194,7 @@ describe('PlanController', function () {
                 ->postJson('/api/v1/plans', []);
 
             $response->assertStatus(422)
-                ->assertJsonValidationErrors(['cycle_id', 'name']);
+                ->assertJsonValidationErrors(['name']);
         });
 
         it('validates unique name per cycle', function () {
@@ -209,6 +232,24 @@ describe('PlanController', function () {
 
             $response->assertStatus(422)
                 ->assertJsonValidationErrors(['cycle_id']);
+        });
+
+        it('creates a plan without cycle_id', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/plans', [
+                    'name' => 'Standalone Plan',
+                ]);
+
+            $response->assertStatus(201);
+
+            $responseData = $response->json('data');
+            expect($responseData['cycle'])->toBeNull();
+
+            $this->assertDatabaseHas('plans', [
+                'id' => $responseData['id'],
+                'cycle_id' => null,
+                'name' => 'Standalone Plan',
+            ]);
         });
 
         it('validates positive order', function () {
@@ -395,6 +436,217 @@ describe('PlanController', function () {
                 ->deleteJson("/api/plans/{$otherPlan->id}");
 
             $response->assertStatus(404);
+        });
+    });
+
+    describe('POST /api/plans/{id}/duplicate', function () {
+        beforeEach(function () {
+            // Создаем план с упражнениями для тестирования копирования
+            $this->planWithExercises = Plan::factory()->create([
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Original Plan',
+                'order' => 1,
+                'is_active' => true,
+            ]);
+
+            // Создаем упражнения для плана
+            $this->exercise1 = \App\Models\Exercise::factory()->create();
+            $this->exercise2 = \App\Models\Exercise::factory()->create();
+
+            \App\Models\PlanExercise::factory()->create([
+                'plan_id' => $this->planWithExercises->id,
+                'exercise_id' => $this->exercise1->id,
+                'order' => 1,
+            ]);
+
+            \App\Models\PlanExercise::factory()->create([
+                'plan_id' => $this->planWithExercises->id,
+                'exercise_id' => $this->exercise2->id,
+                'order' => 2,
+            ]);
+
+            // Создаем новый цикл для копирования
+            $this->newCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+        });
+
+        it('duplicates a plan with exercises to another cycle', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/plans/{$this->planWithExercises->id}/duplicate", [
+                    'cycle_id' => $this->newCycle->id,
+                ]);
+
+            $response->assertStatus(201)
+                ->assertJsonStructure([
+                    'data' => [
+                        'id',
+                        'name',
+                        'order',
+                        'is_active',
+                        'exercise_count',
+                        'cycle' => [
+                            'id',
+                            'name',
+                        ],
+                    ],
+                    'message'
+                ]);
+
+            $responseData = $response->json('data');
+            expect($responseData['cycle']['id'])->toBe($this->newCycle->id);
+            expect($responseData['name'])->toBe('Original Plan (копия)');
+            expect($responseData['exercise_count'])->toBe(2);
+
+            // Проверяем, что план создан в базе данных
+            $this->assertDatabaseHas('plans', [
+                'id' => $responseData['id'],
+                'cycle_id' => $this->newCycle->id,
+                'name' => 'Original Plan (копия)',
+                'order' => 1,
+                'is_active' => true,
+            ]);
+
+            // Проверяем, что упражнения скопированы
+            $newPlanExercises = \App\Models\PlanExercise::where('plan_id', $responseData['id'])->get();
+            expect($newPlanExercises)->toHaveCount(2);
+            expect($newPlanExercises->pluck('exercise_id')->toArray())->toBe([$this->exercise1->id, $this->exercise2->id]);
+        });
+
+        it('duplicates a plan without cycle_id (creates standalone plan)', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/plans/{$this->planWithExercises->id}/duplicate", []);
+
+            $response->assertStatus(201);
+
+            $responseData = $response->json('data');
+            expect($responseData['cycle'])->toBeNull();
+            expect($responseData['name'])->toBe('Original Plan (копия)');
+            expect($responseData['exercise_count'])->toBe(2);
+
+            // Проверяем, что план создан в базе данных
+            $this->assertDatabaseHas('plans', [
+                'id' => $responseData['id'],
+                'cycle_id' => null,
+                'name' => 'Original Plan (копия)',
+                'order' => 1,
+                'is_active' => true,
+            ]);
+        });
+
+        it('duplicates a plan with custom name', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/plans/{$this->planWithExercises->id}/duplicate", [
+                    'cycle_id' => $this->newCycle->id,
+                    'name' => 'Custom Copy Name',
+                ]);
+
+            $response->assertStatus(201);
+
+            $responseData = $response->json('data');
+            expect($responseData['name'])->toBe('Custom Copy Name');
+
+            $this->assertDatabaseHas('plans', [
+                'id' => $responseData['id'],
+                'name' => 'Custom Copy Name',
+            ]);
+        });
+
+        it('validates cycle_id exists when provided', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/plans/{$this->planWithExercises->id}/duplicate", [
+                    'cycle_id' => 999,
+                ]);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['cycle_id']);
+        });
+
+        it('validates name uniqueness within cycle', function () {
+            // Создаем план с таким же именем в новом цикле
+            Plan::factory()->create([
+                'cycle_id' => $this->newCycle->id,
+                'name' => 'Duplicate Name',
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/plans/{$this->planWithExercises->id}/duplicate", [
+                    'cycle_id' => $this->newCycle->id,
+                    'name' => 'Duplicate Name',
+                ]);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['name']);
+        });
+
+        it('allows same name for plans in different cycles or standalone', function () {
+            // Создаем план без цикла с таким же именем
+            Plan::factory()->create([
+                'cycle_id' => null,
+                'name' => 'Duplicate Name',
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/plans/{$this->planWithExercises->id}/duplicate", [
+                    'cycle_id' => $this->newCycle->id,
+                    'name' => 'Duplicate Name',
+                ]);
+
+            $response->assertStatus(201);
+        });
+
+        it('returns 404 for non-existent plan', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/plans/999/duplicate', [
+                    'cycle_id' => $this->newCycle->id,
+                ]);
+
+            $response->assertStatus(404);
+        });
+
+        it('returns 404 for plan belonging to another user', function () {
+            $otherUser = User::factory()->create();
+            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+            $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/plans/{$otherPlan->id}/duplicate", [
+                    'cycle_id' => $this->newCycle->id,
+                ]);
+
+            $response->assertStatus(404);
+        });
+
+        it('returns 404 for cycle belonging to another user', function () {
+            $otherUser = User::factory()->create();
+            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson("/api/v1/plans/{$this->planWithExercises->id}/duplicate", [
+                    'cycle_id' => $otherCycle->id,
+                ]);
+
+            $response->assertStatus(404);
+        });
+
+        it('requires authentication', function () {
+            $response = $this->postJson("/api/v1/plans/{$this->planWithExercises->id}/duplicate", [
+                'cycle_id' => $this->newCycle->id,
+            ]);
+
+            $response->assertStatus(401);
+        });
+
+        it('can access standalone plans (plans without cycle)', function () {
+            // Создаем план без цикла
+            $standalonePlan = Plan::factory()->create([
+                'cycle_id' => null,
+                'name' => 'Standalone Plan',
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->getJson("/api/v1/plans/{$standalonePlan->id}");
+
+            $response->assertStatus(200);
+            expect($response->json('data.cycle'))->toBeNull();
         });
     });
 

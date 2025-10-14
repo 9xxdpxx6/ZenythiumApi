@@ -20,8 +20,17 @@ final class PlanService
      * @param array $filters Массив фильтров для поиска планов
      * @param int|null $filters['user_id'] ID пользователя (обязательно для безопасности)
      * @param int|null $filters['cycle_id'] ID цикла тренировок
+     * @param bool|string|null $filters['standalone'] Фильтр по типу планов:
+     *   - true/'true'/'1': только standalone планы (без цикла)
+     *   - false/'false'/'0': только планы с циклом, принадлежащие пользователю
+     *   - null: все планы пользователя (включая standalone)
      * @param string|null $filters['search'] Название плана (поиск по частичному совпадению)
+     * @param int|null $filters['order'] Порядок плана
      * @param bool|null $filters['is_active'] Статус активности плана
+     * @param string|null $filters['date_from'] Дата создания от (Y-m-d)
+     * @param string|null $filters['date_to'] Дата создания до (Y-m-d)
+     * @param string|null $filters['sort_by'] Поле для сортировки (по умолчанию 'order')
+     * @param string|null $filters['sort_direction'] Направление сортировки (asc/desc, по умолчанию 'asc')
      * @param int $filters['page'] Номер страницы (по умолчанию 1)
      * @param int $filters['per_page'] Количество элементов на странице (по умолчанию 15)
      * 
@@ -57,8 +66,11 @@ final class PlanService
         $query = Plan::query()->with(['cycle', 'planExercises.exercise.muscleGroup']);
 
         if ($userId) {
-            $query->whereHas('cycle', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
+            // План может принадлежать пользователю через цикл или быть без цикла (общие планы)
+            $query->where(function ($q) use ($userId) {
+                $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
+                    $cycleQuery->where('user_id', $userId);
+                })->orWhereNull('cycle_id');
             });
         }
 
@@ -99,8 +111,10 @@ final class PlanService
         $query = Plan::query();
 
         if ($userId) {
-            $query->whereHas('cycle', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
+            $query->where(function ($q) use ($userId) {
+                $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
+                    $cycleQuery->where('user_id', $userId);
+                })->orWhereNull('cycle_id');
             });
         }
 
@@ -127,8 +141,10 @@ final class PlanService
         $query = Plan::query();
 
         if ($userId) {
-            $query->whereHas('cycle', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
+            $query->where(function ($q) use ($userId) {
+                $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
+                    $cycleQuery->where('user_id', $userId);
+                })->orWhereNull('cycle_id');
             });
         }
 
@@ -138,5 +154,59 @@ final class PlanService
         }
         
         return $plan->delete();
+    }
+
+    /**
+     * Создать копию плана тренировок
+     * 
+     * @param int $id ID исходного плана
+     * @param int|null $newCycleId ID нового цикла для копии (опционально, по умолчанию null)
+     * @param int|null $userId ID пользователя для проверки доступа (опционально)
+     * @param string|null $newName Новое название для копии (опционально)
+     * 
+     * @return Plan|null Созданная копия плана или null если исходный план не найден
+     * 
+     * @throws \Illuminate\Database\QueryException При ошибке создания записи
+     */
+    public function duplicate(int $id, ?int $newCycleId = null, ?int $userId = null, ?string $newName = null): ?Plan
+    {
+        // Получаем исходный план с проверкой доступа
+        $originalPlan = $this->getById($id, $userId);
+        if (!$originalPlan) {
+            return null;
+        }
+
+        // Проверяем, что новый цикл принадлежит тому же пользователю (если указан)
+        if ($newCycleId && $userId) {
+            $newCycle = \App\Models\Cycle::where('id', $newCycleId)
+                ->where('user_id', $userId)
+                ->first();
+            
+            if (!$newCycle) {
+                return null;
+            }
+        }
+
+        // Определяем название для копии
+        $copyName = $newName ?? $originalPlan->name . ' (копия)';
+
+        // Создаем копию плана
+        $newPlan = Plan::create([
+            'cycle_id' => $newCycleId,
+            'name' => $copyName,
+            'order' => $originalPlan->order,
+            'is_active' => $originalPlan->is_active,
+        ]);
+
+        // Копируем упражнения плана
+        foreach ($originalPlan->planExercises as $planExercise) {
+            \App\Models\PlanExercise::create([
+                'plan_id' => $newPlan->id,
+                'exercise_id' => $planExercise->exercise_id,
+                'order' => $planExercise->order,
+            ]);
+        }
+
+        return $newPlan->fresh(['cycle', 'planExercises.exercise']);
     }
 }

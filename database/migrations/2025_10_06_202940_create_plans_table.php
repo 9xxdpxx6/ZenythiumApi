@@ -13,9 +13,9 @@ return new class extends Migration
     {
         Schema::create('plans', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('cycle_id')->constrained()->cascadeOnDelete();
+            $table->foreignId('cycle_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name'); 
-            $table->integer('order')->default(0); 
+            $table->integer('order')->nullable(); 
             $table->timestamps();
 
             $table->index('order');

@@ -218,4 +218,165 @@ describe('PlanService', function () {
             expect($result)->toBeFalse();
         })->with('exception_scenarios');
     });
+
+    describe('duplicate', function () {
+        beforeEach(function () {
+            // Создаем план с упражнениями для тестирования копирования
+            $this->planWithExercises = Plan::factory()->create([
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Original Plan',
+                'order' => 1,
+                'is_active' => true,
+            ]);
+
+            // Создаем упражнения для плана
+            $this->exercise1 = \App\Models\Exercise::factory()->create();
+            $this->exercise2 = \App\Models\Exercise::factory()->create();
+
+            \App\Models\PlanExercise::factory()->create([
+                'plan_id' => $this->planWithExercises->id,
+                'exercise_id' => $this->exercise1->id,
+                'order' => 1,
+            ]);
+
+            \App\Models\PlanExercise::factory()->create([
+                'plan_id' => $this->planWithExercises->id,
+                'exercise_id' => $this->exercise2->id,
+                'order' => 2,
+            ]);
+
+            // Создаем новый цикл для копирования
+            $this->newCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+        });
+
+        it('duplicates a plan with exercises to another cycle', function () {
+            $result = $this->planService->duplicate(
+                $this->planWithExercises->id,
+                $this->newCycle->id,
+                $this->user->id
+            );
+
+            expect($result)->toBeInstanceOf(Plan::class);
+            expect($result->cycle_id)->toBe($this->newCycle->id);
+            expect($result->name)->toBe('Original Plan (копия)');
+            expect($result->order)->toBe(1);
+            expect($result->is_active)->toBeTrue();
+
+            // Проверяем, что план создан в базе данных
+            $this->assertDatabaseHas('plans', [
+                'id' => $result->id,
+                'cycle_id' => $this->newCycle->id,
+                'name' => 'Original Plan (копия)',
+                'order' => 1,
+                'is_active' => true,
+            ]);
+
+            // Проверяем, что упражнения скопированы
+            $newPlanExercises = \App\Models\PlanExercise::where('plan_id', $result->id)->get();
+            expect($newPlanExercises)->toHaveCount(2);
+            expect($newPlanExercises->pluck('exercise_id')->toArray())->toBe([$this->exercise1->id, $this->exercise2->id]);
+        });
+
+        it('duplicates a plan without cycle_id (creates standalone plan)', function () {
+            $result = $this->planService->duplicate(
+                $this->planWithExercises->id,
+                null, // cycle_id = null
+                $this->user->id
+            );
+
+            expect($result)->toBeInstanceOf(Plan::class);
+            expect($result->cycle_id)->toBeNull();
+            expect($result->name)->toBe('Original Plan (копия)');
+            expect($result->order)->toBe(1);
+            expect($result->is_active)->toBeTrue();
+
+            // Проверяем, что план создан в базе данных
+            $this->assertDatabaseHas('plans', [
+                'id' => $result->id,
+                'cycle_id' => null,
+                'name' => 'Original Plan (копия)',
+                'order' => 1,
+                'is_active' => true,
+            ]);
+
+            // Проверяем, что упражнения скопированы
+            $newPlanExercises = \App\Models\PlanExercise::where('plan_id', $result->id)->get();
+            expect($newPlanExercises)->toHaveCount(2);
+            expect($newPlanExercises->pluck('exercise_id')->toArray())->toBe([$this->exercise1->id, $this->exercise2->id]);
+        });
+
+        it('duplicates a plan with custom name', function () {
+            $result = $this->planService->duplicate(
+                $this->planWithExercises->id,
+                $this->newCycle->id,
+                $this->user->id,
+                'Custom Copy Name'
+            );
+
+            expect($result)->toBeInstanceOf(Plan::class);
+            expect($result->name)->toBe('Custom Copy Name');
+
+            $this->assertDatabaseHas('plans', [
+                'id' => $result->id,
+                'name' => 'Custom Copy Name',
+            ]);
+        });
+
+        it('duplicates plan without user filter', function () {
+            $result = $this->planService->duplicate(
+                $this->planWithExercises->id,
+                $this->newCycle->id
+            );
+
+            expect($result)->toBeInstanceOf(Plan::class);
+            expect($result->cycle_id)->toBe($this->newCycle->id);
+        });
+
+        it('returns null for non-existent plan', function () {
+            $result = $this->planService->duplicate(
+                999,
+                $this->newCycle->id,
+                $this->user->id
+            );
+
+            expect($result)->toBeNull();
+        });
+
+        it('returns null for plan belonging to another user', function () {
+            $otherUser = User::factory()->create();
+            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+            $otherPlan = Plan::factory()->create(['cycle_id' => $otherCycle->id]);
+
+            $result = $this->planService->duplicate(
+                $otherPlan->id,
+                $this->newCycle->id,
+                $this->user->id
+            );
+
+            expect($result)->toBeNull();
+        });
+
+        it('returns null for cycle belonging to another user', function () {
+            $otherUser = User::factory()->create();
+            $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
+
+            $result = $this->planService->duplicate(
+                $this->planWithExercises->id,
+                $otherCycle->id,
+                $this->user->id
+            );
+
+            expect($result)->toBeNull();
+        });
+
+        it('returns null for non-existent cycle', function () {
+            $result = $this->planService->duplicate(
+                $this->planWithExercises->id,
+                999,
+                $this->user->id
+            );
+
+            expect($result)->toBeNull();
+        });
+    });
 });
