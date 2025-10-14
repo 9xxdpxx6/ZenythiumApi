@@ -70,13 +70,10 @@
                             <div class="card-body">
                                 <form id="filterForm">
                                     <div class="row g-3">
+                                        <!-- Основные фильтры -->
                                         <div class="col-md-6">
                                             <label for="filterSearch" class="form-label">Поиск по названию</label>
                                             <input type="text" class="form-control" id="filterSearch" placeholder="Введите название плана">
-                                        </div>
-                                        <div class="col-md-6">
-                                            <label for="filterUserId" class="form-label">ID пользователя</label>
-                                            <input type="number" class="form-control" id="filterUserId" placeholder="ID пользователя">
                                         </div>
                                         <div class="col-md-6">
                                             <label for="filterCycleId" class="form-label">Цикл</label>
@@ -84,9 +81,15 @@
                                                 <option value="">Все циклы</option>
                                             </select>
                                         </div>
+                                        
+                                        <!-- Фильтры по типу планов -->
                                         <div class="col-md-6">
-                                            <label for="filterOrder" class="form-label">Порядок</label>
-                                            <input type="number" class="form-control" id="filterOrder" min="1" placeholder="Порядок плана">
+                                            <label for="filterStandalone" class="form-label">Тип планов</label>
+                                            <select class="form-control" id="filterStandalone">
+                                                <option value="">Все планы</option>
+                                                <option value="true">Только standalone (без цикла)</option>
+                                                <option value="false">Только с циклом</option>
+                                            </select>
                                         </div>
                                         <div class="col-md-6">
                                             <label for="filterIsActive" class="form-label">Статус активности</label>
@@ -96,6 +99,18 @@
                                                 <option value="0">Неактивные</option>
                                             </select>
                                         </div>
+                                        
+                                        <!-- Фильтры по порядку и датам -->
+                                        <div class="col-md-6">
+                                            <label for="filterOrder" class="form-label">Порядок</label>
+                                            <input type="number" class="form-control" id="filterOrder" min="1" placeholder="Порядок плана">
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterUserId" class="form-label">ID пользователя</label>
+                                            <input type="number" class="form-control" id="filterUserId" placeholder="ID пользователя">
+                                        </div>
+                                        
+                                        <!-- Фильтры по датам -->
                                         <div class="col-md-6">
                                             <label for="filterDateFrom" class="form-label">Дата создания от</label>
                                             <input type="date" class="form-control" id="filterDateFrom">
@@ -104,13 +119,32 @@
                                             <label for="filterDateTo" class="form-label">Дата создания до</label>
                                             <input type="date" class="form-control" id="filterDateTo">
                                         </div>
+                                        
+                                        <!-- Пагинация -->
+                                        <div class="col-md-6">
+                                            <label for="filterPerPage" class="form-label">Элементов на странице</label>
+                                            <select class="form-control" id="filterPerPage">
+                                                <option value="15">15</option>
+                                                <option value="25">25</option>
+                                                <option value="50">50</option>
+                                                <option value="100">100</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-md-6">
+                                            <label for="filterPage" class="form-label">Страница</label>
+                                            <input type="number" class="form-control" id="filterPage" min="1" placeholder="Номер страницы">
+                                        </div>
+                                        
+                                        <!-- Сортировка -->
                                         <div class="col-md-6">
                                             <label for="filterSortBy" class="form-label">Сортировка по</label>
                                             <select class="form-control" id="filterSortBy">
                                                 <option value="order">Порядок</option>
                                                 <option value="name">Название</option>
                                                 <option value="is_active">Статус активности</option>
+                                                <option value="exercise_count">Количество упражнений</option>
                                                 <option value="created_at">Дата создания</option>
+                                                <option value="id">ID</option>
                                             </select>
                                         </div>
                                         <div class="col-md-6">
@@ -276,6 +310,7 @@
                 if (response.ok && data.data) {
                     const createSelect = document.getElementById('createCycleId');
                     const updateSelect = document.getElementById('updateCycleId');
+                    const filterSelect = document.getElementById('filterCycleId');
                     
                     const options = data.data.map(item => 
                         `<option value="${item.id}">${item.name}</option>`
@@ -283,6 +318,7 @@
                     
                     createSelect.innerHTML = '<option value="">Выберите цикл</option>' + options;
                     updateSelect.innerHTML = '<option value="">Выберите цикл</option>' + options;
+                    filterSelect.innerHTML = '<option value="">Все циклы</option>' + options;
                 }
             } catch (error) {
                 console.error('Error loading cycles:', error);
@@ -311,7 +347,16 @@
                 if (response.ok) {
                     const listContainer = document.getElementById('listContainer');
                     if (data.data && data.data.length > 0) {
-                        listContainer.innerHTML = `
+                        const paginationInfo = data.meta ? `
+                            <div class="mb-3">
+                                <small class="text-muted">
+                                    Показано ${data.meta.from || 0}-${data.meta.to || 0} из ${data.meta.total || 0} записей 
+                                    (страница ${data.meta.current_page || 1} из ${data.meta.last_page || 1})
+                                </small>
+                            </div>
+                        ` : '';
+                        
+                        listContainer.innerHTML = paginationInfo + `
                             <div class="table-responsive">
                                 <table class="table table-striped">
                                     <thead>
@@ -330,7 +375,7 @@
                                             <tr>
                                                 <td>${item.id}</td>
                                                 <td>${item.name}</td>
-                                                <td>${item.cycle ? item.cycle.name : '-'}</td>
+                                                <td>${item.cycle ? item.cycle.name : '<span class="text-muted">Standalone</span>'}</td>
                                                 <td>${item.order || '-'}</td>
                                                 <td><span class="badge ${item.is_active ? 'bg-success' : 'bg-secondary'}">${item.is_active ? 'Активен' : 'Неактивен'}</span></td>
                                                 <td>${item.exercise_count}</td>
@@ -363,10 +408,13 @@
                 search: document.getElementById('filterSearch').value,
                 user_id: document.getElementById('filterUserId').value,
                 cycle_id: document.getElementById('filterCycleId').value,
+                standalone: document.getElementById('filterStandalone').value,
                 order: document.getElementById('filterOrder').value,
                 is_active: document.getElementById('filterIsActive').value,
                 date_from: document.getElementById('filterDateFrom').value,
                 date_to: document.getElementById('filterDateTo').value,
+                per_page: document.getElementById('filterPerPage').value,
+                page: document.getElementById('filterPage').value,
                 sort_by: document.getElementById('filterSortBy').value,
                 sort_order: document.getElementById('filterSortOrder').value
             };

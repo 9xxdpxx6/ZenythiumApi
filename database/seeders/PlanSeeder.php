@@ -111,6 +111,7 @@ final class PlanSeeder extends Seeder
                     ],
                     [
                         'order' => $planData['order'],
+                        'is_active' => fake()->boolean(70), // 70% вероятность быть активным
                     ]
                 );
             }
@@ -148,6 +149,7 @@ final class PlanSeeder extends Seeder
                 ],
                 [
                     'order' => $planData['order'],
+                    'is_active' => fake()->boolean(70), // 70% вероятность быть активным
                 ]
             );
         }

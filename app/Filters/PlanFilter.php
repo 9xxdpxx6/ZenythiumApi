@@ -12,6 +12,7 @@ final class PlanFilter extends BaseFilter
     {
         $this->applySearchFilter($query);
         $this->applyUserFilter($query);
+        $this->applyStandaloneFilter($query);
         $this->applyCycleFilter($query);
         $this->applyOrderFilter($query);
         $this->applyActiveFilter($query);
@@ -35,26 +36,27 @@ final class PlanFilter extends BaseFilter
     {
         if ($this->hasFilter('user_id')) {
             $userId = $this->getFilter('user_id');
+            
+            // Показываем все планы пользователя (включая standalone)
+            $query->where(function ($q) use ($userId) {
+                $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
+                    $cycleQuery->where('user_id', $userId);
+                })->orWhereNull('cycle_id');
+            });
+        }
+    }
+
+    private function applyStandaloneFilter(Builder $query): void
+    {
+        if ($this->hasFilter('standalone')) {
             $standalone = $this->getFilter('standalone');
             
-            // Если фильтр standalone не указан, показываем все планы пользователя (включая standalone)
-            if (!$this->hasFilter('standalone')) {
-                $query->where(function ($q) use ($userId) {
-                    $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
-                        $cycleQuery->where('user_id', $userId);
-                    })->orWhereNull('cycle_id');
-                });
-            } else {
-                // Если указан фильтр standalone, применяем его логику
-                if ($standalone === true || $standalone === 'true' || $standalone === '1') {
-                    // Только standalone планы (без цикла)
-                    $query->whereNull('cycle_id');
-                } elseif ($standalone === false || $standalone === 'false' || $standalone === '0') {
-                    // Только планы с циклом, принадлежащие пользователю
-                    $query->whereHas('cycle', function ($cycleQuery) use ($userId) {
-                        $cycleQuery->where('user_id', $userId);
-                    });
-                }
+            if ($standalone === true || $standalone === 'true' || $standalone === '1') {
+                // Только standalone планы (без цикла)
+                $query->whereNull('cycle_id');
+            } elseif ($standalone === false || $standalone === 'false' || $standalone === '0') {
+                // Только планы с циклом
+                $query->whereNotNull('cycle_id');
             }
         }
     }
