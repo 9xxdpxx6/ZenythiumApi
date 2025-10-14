@@ -3115,7 +3115,7 @@
                                 "exercise_count",
                                 "created_at"
                             ],
-                            "example": "order"
+                            "example": "created_at"
                         }
                     },
                     {
@@ -3129,7 +3129,7 @@
                                 "asc",
                                 "desc"
                             ],
-                            "example": "asc"
+                            "example": "desc"
                         }
                     }
                 ],
@@ -3243,6 +3243,18 @@
                                         "description": "Статус активности плана",
                                         "type": "boolean",
                                         "example": true
+                                    },
+                                    "exercise_ids": {
+                                        "description": "Массив ID упражнений для добавления в план",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
                                     }
                                 },
                                 "type": "object"
@@ -3436,6 +3448,18 @@
                                         "description": "Статус активности плана",
                                         "type": "boolean",
                                         "example": true
+                                    },
+                                    "exercise_ids": {
+                                        "description": "Массив ID упражнений для добавления в план",
+                                        "type": "array",
+                                        "items": {
+                                            "type": "integer"
+                                        },
+                                        "example": [
+                                            1,
+                                            2,
+                                            3
+                                        ]
                                     }
                                 },
                                 "type": "object"

@@ -84,7 +84,7 @@ final class PlanFilter extends BaseFilter
 
     private function applySortingFilter(Builder $query): void
     {
-        parent::applySorting($query, 'order', 'asc');
+        parent::applySorting($query, 'created_at', 'desc');
     }
 
     private function applyDateRangeFilter(Builder $query): void

@@ -29,8 +29,8 @@ final class PlanService
      * @param bool|null $filters['is_active'] Статус активности плана
      * @param string|null $filters['date_from'] Дата создания от (Y-m-d)
      * @param string|null $filters['date_to'] Дата создания до (Y-m-d)
-     * @param string|null $filters['sort_by'] Поле для сортировки (по умолчанию 'order')
-     * @param string|null $filters['sort_direction'] Направление сортировки (asc/desc, по умолчанию 'asc')
+     * @param string|null $filters['sort_by'] Поле для сортировки (по умолчанию 'created_at')
+     * @param string|null $filters['sort_direction'] Направление сортировки (asc/desc, по умолчанию 'desc')
      * @param int $filters['page'] Номер страницы (по умолчанию 1)
      * @param int $filters['per_page'] Количество элементов на странице (по умолчанию 15)
      * 
@@ -85,6 +85,7 @@ final class PlanService
      * @param int $data['cycle_id'] ID цикла тренировок
      * @param int|null $data['order'] Порядок плана
      * @param bool|null $data['is_active'] Статус активности плана
+     * @param array|null $data['exercise_ids'] Массив ID упражнений для добавления в план
      * 
      * @return Plan Созданная модель плана
      * 
@@ -92,7 +93,17 @@ final class PlanService
      */
     public function create(array $data): Plan
     {
-        return Plan::create($data);
+        $exerciseIds = $data['exercise_ids'] ?? [];
+        unset($data['exercise_ids']);
+        
+        $plan = Plan::create($data);
+        
+        // Добавляем упражнения в план, если они указаны
+        if (!empty($exerciseIds)) {
+            $this->attachExercisesToPlan($plan, $exerciseIds);
+        }
+        
+        return $plan;
     }
 
     /**
@@ -123,7 +134,15 @@ final class PlanService
             return null;
         }
         
+        $exerciseIds = $data['exercise_ids'] ?? null;
+        unset($data['exercise_ids']);
+        
         $plan->update($data);
+        
+        // Обновляем упражнения плана, если они указаны
+        if ($exerciseIds !== null) {
+            $this->syncExercisesToPlan($plan, $exerciseIds);
+        }
         
         return $plan->fresh(['cycle']);
     }
@@ -208,5 +227,47 @@ final class PlanService
         }
 
         return $newPlan->fresh(['cycle', 'planExercises.exercise']);
+    }
+    
+    /**
+     * Добавить упражнения к плану (для создания).
+     */
+    private function attachExercisesToPlan(Plan $plan, array $exerciseIds): void
+    {
+        foreach ($exerciseIds as $index => $exerciseId) {
+            $exercise = \App\Models\Exercise::find($exerciseId);
+            
+            // Проверяем, что упражнение существует и принадлежит пользователю
+            if ($exercise && $exercise->user_id === $plan->cycle?->user_id) {
+                \App\Models\PlanExercise::create([
+                    'plan_id' => $plan->id,
+                    'exercise_id' => $exerciseId,
+                    'order' => $index + 1
+                ]);
+            }
+        }
+    }
+    
+    /**
+     * Синхронизировать упражнения плана (для обновления).
+     */
+    private function syncExercisesToPlan(Plan $plan, array $exerciseIds): void
+    {
+        // Удаляем все существующие упражнения плана
+        \App\Models\PlanExercise::where('plan_id', $plan->id)->delete();
+        
+        // Добавляем новые упражнения в порядке массива
+        foreach ($exerciseIds as $index => $exerciseId) {
+            $exercise = \App\Models\Exercise::find($exerciseId);
+            
+            // Проверяем, что упражнение существует и принадлежит пользователю
+            if ($exercise && $exercise->user_id === $plan->cycle?->user_id) {
+                \App\Models\PlanExercise::create([
+                    'plan_id' => $plan->id,
+                    'exercise_id' => $exerciseId,
+                    'order' => $index + 1
+                ]);
+            }
+        }
     }
 }

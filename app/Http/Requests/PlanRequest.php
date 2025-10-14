@@ -84,6 +84,14 @@ final class PlanRequest extends FormRequest
                 'nullable',
                 'boolean'
             ],
+            'exercise_ids' => [
+                'nullable',
+                'array'
+            ],
+            'exercise_ids.*' => [
+                'integer',
+                'exists:exercises,id'
+            ],
         ];
     }
 
@@ -102,6 +110,9 @@ final class PlanRequest extends FormRequest
             'order.integer' => 'Порядок должен быть числом.',
             'order.min' => 'Порядок должен быть больше 0.',
             'is_active.boolean' => 'Статус активности должен быть логическим значением.',
+            'exercise_ids.array' => 'Упражнения должны быть массивом.',
+            'exercise_ids.*.integer' => 'ID упражнения должен быть числом.',
+            'exercise_ids.*.exists' => 'Упражнение не найдено.',
         ];
     }
 

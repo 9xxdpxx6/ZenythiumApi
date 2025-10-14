@@ -72,14 +72,14 @@ final class PlanController extends Controller
      *         in="query",
      *         description="Поле для сортировки",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id", "name", "order", "is_active", "exercise_count", "created_at"}, example="order")
+     *         @OA\Schema(type="string", enum={"id", "name", "order", "is_active", "exercise_count", "created_at"}, example="created_at")
      *     ),
      *     @OA\Parameter(
      *         name="sort_order",
      *         in="query",
      *         description="Порядок сортировки",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="asc")
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
      *     ),
      *     @OA\Response(
      *         response=200,
@@ -141,7 +141,8 @@ final class PlanController extends Controller
      *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
      *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок (необязательно)"),
      *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
-     *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана")
+     *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана"),
+     *             @OA\Property(property="exercise_ids", type="array", @OA\Items(type="integer"), example={1, 2, 3}, description="Массив ID упражнений для добавления в план")
      *         )
      *     ),
      *     @OA\Response(
@@ -255,7 +256,8 @@ final class PlanController extends Controller
      *             @OA\Property(property="name", type="string", example="Силовая тренировка", description="Название плана"),
      *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок (необязательно)"),
      *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
-     *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана")
+     *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана"),
+     *             @OA\Property(property="exercise_ids", type="array", @OA\Items(type="integer"), example={1, 2, 3}, description="Массив ID упражнений для добавления в план")
      *         )
      *     ),
      *     @OA\Response(
