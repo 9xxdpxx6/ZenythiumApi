@@ -89,18 +89,60 @@ final class WorkoutSetController extends Controller
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Parameter(
-     *         name="weight_min",
+     *         name="search",
+     *         in="query",
+     *         description="Поиск по названию плана, упражнения или имени пользователя",
+     *         required=false,
+     *         @OA\Schema(type="string", example="жим")
+     *     ),
+     *     @OA\Parameter(
+     *         name="user_id",
+     *         in="query",
+     *         description="Фильтр по ID пользователя",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="weight_from",
      *         in="query",
      *         description="Фильтр по минимальному весу",
      *         required=false,
      *         @OA\Schema(type="number", format="float", example=50.0)
      *     ),
      *     @OA\Parameter(
-     *         name="weight_max",
+     *         name="weight_to",
      *         in="query",
      *         description="Фильтр по максимальному весу",
      *         required=false,
      *         @OA\Schema(type="number", format="float", example=100.0)
+     *     ),
+     *     @OA\Parameter(
+     *         name="reps_from",
+     *         in="query",
+     *         description="Фильтр по минимальному количеству повторений",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=5)
+     *     ),
+     *     @OA\Parameter(
+     *         name="reps_to",
+     *         in="query",
+     *         description="Фильтр по максимальному количеству повторений",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15)
+     *     ),
+     *     @OA\Parameter(
+     *         name="reps_min",
+     *         in="query",
+     *         description="Фильтр по минимальному количеству повторений (альтернативный параметр)",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=5)
+     *     ),
+     *     @OA\Parameter(
+     *         name="reps_max",
+     *         in="query",
+     *         description="Фильтр по максимальному количеству повторений (альтернативный параметр)",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=15)
      *     ),
      *     @OA\Parameter(
      *         name="sort_by",

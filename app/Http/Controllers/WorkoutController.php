@@ -61,6 +61,20 @@ final class WorkoutController extends Controller
      *         @OA\Schema(type="integer", example=15)
      *     ),
      *     @OA\Parameter(
+     *         name="search",
+     *         in="query",
+     *         description="Поиск по названию плана или имени пользователя",
+     *         required=false,
+     *         @OA\Schema(type="string", example="Программа на массу")
+     *     ),
+     *     @OA\Parameter(
+     *         name="user_id",
+     *         in="query",
+     *         description="Фильтр по ID пользователя",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
      *         name="plan_id",
      *         in="query",
      *         description="Фильтр по ID плана",
@@ -68,25 +82,46 @@ final class WorkoutController extends Controller
      *         @OA\Schema(type="integer", example=1)
      *     ),
      *     @OA\Parameter(
-     *         name="started_at",
+     *         name="started_at_from",
      *         in="query",
-     *         description="Фильтр по дате начала (от)",
+     *         description="Фильтр по дате начала тренировки (от). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
      *         required=false,
-     *         @OA\Schema(type="string", format="date", example="2024-01-01")
+     *         @OA\Schema(type="string", format="date-time", example="2024-01-01T00:00:00Z")
      *     ),
      *     @OA\Parameter(
-     *         name="finished_at",
+     *         name="started_at_to",
      *         in="query",
-     *         description="Фильтр по дате окончания (до)",
+     *         description="Фильтр по дате начала тренировки (до). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
      *         required=false,
-     *         @OA\Schema(type="string", format="date", example="2024-01-31")
+     *         @OA\Schema(type="string", format="date-time", example="2024-01-31T23:59:59Z")
+     *     ),
+     *     @OA\Parameter(
+     *         name="finished_at_from",
+     *         in="query",
+     *         description="Фильтр по дате окончания тренировки (от). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date-time", example="2024-01-01T00:00:00Z")
+     *     ),
+     *     @OA\Parameter(
+     *         name="finished_at_to",
+     *         in="query",
+     *         description="Фильтр по дате окончания тренировки (до). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date-time", example="2024-01-31T23:59:59Z")
+     *     ),
+     *     @OA\Parameter(
+     *         name="completed",
+     *         in="query",
+     *         description="Фильтр по статусу завершения тренировки",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"true", "false", "1", "0"}, example="true")
      *     ),
      *     @OA\Parameter(
      *         name="sort_by",
      *         in="query",
      *         description="Поле для сортировки",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"id", "started_at", "finished_at", "duration_minutes", "exercise_count", "total_volume", "created_at"}, example="started_at")
+     *         @OA\Schema(type="string", enum={"id", "started_at", "finished_at", "created_at", "updated_at"}, example="started_at")
      *     ),
      *     @OA\Parameter(
      *         name="sort_order",

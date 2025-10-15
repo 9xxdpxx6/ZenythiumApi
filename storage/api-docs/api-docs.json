@@ -1477,6 +1477,54 @@
                         }
                     },
                     {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Фильтр по ID пользователя",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Фильтр по статусу активности",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false",
+                                "1",
+                                "0"
+                            ],
+                            "example": "true"
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Фильтр по дате создания (от). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-01-01T00:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Фильтр по дате создания (до). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-01-31T23:59:59Z"
+                        }
+                    },
+                    {
                         "name": "muscle_group_id",
                         "in": "query",
                         "description": "Фильтр по ID группы мышц",
@@ -2090,7 +2138,27 @@
                         }
                     },
                     {
-                        "name": "weight_min",
+                        "name": "search",
+                        "in": "query",
+                        "description": "Поиск по заметкам и имени пользователя",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "прогресс"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Фильтр по ID пользователя",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "weight_from",
                         "in": "query",
                         "description": "Фильтр по минимальному весу",
                         "required": false,
@@ -2101,7 +2169,7 @@
                         }
                     },
                     {
-                        "name": "weight_max",
+                        "name": "weight_to",
                         "in": "query",
                         "description": "Фильтр по максимальному весу",
                         "required": false,
@@ -3058,6 +3126,48 @@
                         "schema": {
                             "type": "integer",
                             "example": 15
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Фильтр по ID пользователя",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "order",
+                        "in": "query",
+                        "description": "Фильтр по порядку плана",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "date_from",
+                        "in": "query",
+                        "description": "Фильтр по дате создания (от). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-01-01T00:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "date_to",
+                        "in": "query",
+                        "description": "Фильтр по дате создания (до). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-01-31T23:59:59Z"
                         }
                     },
                     {
@@ -4754,6 +4864,26 @@
                         }
                     },
                     {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Поиск по названию плана или имени пользователя",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Программа на массу"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Фильтр по ID пользователя",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
                         "name": "plan_id",
                         "in": "query",
                         "description": "Фильтр по ID плана",
@@ -4764,25 +4894,63 @@
                         }
                     },
                     {
-                        "name": "started_at",
+                        "name": "started_at_from",
                         "in": "query",
-                        "description": "Фильтр по дате начала (от)",
+                        "description": "Фильтр по дате начала тренировки (от). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "format": "date",
-                            "example": "2024-01-01"
+                            "format": "date-time",
+                            "example": "2024-01-01T00:00:00Z"
                         }
                     },
                     {
-                        "name": "finished_at",
+                        "name": "started_at_to",
                         "in": "query",
-                        "description": "Фильтр по дате окончания (до)",
+                        "description": "Фильтр по дате начала тренировки (до). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
                         "required": false,
                         "schema": {
                             "type": "string",
-                            "format": "date",
-                            "example": "2024-01-31"
+                            "format": "date-time",
+                            "example": "2024-01-31T23:59:59Z"
+                        }
+                    },
+                    {
+                        "name": "finished_at_from",
+                        "in": "query",
+                        "description": "Фильтр по дате окончания тренировки (от). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-01-01T00:00:00Z"
+                        }
+                    },
+                    {
+                        "name": "finished_at_to",
+                        "in": "query",
+                        "description": "Фильтр по дате окончания тренировки (до). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "format": "date-time",
+                            "example": "2024-01-31T23:59:59Z"
+                        }
+                    },
+                    {
+                        "name": "completed",
+                        "in": "query",
+                        "description": "Фильтр по статусу завершения тренировки",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "true",
+                                "false",
+                                "1",
+                                "0"
+                            ],
+                            "example": "true"
                         }
                     },
                     {
@@ -4796,10 +4964,8 @@
                                 "id",
                                 "started_at",
                                 "finished_at",
-                                "duration_minutes",
-                                "exercise_count",
-                                "total_volume",
-                                "created_at"
+                                "created_at",
+                                "updated_at"
                             ],
                             "example": "started_at"
                         }
@@ -5523,7 +5689,27 @@
                         }
                     },
                     {
-                        "name": "weight_min",
+                        "name": "search",
+                        "in": "query",
+                        "description": "Поиск по названию плана, упражнения или имени пользователя",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "жим"
+                        }
+                    },
+                    {
+                        "name": "user_id",
+                        "in": "query",
+                        "description": "Фильтр по ID пользователя",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "weight_from",
                         "in": "query",
                         "description": "Фильтр по минимальному весу",
                         "required": false,
@@ -5534,7 +5720,7 @@
                         }
                     },
                     {
-                        "name": "weight_max",
+                        "name": "weight_to",
                         "in": "query",
                         "description": "Фильтр по максимальному весу",
                         "required": false,
@@ -5542,6 +5728,46 @@
                             "type": "number",
                             "format": "float",
                             "example": 100
+                        }
+                    },
+                    {
+                        "name": "reps_from",
+                        "in": "query",
+                        "description": "Фильтр по минимальному количеству повторений",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "reps_to",
+                        "in": "query",
+                        "description": "Фильтр по максимальному количеству повторений",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    },
+                    {
+                        "name": "reps_min",
+                        "in": "query",
+                        "description": "Фильтр по минимальному количеству повторений (альтернативный параметр)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    },
+                    {
+                        "name": "reps_max",
+                        "in": "query",
+                        "description": "Фильтр по максимальному количеству повторений (альтернативный параметр)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
                         }
                     },
                     {

@@ -69,14 +69,28 @@ final class MetricController extends Controller
      *         @OA\Schema(type="string", format="date", example="2024-01-31")
      *     ),
      *     @OA\Parameter(
-     *         name="weight_min",
+     *         name="search",
+     *         in="query",
+     *         description="Поиск по заметкам и имени пользователя",
+     *         required=false,
+     *         @OA\Schema(type="string", example="прогресс")
+     *     ),
+     *     @OA\Parameter(
+     *         name="user_id",
+     *         in="query",
+     *         description="Фильтр по ID пользователя",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="weight_from",
      *         in="query",
      *         description="Фильтр по минимальному весу",
      *         required=false,
      *         @OA\Schema(type="number", format="float", example=70.0)
      *     ),
      *     @OA\Parameter(
-     *         name="weight_max",
+     *         name="weight_to",
      *         in="query",
      *         description="Фильтр по максимальному весу",
      *         required=false,

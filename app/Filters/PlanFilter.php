@@ -78,7 +78,14 @@ final class PlanFilter extends BaseFilter
     private function applyActiveFilter(Builder $query): void
     {
         if ($this->hasFilter('is_active')) {
-            $query->where('is_active', $this->getFilter('is_active'));
+            $isActive = $this->getFilter('is_active');
+            
+            // Преобразуем строковые значения в boolean
+            if (is_string($isActive)) {
+                $isActive = filter_var($isActive, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+            }
+            
+            $query->where('is_active', $isActive);
         }
     }
 

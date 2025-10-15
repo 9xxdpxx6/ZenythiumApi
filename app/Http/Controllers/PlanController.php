@@ -40,6 +40,34 @@ final class PlanController extends Controller
      *         @OA\Schema(type="integer", example=15)
      *     ),
      *     @OA\Parameter(
+     *         name="user_id",
+     *         in="query",
+     *         description="Фильтр по ID пользователя",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="order",
+     *         in="query",
+     *         description="Фильтр по порядку плана",
+     *         required=false,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_from",
+     *         in="query",
+     *         description="Фильтр по дате создания (от). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date-time", example="2024-01-01T00:00:00Z")
+     *     ),
+     *     @OA\Parameter(
+     *         name="date_to",
+     *         in="query",
+     *         description="Фильтр по дате создания (до). Форматы: YYYY-MM-DD, YYYY-MM-DD HH:MM:SS, ISO 8601",
+     *         required=false,
+     *         @OA\Schema(type="string", format="date-time", example="2024-01-31T23:59:59Z")
+     *     ),
+     *     @OA\Parameter(
      *         name="cycle_id",
      *         in="query",
      *         description="Фильтр по ID цикла",
