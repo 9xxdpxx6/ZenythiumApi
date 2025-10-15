@@ -5454,19 +5454,16 @@
                     "Workouts"
                 ],
                 "summary": "Запуск тренировки",
-                "description": "Создает новую тренировку на основе плана и устанавливает время начала",
+                "description": "Создает новую тренировку на основе плана и устанавливает время начала. Если plan_id не передан, автоматически определяет план на основе активного цикла и прогресса тренировок.",
                 "operationId": "7b519fa4220a0f7cc29db894e1443c4a",
                 "requestBody": {
-                    "required": true,
+                    "required": false,
                     "content": {
                         "application/json": {
                             "schema": {
-                                "required": [
-                                    "plan_id"
-                                ],
                                 "properties": {
                                     "plan_id": {
-                                        "description": "ID плана для тренировки",
+                                        "description": "ID плана для тренировки (необязательно, если не указан - определяется автоматически)",
                                         "type": "integer",
                                         "example": 1
                                     }
@@ -5505,6 +5502,22 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Пользователь не аутентифицирован"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Активный цикл не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Не найден активный цикл с планами"
                                         }
                                     },
                                     "type": "object"

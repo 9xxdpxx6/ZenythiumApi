@@ -412,14 +412,13 @@ final class WorkoutController extends Controller
      * @OA\Post(
      *     path="/api/v1/workouts/start",
      *     summary="Запуск тренировки",
-     *     description="Создает новую тренировку на основе плана и устанавливает время начала",
+     *     description="Создает новую тренировку на основе плана и устанавливает время начала. Если plan_id не передан, автоматически определяет план на основе активного цикла и прогресса тренировок.",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
-     *         required=true,
+     *         required=false,
      *         @OA\JsonContent(
-     *             required={"plan_id"},
-     *             @OA\Property(property="plan_id", type="integer", example=1, description="ID плана для тренировки")
+     *             @OA\Property(property="plan_id", type="integer", example=1, description="ID плана для тренировки (необязательно, если не указан - определяется автоматически)")
      *         )
      *     ),
      *     @OA\Response(
@@ -438,6 +437,13 @@ final class WorkoutController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=404,
+     *         description="Активный цикл не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Не найден активный цикл с планами")
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=422,
      *         description="Ошибка валидации",
      *         @OA\JsonContent(
@@ -450,7 +456,7 @@ final class WorkoutController extends Controller
     public function start(Request $request): JsonResponse
     {
         $request->validate([
-            'plan_id' => 'required|integer|exists:plans,id',
+            'plan_id' => 'nullable|integer|exists:plans,id',
         ]);
 
         $userId = $request->user()?->id;
@@ -458,7 +464,20 @@ final class WorkoutController extends Controller
             return response()->json(['message' => 'Пользователь не аутентифицирован'], 401);
         }
 
-        $workout = $this->workoutService->start($request->plan_id, $userId);
+        $planId = $request->plan_id;
+        
+        // Если plan_id не передан, автоматически определяем план
+        if (!$planId) {
+            $planId = $this->workoutService->determineNextPlan($userId);
+            
+            if (!$planId) {
+                return response()->json([
+                    'message' => 'Не найден активный цикл с планами'
+                ], 404);
+            }
+        }
+
+        $workout = $this->workoutService->start($planId, $userId);
         
         return response()->json([
             'data' => new WorkoutResource($workout->load(['plan.cycle', 'user'])),

@@ -549,12 +549,12 @@ describe('WorkoutController', function () {
             expect($response->json('data.finished_at'))->toBeNull();
         });
 
-        it('validates plan_id is required', function () {
+        it('works without plan_id when active cycle exists', function () {
             $response = $this->actingAs($this->user)
                 ->postJson('/api/v1/workouts/start', []);
 
-            $response->assertStatus(422)
-                ->assertJsonValidationErrors(['plan_id']);
+            $response->assertStatus(201);
+            expect($response->json('data.plan.id'))->toBe($this->plan->id);
         });
 
         it('validates plan_id exists', function () {
@@ -659,6 +659,190 @@ describe('WorkoutController', function () {
             $response = $this->postJson("/api/v1/workouts/{$this->workout->id}/finish");
 
             $response->assertStatus(401);
+        });
+    });
+
+    describe('POST /api/v1/workouts/start - Auto Plan Detection', function () {
+        beforeEach(function () {
+            // Создаем дополнительные планы для тестирования логики
+            $this->plan1 = Plan::factory()->create([
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Plan 1',
+                'order' => 1,
+                'is_active' => true,
+            ]);
+            $this->plan2 = Plan::factory()->create([
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Plan 2',
+                'order' => 2,
+                'is_active' => true,
+            ]);
+            $this->plan3 = Plan::factory()->create([
+                'cycle_id' => $this->cycle->id,
+                'name' => 'Plan 3',
+                'order' => 3,
+                'is_active' => true,
+            ]);
+        });
+
+        it('automatically determines first plan when no workouts completed', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(201);
+            expect($response->json('data.plan.id'))->toBe($this->plan1->id);
+        });
+
+        it('automatically determines plan with least completed workouts', function () {
+            // Завершаем 2 тренировки для первого плана
+            Workout::factory()->create([
+                'plan_id' => $this->plan1->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subDays(2),
+                'finished_at' => now()->subDays(2)->addHour(),
+            ]);
+            Workout::factory()->create([
+                'plan_id' => $this->plan1->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subDay(),
+                'finished_at' => now()->subDay()->addHour(),
+            ]);
+
+            // Завершаем 1 тренировку для второго плана
+            Workout::factory()->create([
+                'plan_id' => $this->plan2->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subDays(3),
+                'finished_at' => now()->subDays(3)->addHour(),
+            ]);
+
+            // Третий план без завершенных тренировок
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(201);
+            expect($response->json('data.plan.id'))->toBe($this->plan3->id);
+        });
+
+        it('chooses first plan when multiple plans have same completed count', function () {
+            // Завершаем по 1 тренировке для каждого плана
+            Workout::factory()->create([
+                'plan_id' => $this->plan1->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subDays(3),
+                'finished_at' => now()->subDays(3)->addHour(),
+            ]);
+            Workout::factory()->create([
+                'plan_id' => $this->plan2->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subDays(2),
+                'finished_at' => now()->subDays(2)->addHour(),
+            ]);
+            Workout::factory()->create([
+                'plan_id' => $this->plan3->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subDay(),
+                'finished_at' => now()->subDay()->addHour(),
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(201);
+            expect($response->json('data.plan.id'))->toBe($this->plan1->id);
+        });
+
+        it('ignores inactive plans when determining next plan', function () {
+            // Деактивируем первый план
+            $this->plan1->update(['is_active' => false]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(201);
+            expect($response->json('data.plan.id'))->toBe($this->plan2->id);
+        });
+
+        it('returns 404 when no active cycle with plans found', function () {
+            // Удаляем все планы из цикла
+            Plan::where('cycle_id', $this->cycle->id)->delete();
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(404)
+                ->assertJson([
+                    'message' => 'Не найден активный цикл с планами'
+                ]);
+        });
+
+        it('returns 404 when no active plans found', function () {
+            // Деактивируем все планы
+            Plan::where('cycle_id', $this->cycle->id)->update(['is_active' => false]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(404)
+                ->assertJson([
+                    'message' => 'Не найден активный цикл с планами'
+                ]);
+        });
+
+        it('ignores incomplete workouts when counting completed workouts', function () {
+            // Создаем незавершенную тренировку для первого плана
+            Workout::factory()->create([
+                'plan_id' => $this->plan1->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subHour(),
+                'finished_at' => null, // Не завершена
+            ]);
+
+            // Завершаем тренировку для второго плана
+            Workout::factory()->create([
+                'plan_id' => $this->plan2->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subDays(2),
+                'finished_at' => now()->subDays(2)->addHour(),
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(201);
+            // Должен выбрать первый план, так как у него 0 завершенных тренировок
+            expect($response->json('data.plan.id'))->toBe($this->plan1->id);
+        });
+
+        it('uses latest cycle when multiple cycles exist', function () {
+            // Создаем более новый цикл
+            $newerCycle = Cycle::factory()->create([
+                'user_id' => $this->user->id,
+                'created_at' => now()->addDay(),
+            ]);
+            $newerPlan = Plan::factory()->create([
+                'cycle_id' => $newerCycle->id,
+                'name' => 'Newer Plan',
+                'order' => 1,
+                'is_active' => true,
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(201);
+            expect($response->json('data.plan.id'))->toBe($newerPlan->id);
+        });
+
+        it('still works with explicit plan_id when provided', function () {
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start', [
+                    'plan_id' => $this->plan2->id,
+                ]);
+
+            $response->assertStatus(201);
+            expect($response->json('data.plan.id'))->toBe($this->plan2->id);
         });
     });
 });

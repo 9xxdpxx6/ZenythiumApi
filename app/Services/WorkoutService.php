@@ -156,6 +156,69 @@ final class WorkoutService
     }
 
     /**
+     * Автоматически определить план для следующей тренировки на основе активного цикла
+     * 
+     * @param int $userId ID пользователя
+     * 
+     * @return int|null ID плана для следующей тренировки или null если не найден активный цикл
+     */
+    public function determineNextPlan(int $userId): ?int
+    {
+        // Находим активный цикл пользователя (последний по дате создания)
+        $activeCycle = \App\Models\Cycle::where('user_id', $userId)
+            ->whereHas('plans', function ($query) {
+                $query->where('is_active', true);
+            })
+            ->orderBy('created_at', 'desc')
+            ->first();
+
+        if (!$activeCycle) {
+            return null;
+        }
+
+        // Получаем планы цикла в порядке их выполнения
+        $plans = $activeCycle->plans()
+            ->where('is_active', true)
+            ->orderBy('order')
+            ->get();
+
+        if ($plans->isEmpty()) {
+            return null;
+        }
+
+        // Подсчитываем завершенные тренировки для каждого плана
+        $planProgress = [];
+        foreach ($plans as $plan) {
+            $completedWorkouts = $plan->workouts()
+                ->where('user_id', $userId)
+                ->whereNotNull('finished_at')
+                ->count();
+            
+            $planProgress[$plan->id] = [
+                'plan' => $plan,
+                'completed_workouts' => $completedWorkouts,
+                'order' => $plan->order
+            ];
+        }
+
+        // Определяем следующий план на основе логики:
+        // Если в первом плане меньше тренировок чем в остальных, начинаем с него
+        // Иначе ищем план с наименьшим количеством завершенных тренировок
+        
+        $minCompletedWorkouts = min(array_column($planProgress, 'completed_workouts'));
+        
+        // Находим план с минимальным количеством завершенных тренировок
+        // Если несколько планов имеют одинаковое минимальное количество, берем первый по порядку
+        foreach ($plans as $plan) {
+            if ($planProgress[$plan->id]['completed_workouts'] === $minCompletedWorkouts) {
+                return $plan->id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
      * Завершить тренировку установкой времени окончания
      * 
      * @param int $workoutId ID тренировки
