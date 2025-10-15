@@ -131,7 +131,7 @@ final class PlanController extends Controller
      * @OA\Post(
      *     path="/api/v1/plans",
      *     summary="Создание нового плана тренировок",
-     *     description="Создает новый план тренировок для текущего пользователя",
+     *     description="Создает новый план тренировок для текущего пользователя. Поддерживает добавление упражнений через массив exercise_ids. Для планов с циклом проверяется принадлежность упражнений пользователю. Для standalone планов упражнения добавляются без проверки принадлежности.",
      *     tags={"Plans"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
@@ -142,7 +142,7 @@ final class PlanController extends Controller
      *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок (необязательно)"),
      *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
      *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана"),
-     *             @OA\Property(property="exercise_ids", type="array", @OA\Items(type="integer"), example={1, 2, 3}, description="Массив ID упражнений для добавления в план")
+     *             @OA\Property(property="exercise_ids", type="array", @OA\Items(type="integer"), example={1, 2, 3}, description="Массив ID упражнений для добавления в план. Упражнения добавляются в порядке указанном в массиве. Для планов с циклом проверяется принадлежность упражнений пользователю. Для standalone планов упражнения добавляются без проверки принадлежности.")
      *         )
      *     ),
      *     @OA\Response(
@@ -240,7 +240,7 @@ final class PlanController extends Controller
      * @OA\Put(
      *     path="/api/v1/plans/{plan}",
      *     summary="Обновление плана тренировок",
-     *     description="Обновляет информацию о существующем плане тренировок",
+     *     description="Обновляет информацию о существующем плане тренировок. Поддерживает синхронизацию упражнений через массив exercise_ids. При передаче exercise_ids все существующие упражнения плана удаляются и заменяются новыми в указанном порядке. Для планов с циклом проверяется принадлежность упражнений пользователю. Для standalone планов упражнения добавляются без проверки принадлежности.",
      *     tags={"Plans"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
@@ -257,7 +257,7 @@ final class PlanController extends Controller
      *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок (необязательно)"),
      *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
      *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана"),
-     *             @OA\Property(property="exercise_ids", type="array", @OA\Items(type="integer"), example={1, 2, 3}, description="Массив ID упражнений для добавления в план")
+     *             @OA\Property(property="exercise_ids", type="array", @OA\Items(type="integer"), example={1, 2, 3}, description="Массив ID упражнений для добавления в план. Упражнения добавляются в порядке указанном в массиве. Для планов с циклом проверяется принадлежность упражнений пользователю. Для standalone планов упражнения добавляются без проверки принадлежности.")
      *         )
      *     ),
      *     @OA\Response(

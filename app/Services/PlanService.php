@@ -111,6 +111,11 @@ final class PlanService
      * 
      * @param int $id ID плана
      * @param array $data Данные для обновления
+     * @param string|null $data['name'] Название плана
+     * @param int|null $data['cycle_id'] ID цикла тренировок
+     * @param int|null $data['order'] Порядок плана
+     * @param bool|null $data['is_active'] Статус активности плана
+     * @param array|null $data['exercise_ids'] Массив ID упражнений для синхронизации с планом
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
      * @return Plan|null Обновленная модель плана с загруженной связью цикла или null если не найден
@@ -231,25 +236,52 @@ final class PlanService
     
     /**
      * Добавить упражнения к плану (для создания).
+     * 
+     * Для планов с циклом проверяет принадлежность упражнений пользователю.
+     * Для standalone планов добавляет упражнения без проверки принадлежности.
+     * 
+     * @param Plan $plan План тренировок
+     * @param array $exerciseIds Массив ID упражнений для добавления
+     * @return void
      */
     private function attachExercisesToPlan(Plan $plan, array $exerciseIds): void
     {
         foreach ($exerciseIds as $index => $exerciseId) {
             $exercise = \App\Models\Exercise::find($exerciseId);
             
-            // Проверяем, что упражнение существует и принадлежит пользователю
-            if ($exercise && $exercise->user_id === $plan->cycle?->user_id) {
-                \App\Models\PlanExercise::create([
-                    'plan_id' => $plan->id,
-                    'exercise_id' => $exerciseId,
-                    'order' => $index + 1
-                ]);
+            // Проверяем, что упражнение существует
+            if ($exercise) {
+                // Для планов с циклом проверяем принадлежность пользователю
+                if ($plan->cycle_id !== null) {
+                    if ($exercise->user_id === $plan->cycle->user_id) {
+                        \App\Models\PlanExercise::create([
+                            'plan_id' => $plan->id,
+                            'exercise_id' => $exerciseId,
+                            'order' => $index + 1
+                        ]);
+                    }
+                } else {
+                    // Для standalone планов добавляем без проверки принадлежности
+                    \App\Models\PlanExercise::create([
+                        'plan_id' => $plan->id,
+                        'exercise_id' => $exerciseId,
+                        'order' => $index + 1
+                    ]);
+                }
             }
         }
     }
     
     /**
      * Синхронизировать упражнения плана (для обновления).
+     * 
+     * Удаляет все существующие упражнения плана и добавляет новые в указанном порядке.
+     * Для планов с циклом проверяет принадлежность упражнений пользователю.
+     * Для standalone планов добавляет упражнения без проверки принадлежности.
+     * 
+     * @param Plan $plan План тренировок
+     * @param array $exerciseIds Массив ID упражнений для синхронизации
+     * @return void
      */
     private function syncExercisesToPlan(Plan $plan, array $exerciseIds): void
     {
@@ -260,13 +292,25 @@ final class PlanService
         foreach ($exerciseIds as $index => $exerciseId) {
             $exercise = \App\Models\Exercise::find($exerciseId);
             
-            // Проверяем, что упражнение существует и принадлежит пользователю
-            if ($exercise && $exercise->user_id === $plan->cycle?->user_id) {
-                \App\Models\PlanExercise::create([
-                    'plan_id' => $plan->id,
-                    'exercise_id' => $exerciseId,
-                    'order' => $index + 1
-                ]);
+            // Проверяем, что упражнение существует
+            if ($exercise) {
+                // Для планов с циклом проверяем принадлежность пользователю
+                if ($plan->cycle_id !== null) {
+                    if ($exercise->user_id === $plan->cycle->user_id) {
+                        \App\Models\PlanExercise::create([
+                            'plan_id' => $plan->id,
+                            'exercise_id' => $exerciseId,
+                            'order' => $index + 1
+                        ]);
+                    }
+                } else {
+                    // Для standalone планов добавляем без проверки принадлежности
+                    \App\Models\PlanExercise::create([
+                        'plan_id' => $plan->id,
+                        'exercise_id' => $exerciseId,
+                        'order' => $index + 1
+                    ]);
+                }
             }
         }
     }
