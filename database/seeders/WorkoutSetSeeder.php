@@ -33,13 +33,10 @@ final class WorkoutSetSeeder extends Seeder
                 continue;
             }
 
-            // Random number of exercises for this workout (2-6 exercises)
-            $exerciseCount = rand(2, min(6, $planExercisesForWorkout->count()));
-            $selectedExercises = $planExercisesForWorkout->random($exerciseCount);
-
-            foreach ($selectedExercises as $planExercise) {
-                // Random number of sets per exercise (2-5 sets)
-                $setCount = rand(2, 5);
+            // Create workout sets for ALL exercises in the plan (not random selection)
+            foreach ($planExercisesForWorkout as $planExercise) {
+                // Create 5+ sets per exercise for better history data
+                $setCount = rand(5, 8); // 5-8 sets per exercise
                 
                 for ($set = 1; $set <= $setCount; $set++) {
                     // Progressive weight increase for each set (realistic training)

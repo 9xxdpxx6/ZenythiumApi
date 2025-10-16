@@ -28,12 +28,12 @@ final class WorkoutSeeder extends Seeder
 
         $workouts = [];
 
-        // Create workouts for the last 30 days
-        for ($i = 0; $i < 30; $i++) {
+        // Create workouts for the last 60 days (more history)
+        for ($i = 0; $i < 60; $i++) {
             $date = Carbon::now()->subDays($i);
             
-            // Skip some days to make it more realistic (not every day)
-            if (rand(1, 3) === 1) { // 33% chance of having a workout on any given day
+            // Higher chance of having workouts (50% chance instead of 33%)
+            if (rand(1, 2) === 1) { // 50% chance of having a workout on any given day
                 $user = $users->random();
                 $plan = $plans->random();
                 
@@ -51,7 +51,7 @@ final class WorkoutSeeder extends Seeder
         }
 
         // Create some ongoing workouts (started but not finished)
-        for ($i = 0; $i < 3; $i++) {
+        for ($i = 0; $i < 5; $i++) { // More ongoing workouts
             $user = $users->random();
             $plan = $plans->random();
             $startTime = Carbon::now()->subMinutes(rand(10, 60));
