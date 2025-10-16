@@ -52,6 +52,29 @@ final class PlanExerciseService
     }
 
     /**
+     * Получить все упражнения плана для пользователя
+     * 
+     * @param int|null $userId ID пользователя для проверки доступа
+     * 
+     * @return Collection Коллекция упражнений плана пользователя
+     */
+    public function getAllForUser(?int $userId = null): Collection
+    {
+        $query = PlanExercise::query()
+            ->with(['exercise.muscleGroup', 'plan'])
+            ->orderBy('plan_id')
+            ->orderBy('order');
+
+        if ($userId) {
+            $query->whereHas('plan.cycle', function ($q) use ($userId) {
+                $q->where('user_id', $userId);
+            });
+        }
+
+        return $query->get();
+    }
+
+    /**
      * Создать новое упражнение в плане
      * 
      * @param array $data Данные для создания

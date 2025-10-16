@@ -39,6 +39,40 @@ final class PlanExerciseController extends Controller
 
     /**
      * @OA\Get(
+     *     path="/api/v1/plan-exercises",
+     *     summary="Получение всех упражнений плана пользователя",
+     *     description="Возвращает список всех упражнений плана для текущего пользователя",
+     *     tags={"Plan Exercises"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Упражнения плана успешно получены",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/PlanExerciseResource")),
+     *             @OA\Property(property="message", type="string", example="Упражнения плана успешно получены")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
+    public function getAllForUser(Request $request): JsonResponse
+    {
+        $planExercises = $this->planExerciseService->getAllForUser($request->user()?->id);
+        
+        return response()->json([
+            'data' => PlanExerciseResource::collection($planExercises),
+            'message' => 'Упражнения плана успешно получены'
+        ]);
+    }
+
+    /**
+     * @OA\Get(
      *     path="/api/v1/plans/{plan}/exercises",
      *     summary="Получение упражнений плана",
      *     description="Возвращает список упражнений в конкретном плане тренировок",

@@ -274,6 +274,7 @@
                 if (response.ok && data.data) {
                     const createSelect = document.getElementById('createWorkoutId');
                     const updateSelect = document.getElementById('updateWorkoutId');
+                    const filterSelect = document.getElementById('filterWorkoutId');
                     
                     const options = data.data.map(item => 
                         `<option value="${item.id}">ID: ${item.id} - ${item.plan ? item.plan.name : 'План не указан'} (${item.started_at ? new Date(item.started_at).toLocaleDateString('ru-RU') : 'Дата не указана'})</option>`
@@ -281,6 +282,7 @@
                     
                     createSelect.innerHTML = '<option value="">Выберите тренировку</option>' + options;
                     updateSelect.innerHTML = '<option value="">Выберите тренировку</option>' + options;
+                    filterSelect.innerHTML = '<option value="">Все тренировки</option>' + options;
                 }
             } catch (error) {
                 console.error('Error loading workouts:', error);
@@ -290,22 +292,24 @@
         // Load Plan Exercises for dropdowns
         async function loadPlanExercises() {
             try {
-                // Note: This endpoint might not exist, so we'll try to get it from plans
-                const response = await fetch(`${API_BASE}/plans`, {
+                const response = await fetch(`${API_BASE}/plan-exercises`, {
                     headers: getAuthHeaders()
                 });
 
                 const data = await response.json();
                 
                 if (response.ok && data.data) {
-                    // For now, we'll create a simple dropdown
-                    // In a real app, you'd need a proper endpoint for plan exercises
                     const createSelect = document.getElementById('createPlanExerciseId');
                     const updateSelect = document.getElementById('updatePlanExerciseId');
+                    const filterSelect = document.getElementById('filterPlanExerciseId');
                     
-                    // This is a placeholder - you'd need to implement proper plan exercises loading
-                    createSelect.innerHTML = '<option value="">Выберите упражнение</option><option value="1">Упражнение 1</option><option value="2">Упражнение 2</option>';
-                    updateSelect.innerHTML = '<option value="">Выберите упражнение</option><option value="1">Упражнение 1</option><option value="2">Упражнение 2</option>';
+                    const options = data.data.map(item => 
+                        `<option value="${item.id}">ID: ${item.id} - ${item.exercise ? item.exercise.name : 'Упражнение не указано'} (План: ${item.plan ? item.plan.name : 'План не указан'})</option>`
+                    ).join('');
+                    
+                    createSelect.innerHTML = '<option value="">Выберите упражнение</option>' + options;
+                    updateSelect.innerHTML = '<option value="">Выберите упражнение</option>' + options;
+                    filterSelect.innerHTML = '<option value="">Все упражнения</option>' + options;
                 }
             } catch (error) {
                 console.error('Error loading plan exercises:', error);

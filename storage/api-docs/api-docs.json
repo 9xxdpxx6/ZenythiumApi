@@ -3861,6 +3861,61 @@
                 ]
             }
         },
+        "/api/v1/plan-exercises": {
+            "get": {
+                "tags": [
+                    "Plan Exercises"
+                ],
+                "summary": "Получение всех упражнений плана пользователя",
+                "description": "Возвращает список всех упражнений плана для текущего пользователя",
+                "operationId": "81d5988b75e358cb93e0253918f80b48",
+                "responses": {
+                    "200": {
+                        "description": "Упражнения плана успешно получены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/PlanExerciseResource"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Упражнения плана успешно получены"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/plans/{plan}/exercises": {
             "get": {
                 "tags": [
