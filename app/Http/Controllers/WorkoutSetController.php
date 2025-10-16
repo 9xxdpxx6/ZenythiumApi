@@ -261,32 +261,42 @@ final class WorkoutSetController extends Controller
     }
 
     /**
-     * @group Workout Sets
-     * @authenticated
-     * Получение конкретного подхода
-     * 
-     * Возвращает детальную информацию о подходе по ID.
-     * 
-     * @urlParam workout_set integer required ID подхода. Example: 1
-     * 
-     * @response 200 scenario="success" {
-     *   "data": {
-     *     "id": 1,
-     *     "workout_id": 1,
-     *     "plan_exercise_id": 1,
-     *     "weight": 80.0,
-     *     "reps": 10,
-     *     "workout": {"id": 1, "started_at": "2024-01-15T10:00:00.000000Z"},
-     *     "plan_exercise": {"id": 1, "exercise": {"name": "Жим лежа"}}
-     *   },
-     *   "message": "Подход успешно получен"
-     * }
-     * @response 401 scenario="unauthenticated" {
-     *   "message": "Unauthenticated."
-     * }
-     * @response 404 scenario="not found" {
-     *   "message": "Подход не найден"
-     * }
+     * @OA\Get(
+     *     path="/api/workout-sets/{workout_set}",
+     *     summary="Получение конкретного подхода",
+     *     description="Возвращает детальную информацию о подходе по ID",
+     *     tags={"Workout Sets"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="workout_set",
+     *         in="path",
+     *         description="ID подхода",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Подход успешно получен",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/WorkoutSetResource"),
+     *             @OA\Property(property="message", type="string", example="Подход успешно получен")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Подход не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Подход не найден")
+     *         )
+     *     )
+     * )
      */
     public function show(int $id, Request $request): JsonResponse
     {
@@ -305,38 +315,57 @@ final class WorkoutSetController extends Controller
     }
 
     /**
-     * @group Workout Sets
-     * @authenticated
-     * Обновление подхода
-     * 
-     * Обновляет информацию о существующем подходе.
-     * 
-     * @urlParam workout_set integer required ID подхода. Example: 1
-     * @bodyParam weight float optional Вес в килограммах. Example: 80.0
-     * @bodyParam reps integer optional Количество повторений. Example: 10
-     * 
-     * @response 200 scenario="success" {
-     *   "data": {
-     *     "id": 1,
-     *     "workout_id": 1,
-     *     "plan_exercise_id": 1,
-     *     "weight": 80.0,
-     *     "reps": 10,
-     *     "workout": {"id": 1, "started_at": "2024-01-15T10:00:00.000000Z"},
-     *     "plan_exercise": {"id": 1, "exercise": {"name": "Жим лежа"}}
-     *   },
-     *   "message": "Подход успешно обновлен"
-     * }
-     * @response 401 scenario="unauthenticated" {
-     *   "message": "Unauthenticated."
-     * }
-     * @response 404 scenario="not found" {
-     *   "message": "Подход не найден"
-     * }
-     * @response 422 scenario="validation error" {
-     *   "message": "Ошибка валидации",
-     *   "errors": {"weight": ["Вес должен быть положительным числом"]}
-     * }
+     * @OA\Put(
+     *     path="/api/workout-sets/{workout_set}",
+     *     summary="Обновление подхода",
+     *     description="Обновляет информацию о существующем подходе",
+     *     tags={"Workout Sets"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="workout_set",
+     *         in="path",
+     *         description="ID подхода",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             @OA\Property(property="weight", type="number", format="float", example=80.0, description="Вес в килограммах"),
+     *             @OA\Property(property="reps", type="integer", example=10, description="Количество повторений")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Подход успешно обновлен",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/WorkoutSetResource"),
+     *             @OA\Property(property="message", type="string", example="Подход успешно обновлен")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Подход не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Подход не найден")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
      */
     public function update(WorkoutSetRequest $request, int $id): JsonResponse
     {
@@ -355,24 +384,42 @@ final class WorkoutSetController extends Controller
     }
 
     /**
-     * @group Workout Sets
-     * @authenticated
-     * Удаление подхода
-     * 
-     * Удаляет подход из тренировки.
-     * 
-     * @urlParam workout_set integer required ID подхода. Example: 1
-     * 
-     * @response 200 scenario="success" {
-     *   "data": null,
-     *   "message": "Подход успешно удален"
-     * }
-     * @response 401 scenario="unauthenticated" {
-     *   "message": "Unauthenticated."
-     * }
-     * @response 404 scenario="not found" {
-     *   "message": "Подход не найден"
-     * }
+     * @OA\Delete(
+     *     path="/api/workout-sets/{workout_set}",
+     *     summary="Удаление подхода",
+     *     description="Удаляет подход из тренировки",
+     *     tags={"Workout Sets"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="workout_set",
+     *         in="path",
+     *         description="ID подхода",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Подход успешно удален",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="null", example=null),
+     *             @OA\Property(property="message", type="string", example="Подход успешно удален")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Подход не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Подход не найден")
+     *         )
+     *     )
+     * )
      */
     public function destroy(int $id, Request $request): JsonResponse
     {
