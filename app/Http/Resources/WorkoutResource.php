@@ -94,14 +94,23 @@ final class WorkoutResource extends JsonResource
     }
 
     /**
-     * Получить историю выполнения упражнения за последние 3 тренировки
+     * Получить историю выполнения упражнения за последние тренировки
+     * 
+     * Возвращает историю подходов для упражнения, включая:
+     * - Текущую тренировку (если есть подходы)
+     * - Последние 3 завершенные тренировки (finished_at != null)
      * 
      * @param int $planExerciseId ID упражнения в плане
      * 
      * @return array Массив с историей подходов. Каждый элемент содержит:
      * - workout_id: ID тренировки
-     * - workout_date: дата завершения тренировки в ISO 8601 формате
+     * - workout_date: дата завершения тренировки в ISO 8601 формате 
+     *   (null для незавершенных тренировок, показывает статус завершения)
      * - sets: массив подходов с id, weight, reps
+     * 
+     * @note workout_date = null означает незавершенную тренировку (finished_at = null)
+     * @note workout_date = дата означает завершенную тренировку (finished_at != null)
+     * @note started_at не используется в истории, только finished_at для определения статуса
      */
     private function getExerciseHistory(int $planExerciseId): array
     {
@@ -115,15 +124,40 @@ final class WorkoutResource extends JsonResource
             return [];
         }
 
-        // Группируем подходы по тренировкам и берем только последние 3
-        $workoutSets = $planExercise->workoutSets
-            ->sortByDesc('workout.finished_at')
-            ->groupBy('workout.id')
+        // Группируем подходы по тренировкам
+        $workoutSets = $planExercise->workoutSets->groupBy('workout.id');
+        
+        $history = [];
+        
+        // Добавляем текущую тренировку (если есть подходы)
+        if ($workoutSets->has($this->id)) {
+            $currentSets = $workoutSets->get($this->id);
+            $history[] = [
+                'workout_id' => $this->id,
+                'workout_date' => $this->finished_at?->toISOString(), // Используем finished_at текущей тренировки
+                'sets' => $currentSets->map(function ($set) {
+                    return [
+                        'id' => $set->id,
+                        'weight' => $set->weight,
+                        'reps' => $set->reps,
+                    ];
+                })->values()->toArray(),
+            ];
+        }
+        
+        // Добавляем последние 3 завершенные тренировки (исключая текущую)
+        $completedWorkouts = $workoutSets
+            ->filter(function ($sets, $workoutId) {
+                return $workoutId != $this->id && $sets->first()->workout->finished_at !== null; // Исключаем текущую тренировку и незавершенные
+            })
+            ->sortByDesc(function ($sets) {
+                return $sets->first()->workout->finished_at;
+            })
             ->take(3);
 
-        return $workoutSets->map(function ($sets, $workoutId) {
+        foreach ($completedWorkouts as $workoutId => $sets) {
             $workout = $sets->first()->workout;
-            return [
+            $history[] = [
                 'workout_id' => $workoutId,
                 'workout_date' => $workout->finished_at?->toISOString(),
                 'sets' => $sets->map(function ($set) {
@@ -134,6 +168,8 @@ final class WorkoutResource extends JsonResource
                     ];
                 })->values()->toArray(),
             ];
-        })->values()->toArray();
+        }
+
+        return $history;
     }
 }

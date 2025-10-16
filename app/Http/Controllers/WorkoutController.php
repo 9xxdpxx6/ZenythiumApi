@@ -45,7 +45,7 @@ use Illuminate\Http\Request;
  *         @OA\Property(property="history", type="array", @OA\Items(
  *             type="object",
  *             @OA\Property(property="workout_id", type="integer", example=1),
- *             @OA\Property(property="workout_date", type="string", format="date-time", example="2024-01-01T11:30:00.000000Z"),
+ *             @OA\Property(property="workout_date", type="string", format="date-time", nullable=true, example="2024-01-01T11:30:00.000000Z", description="Дата завершения тренировки (finished_at). null = незавершенная тренировка, дата = завершенная тренировка"),
  *             @OA\Property(property="sets", type="array", @OA\Items(
  *                 type="object",
  *                 @OA\Property(property="id", type="integer", example=1),
@@ -259,7 +259,7 @@ final class WorkoutController extends Controller
      * @OA\Get(
      *     path="/api/v1/workouts/{workout}",
      *     summary="Получение конкретной тренировки",
-     *     description="Возвращает детальную информацию о тренировке по ID, включая список упражнений из плана с историей их выполнения за последние 3 тренировки",
+     *     description="Возвращает детальную информацию о тренировке по ID, включая список упражнений из плана с историей их выполнения. История содержит: текущую тренировку (workout_date=null если незавершена) + последние 3 завершенные тренировки (workout_date=finished_at)",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
@@ -306,10 +306,13 @@ final class WorkoutController extends Controller
         // Загружаем дополнительные связи для отображения упражнений с историей
         $workout->load([
             'plan.planExercises.exercise.muscleGroup',
-            'plan.planExercises.workoutSets' => function ($query) use ($request) {
-                $query->whereHas('workout', function ($q) use ($request) {
+            'plan.planExercises.workoutSets' => function ($query) use ($request, $workout) {
+                $query->whereHas('workout', function ($q) use ($request, $workout) {
                     $q->where('user_id', $request->user()?->id)
-                      ->whereNotNull('finished_at');
+                      ->where(function ($subQ) use ($workout) {
+                          $subQ->whereNotNull('finished_at')
+                               ->orWhere('id', $workout->id); // Включаем текущую тренировку
+                      });
                 })->with('workout:id,finished_at')->orderBy('created_at', 'desc');
             }
         ]);
