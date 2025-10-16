@@ -123,6 +123,8 @@ final class WorkoutService
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
      * @return bool True если тренировка успешно удалена, false если не найдена
+     * 
+     * @note При удалении тренировки автоматически удаляются все связанные WorkoutSet записи
      */
     public function delete(int $id, ?int $userId = null): bool
     {
@@ -170,6 +172,7 @@ final class WorkoutService
     public function determineNextPlan(int $userId): ?int
     {
         // Находим активный цикл пользователя (последний по дате создания)
+        // Активным считается цикл, у которого есть активные планы
         $activeCycle = \App\Models\Cycle::where('user_id', $userId)
             ->whereHas('plans', function ($query) {
                 $query->where('is_active', true);
@@ -181,7 +184,7 @@ final class WorkoutService
             return null;
         }
 
-        // Получаем планы цикла в порядке их выполнения
+        // Получаем только активные планы этого цикла в порядке их выполнения
         $plans = $activeCycle->plans()
             ->where('is_active', true)
             ->orderBy('order')
@@ -207,8 +210,8 @@ final class WorkoutService
         }
 
         // Определяем следующий план на основе логики:
-        // Если в первом плане меньше тренировок чем в остальных, начинаем с него
-        // Иначе ищем план с наименьшим количеством завершенных тренировок
+        // Выбираем план с наименьшим количеством завершенных тренировок
+        // Если несколько планов имеют одинаковое минимальное количество, берем первый по порядку
         
         $minCompletedWorkouts = min(array_column($planProgress, 'completed_workouts'));
         

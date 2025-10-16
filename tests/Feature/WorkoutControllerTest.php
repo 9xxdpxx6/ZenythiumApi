@@ -601,7 +601,19 @@ describe('WorkoutController', function () {
     });
 
     describe('DELETE /api/v1/workouts/{id}', function () {
-        it('deletes a workout', function () {
+        it('deletes workout and related workout sets', function () {
+            // Создаем WorkoutSet для этой тренировки
+            $planExercise = \App\Models\PlanExercise::factory()->create([
+                'plan_id' => $this->plan->id
+            ]);
+            
+            $workoutSet = \App\Models\WorkoutSet::factory()->create([
+                'workout_id' => $this->workout->id,
+                'plan_exercise_id' => $planExercise->id,
+                'weight' => 80.5,
+                'reps' => 10
+            ]);
+
             $response = $this->actingAs($this->user)
                 ->deleteJson("/api/v1/workouts/{$this->workout->id}");
 
@@ -610,9 +622,12 @@ describe('WorkoutController', function () {
                     'data' => null,
                     'message' => 'Тренировка успешно удалена'
                 ]);
-
+            
             $this->assertDatabaseMissing('workouts', [
                 'id' => $this->workout->id,
+            ]);
+            $this->assertDatabaseMissing('workout_sets', [
+                'id' => $workoutSet->id,
             ]);
         });
 
@@ -861,7 +876,13 @@ describe('WorkoutController', function () {
         });
 
         it('chooses first plan when multiple plans have same completed count', function () {
-            // Завершаем по 1 тренировке для каждого плана
+            // Завершаем по 1 тренировке для каждого плана (включая план из основного beforeEach)
+            Workout::factory()->create([
+                'plan_id' => $this->plan->id, // план из основного beforeEach
+                'user_id' => $this->user->id,
+                'started_at' => now()->subDays(4),
+                'finished_at' => now()->subDays(4)->addHour(),
+            ]);
             Workout::factory()->create([
                 'plan_id' => $this->plan1->id,
                 'user_id' => $this->user->id,
@@ -885,6 +906,8 @@ describe('WorkoutController', function () {
                 ->postJson('/api/v1/workouts/start');
 
             $response->assertStatus(201);
+            // Должен выбрать план с наименьшим количеством завершенных тренировок
+            // Поскольку у всех планов по 1 завершенной тренировке, выбирается первый по порядку
             expect($response->json('data.plan.id'))->toBe($this->plan1->id);
         });
 

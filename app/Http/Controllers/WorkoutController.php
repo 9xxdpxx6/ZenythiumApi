@@ -478,7 +478,7 @@ final class WorkoutController extends Controller
      *     ),
      *     @OA\Response(
      *         response=404,
-     *         description="Активный цикл не найден",
+     *         description="Активный цикл не найден или план неактивен",
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Не найден активный цикл с планами")
      *         )
@@ -513,6 +513,20 @@ final class WorkoutController extends Controller
             if (!$planId) {
                 return response()->json([
                     'message' => 'Не найден активный цикл с планами'
+                ], 404);
+            }
+        } else {
+            // Если plan_id передан, проверяем что план принадлежит активному циклу пользователя
+            $plan = \App\Models\Plan::where('id', $planId)
+                ->whereHas('cycle', function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                })
+                ->where('is_active', true)
+                ->first();
+                
+            if (!$plan) {
+                return response()->json([
+                    'message' => 'План не найден или неактивен'
                 ], 404);
             }
         }

@@ -5566,7 +5566,7 @@
                         }
                     },
                     "404": {
-                        "description": "Активный цикл не найден",
+                        "description": "Активный цикл не найден или план неактивен",
                         "content": {
                             "application/json": {
                                 "schema": {

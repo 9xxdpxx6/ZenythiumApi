@@ -16,6 +16,7 @@ return new class extends Migration
             $table->foreignId('cycle_id')->nullable()->constrained()->nullOnDelete();
             $table->string('name'); 
             $table->integer('order')->nullable(); 
+            $table->boolean('is_active')->default(true);
             $table->timestamps();
 
             $table->index('order');

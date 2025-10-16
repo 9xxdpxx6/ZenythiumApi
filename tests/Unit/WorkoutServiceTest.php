@@ -258,12 +258,25 @@ describe('WorkoutService', function () {
     });
 
     describe('delete', function () {
-        it('deletes a workout', function () {
+        it('deletes workout and related workout sets', function () {
+            // Создаем WorkoutSet для этой тренировки
+            $workoutSet = \App\Models\WorkoutSet::factory()->create([
+                'workout_id' => $this->workout->id,
+                'plan_exercise_id' => \App\Models\PlanExercise::factory()->create([
+                    'plan_id' => $this->plan->id
+                ])->id,
+                'weight' => 80.5,
+                'reps' => 10
+            ]);
+
             $result = $this->workoutService->delete($this->workout->id, $this->user->id);
             
             expect($result)->toBeTrue();
             $this->assertDatabaseMissing('workouts', [
                 'id' => $this->workout->id,
+            ]);
+            $this->assertDatabaseMissing('workout_sets', [
+                'id' => $workoutSet->id,
             ]);
         });
 
@@ -296,5 +309,210 @@ describe('WorkoutService', function () {
             $result = $this->workoutService->delete($workoutId, $this->user->id);
             expect($result)->toBeFalse();
         })->with('exception_scenarios');
+    });
+
+    describe('determineNextPlan', function () {
+        beforeEach(function () {
+            // Для тестов determineNextPlan создаем только пользователя без циклов
+            $this->user = User::factory()->create();
+            $this->workoutService = new WorkoutService();
+        });
+
+        it('returns first plan when no workouts completed', function () {
+            // Создаем новый цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            
+            // Создаем цикл с несколькими планами
+            $plan1 = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 1,
+                'is_active' => true,
+                'name' => 'Plan 1'
+            ]);
+            $plan2 = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 2,
+                'is_active' => true,
+                'name' => 'Plan 2'
+            ]);
+
+            $result = $this->workoutService->determineNextPlan($this->user->id);
+
+            expect($result)->toBe($plan1->id);
+        });
+
+        it('returns plan with least completed workouts', function () {
+            // Создаем новый цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            
+            // Создаем цикл с несколькими планами
+            $plan1 = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 1,
+                'is_active' => true,
+                'name' => 'Plan 1'
+            ]);
+            $plan2 = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 2,
+                'is_active' => true,
+                'name' => 'Plan 2'
+            ]);
+
+            // Создаем завершенные тренировки для plan1 (2 тренировки)
+            Workout::factory()->completed()->count(2)->create([
+                'plan_id' => $plan1->id,
+                'user_id' => $this->user->id,
+            ]);
+
+            // Создаем завершенную тренировку для plan2 (1 тренировка)
+            Workout::factory()->completed()->create([
+                'plan_id' => $plan2->id,
+                'user_id' => $this->user->id,
+            ]);
+
+            $result = $this->workoutService->determineNextPlan($this->user->id);
+
+            expect($result)->toBe($plan2->id);
+        });
+
+        it('returns first plan by order when equal completed workouts', function () {
+            // Создаем новый цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            
+            // Создаем цикл с несколькими планами
+            $plan1 = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 1,
+                'is_active' => true,
+                'name' => 'Plan 1'
+            ]);
+            $plan2 = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 2,
+                'is_active' => true,
+                'name' => 'Plan 2'
+            ]);
+
+            // Создаем одинаковое количество завершенных тренировок для обоих планов
+            Workout::factory()->completed()->create([
+                'plan_id' => $plan1->id,
+                'user_id' => $this->user->id,
+            ]);
+            Workout::factory()->completed()->create([
+                'plan_id' => $plan2->id,
+                'user_id' => $this->user->id,
+            ]);
+
+            $result = $this->workoutService->determineNextPlan($this->user->id);
+
+            expect($result)->toBe($plan1->id);
+        });
+
+        it('ignores inactive plans', function () {
+            // Создаем новый цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            
+            // Создаем активный план
+            $activePlan = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 1,
+                'is_active' => true,
+                'name' => 'Active Plan'
+            ]);
+
+            // Создаем неактивный план
+            $inactivePlan = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 2,
+                'is_active' => false,
+                'name' => 'Inactive Plan'
+            ]);
+
+            $result = $this->workoutService->determineNextPlan($this->user->id);
+
+            expect($result)->toBe($activePlan->id);
+        });
+
+        it('returns null when no active cycle found', function () {
+            // Создаем пользователя без циклов
+            $userWithoutCycles = User::factory()->create();
+
+            $result = $this->workoutService->determineNextPlan($userWithoutCycles->id);
+
+            expect($result)->toBeNull();
+        });
+
+        it('returns null when cycle has no active plans', function () {
+            // Создаем новый цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            
+            // Создаем цикл только с неактивными планами
+            $inactivePlan = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 1,
+                'is_active' => false,
+                'name' => 'Inactive Plan'
+            ]);
+
+            $result = $this->workoutService->determineNextPlan($this->user->id);
+
+            expect($result)->toBeNull();
+        });
+
+        it('selects from most recent cycle when user has multiple cycles', function () {
+            // Создаем старый цикл
+            $oldCycle = Cycle::factory()->create([
+                'user_id' => $this->user->id,
+                'created_at' => now()->subDays(10)
+            ]);
+            $oldPlan = Plan::factory()->create([
+                'cycle_id' => $oldCycle->id,
+                'order' => 1,
+                'is_active' => true,
+                'name' => 'Old Plan'
+            ]);
+
+            // Создаем новый цикл
+            $newCycle = Cycle::factory()->create([
+                'user_id' => $this->user->id,
+                'created_at' => now()
+            ]);
+            $newPlan = Plan::factory()->create([
+                'cycle_id' => $newCycle->id,
+                'order' => 1,
+                'is_active' => true,
+                'name' => 'New Plan'
+            ]);
+
+            $result = $this->workoutService->determineNextPlan($this->user->id);
+
+            expect($result)->toBe($newPlan->id);
+        });
+
+        it('ignores workouts from other users when counting completed workouts', function () {
+            // Создаем новый цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            
+            // Создаем план
+            $plan = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 1,
+                'is_active' => true,
+                'name' => 'Plan'
+            ]);
+
+            // Создаем завершенную тренировку для другого пользователя
+            $otherUser = User::factory()->create();
+            Workout::factory()->completed()->create([
+                'plan_id' => $plan->id,
+                'user_id' => $otherUser->id,
+            ]);
+
+            $result = $this->workoutService->determineNextPlan($this->user->id);
+
+            // Должен вернуть план, так как у текущего пользователя нет завершенных тренировок
+            expect($result)->toBe($plan->id);
+        });
     });
 });
