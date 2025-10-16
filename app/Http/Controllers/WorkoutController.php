@@ -29,6 +29,31 @@ use Illuminate\Http\Request;
  *         @OA\Property(property="id", type="integer", example=1),
  *         @OA\Property(property="name", type="string", example="Иван Петров")
  *     ),
+ *     @OA\Property(property="exercises", type="array", @OA\Items(
+ *         type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="order", type="integer", example=1),
+ *         @OA\Property(property="exercise", type="object",
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="name", type="string", example="Жим лежа"),
+ *             @OA\Property(property="description", type="string", example="Базовое упражнение для груди"),
+ *             @OA\Property(property="muscle_group", type="object",
+ *                 @OA\Property(property="id", type="integer", example=1),
+ *                 @OA\Property(property="name", type="string", example="Грудь")
+ *             )
+ *         ),
+ *         @OA\Property(property="history", type="array", @OA\Items(
+ *             type="object",
+ *             @OA\Property(property="workout_id", type="integer", example=1),
+ *             @OA\Property(property="workout_date", type="string", format="date-time", example="2024-01-01T11:30:00.000000Z"),
+ *             @OA\Property(property="sets", type="array", @OA\Items(
+ *                 type="object",
+ *                 @OA\Property(property="id", type="integer", example=1),
+ *                 @OA\Property(property="weight", type="number", format="float", example=80.5),
+ *                 @OA\Property(property="reps", type="integer", example=10)
+ *             ))
+ *         ))
+ *     )),
  *     @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
  *     @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
  * )
@@ -234,7 +259,7 @@ final class WorkoutController extends Controller
      * @OA\Get(
      *     path="/api/v1/workouts/{workout}",
      *     summary="Получение конкретной тренировки",
-     *     description="Возвращает детальную информацию о тренировке по ID",
+     *     description="Возвращает детальную информацию о тренировке по ID, включая список упражнений из плана с историей их выполнения за последние 3 тренировки",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
@@ -277,6 +302,17 @@ final class WorkoutController extends Controller
                 'message' => 'Тренировка не найдена'
             ], 404);
         }
+        
+        // Загружаем дополнительные связи для отображения упражнений с историей
+        $workout->load([
+            'plan.planExercises.exercise.muscleGroup',
+            'plan.planExercises.workoutSets' => function ($query) use ($request) {
+                $query->whereHas('workout', function ($q) use ($request) {
+                    $q->where('user_id', $request->user()?->id)
+                      ->whereNotNull('finished_at');
+                })->with('workout:id,finished_at')->orderBy('created_at', 'desc');
+            }
+        ]);
         
         return response()->json([
             'data' => new WorkoutResource($workout),
@@ -412,20 +448,21 @@ final class WorkoutController extends Controller
      * @OA\Post(
      *     path="/api/v1/workouts/start",
      *     summary="Запуск тренировки",
-     *     description="Создает новую тренировку на основе плана и устанавливает время начала. Если plan_id не передан, автоматически определяет план на основе активного цикла и прогресса тренировок.",
+     *     description="Создает новую тренировку на основе плана и устанавливает время начала. Если plan_id не передан, автоматически определяет план на основе активного цикла и прогресса тренировок. Логика выбора: выбирается план с наименьшим количеством завершенных тренировок, при равенстве - первый по порядку.",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
      *         required=false,
      *         @OA\JsonContent(
      *             @OA\Property(property="plan_id", type="integer", example=1, description="ID плана для тренировки (необязательно, если не указан - определяется автоматически)")
-     *         )
+     *         ),
+     *         description="Тело запроса может быть пустым для автоматического определения плана или содержать plan_id для указания конкретного плана"
      *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Тренировка успешно запущена",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/WorkoutResource"),
      *             @OA\Property(property="message", type="string", example="Тренировка успешно запущена")
      *         )
      *     ),

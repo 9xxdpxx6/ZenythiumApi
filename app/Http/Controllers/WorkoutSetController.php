@@ -16,6 +16,8 @@ use Illuminate\Http\Request;
  *     schema="WorkoutSetResource",
  *     type="object",
  *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="workout_id", type="integer", example=1),
+ *     @OA\Property(property="plan_exercise_id", type="integer", example=1),
  *     @OA\Property(property="weight", type="number", format="float", example=80.0),
  *     @OA\Property(property="reps", type="integer", example=10),
  *     @OA\Property(property="workout", type="object",
@@ -55,7 +57,7 @@ final class WorkoutSetController extends Controller
 
     /**
      * @OA\Get(
-     *     path="/api/v1/workout-sets",
+     *     path="/api/workout-sets",
      *     summary="Получение списка подходов",
      *     description="Возвращает пагинированный список подходов текущего пользователя с возможностью фильтрации",
      *     tags={"Workout Sets"},
@@ -206,7 +208,7 @@ final class WorkoutSetController extends Controller
 
     /**
      * @OA\Post(
-     *     path="/api/v1/workout-sets",
+     *     path="/api/workout-sets",
      *     summary="Создание нового подхода",
      *     description="Создает новый подход для упражнения в тренировке",
      *     tags={"Workout Sets"},
@@ -218,15 +220,14 @@ final class WorkoutSetController extends Controller
      *             @OA\Property(property="workout_id", type="integer", example=1, description="ID тренировки"),
      *             @OA\Property(property="plan_exercise_id", type="integer", example=1, description="ID упражнения в плане"),
      *             @OA\Property(property="weight", type="number", format="float", example=80.0, description="Вес в килограммах"),
-     *             @OA\Property(property="reps", type="integer", example=10, description="Количество повторений"),
-     *             @OA\Property(property="rest_seconds", type="integer", example=120, description="Отдых в секундах")
+     *             @OA\Property(property="reps", type="integer", example=10, description="Количество повторений")
      *         )
      *     ),
      *     @OA\Response(
      *         response=201,
      *         description="Подход успешно создан",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/WorkoutSetResource"),
      *             @OA\Property(property="message", type="string", example="Подход успешно создан")
      *         )
      *     ),
@@ -271,9 +272,10 @@ final class WorkoutSetController extends Controller
      * @response 200 scenario="success" {
      *   "data": {
      *     "id": 1,
+     *     "workout_id": 1,
+     *     "plan_exercise_id": 1,
      *     "weight": 80.0,
      *     "reps": 10,
-     *     "rest_seconds": 120,
      *     "workout": {"id": 1, "started_at": "2024-01-15T10:00:00.000000Z"},
      *     "plan_exercise": {"id": 1, "exercise": {"name": "Жим лежа"}}
      *   },
@@ -312,14 +314,14 @@ final class WorkoutSetController extends Controller
      * @urlParam workout_set integer required ID подхода. Example: 1
      * @bodyParam weight float optional Вес в килограммах. Example: 80.0
      * @bodyParam reps integer optional Количество повторений. Example: 10
-     * @bodyParam rest_seconds integer optional Отдых в секундах. Example: 120
      * 
      * @response 200 scenario="success" {
      *   "data": {
      *     "id": 1,
+     *     "workout_id": 1,
+     *     "plan_exercise_id": 1,
      *     "weight": 80.0,
      *     "reps": 10,
-     *     "rest_seconds": 120,
      *     "workout": {"id": 1, "started_at": "2024-01-15T10:00:00.000000Z"},
      *     "plan_exercise": {"id": 1, "exercise": {"name": "Жим лежа"}}
      *   },
@@ -401,9 +403,10 @@ final class WorkoutSetController extends Controller
      *   "data": [
      *     {
      *       "id": 1,
+     *       "workout_id": 1,
+     *       "plan_exercise_id": 1,
      *       "weight": 80.0,
      *       "reps": 10,
-     *       "rest_seconds": 120,
      *       "workout": {"id": 1, "started_at": "2024-01-15T10:00:00.000000Z"},
      *       "plan_exercise": {"id": 1, "exercise": {"name": "Жим лежа"}}
      *     }
@@ -440,9 +443,10 @@ final class WorkoutSetController extends Controller
      *   "data": [
      *     {
      *       "id": 1,
+     *       "workout_id": 1,
+     *       "plan_exercise_id": 1,
      *       "weight": 80.0,
      *       "reps": 10,
-     *       "rest_seconds": 120,
      *       "workout": {"id": 1, "started_at": "2024-01-15T10:00:00.000000Z"},
      *       "plan_exercise": {"id": 1, "exercise": {"name": "Жим лежа"}}
      *     }

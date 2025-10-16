@@ -50,11 +50,16 @@ final class WorkoutService
      * @param int $id ID тренировки
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * 
-     * @return Workout|null Модель тренировки с загруженными связями или null если не найдена
+     * @return Workout|null Модель тренировки с загруженными связями или null если не найдена.
+     * Загружает связи: plan.cycle, user, plan.planExercises.exercise.muscleGroup
      */
     public function getById(int $id, ?int $userId = null): ?Workout
     {
-        $query = Workout::query()->with(['plan.cycle', 'user']);
+        $query = Workout::query()->with([
+            'plan.cycle', 
+            'user',
+            'plan.planExercises.exercise.muscleGroup'
+        ]);
 
         if ($userId) {
             $query->where('user_id', $userId);
@@ -249,5 +254,32 @@ final class WorkoutService
         $workout->update(['finished_at' => now()]);
         
         return $workout->fresh(['plan.cycle', 'user']);
+    }
+
+    /**
+     * Получить историю выполнения упражнения за последние 3 тренировки
+     * 
+     * Возвращает подходы для указанного упражнения из плана за последние 3 завершенные тренировки.
+     * Подходы отсортированы по дате создания (новые сначала) и сгруппированы по тренировкам.
+     * 
+     * @param int $planExerciseId ID упражнения в плане
+     * @param int $userId ID пользователя
+     * 
+     * @return \Illuminate\Database\Eloquent\Collection Коллекция подходов за последние 3 тренировки.
+     * Каждый подход содержит связь с тренировкой (id, started_at, finished_at).
+     */
+    public function getExerciseHistory(int $planExerciseId, int $userId): \Illuminate\Database\Eloquent\Collection
+    {
+        return \App\Models\WorkoutSet::where('plan_exercise_id', $planExerciseId)
+            ->whereHas('workout', function ($query) use ($userId) {
+                $query->where('user_id', $userId)
+                      ->whereNotNull('finished_at');
+            })
+            ->with(['workout' => function ($query) {
+                $query->select('id', 'started_at', 'finished_at');
+            }])
+            ->orderBy('created_at', 'desc')
+            ->limit(3)
+            ->get();
     }
 }

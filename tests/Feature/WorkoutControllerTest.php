@@ -386,6 +386,141 @@ describe('WorkoutController', function () {
 
             $response->assertStatus(404);
         });
+
+        it('returns exercises with history for workout', function () {
+            // Создаем группу мышц
+            $muscleGroup = \App\Models\MuscleGroup::factory()->create(['name' => 'Грудь']);
+            
+            // Создаем упражнение
+            $exercise = \App\Models\Exercise::factory()->create([
+                'name' => 'Жим лежа',
+                'description' => 'Базовое упражнение для груди',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+            ]);
+            
+            // Создаем упражнение в плане
+            $planExercise = \App\Models\PlanExercise::factory()->create([
+                'plan_id' => $this->plan->id,
+                'exercise_id' => $exercise->id,
+                'order' => 1,
+            ]);
+            
+            // Создаем несколько тренировок с подходами для истории
+            $workout1 = Workout::factory()->create([
+                'plan_id' => $this->plan->id,
+                'user_id' => $this->user->id,
+                'started_at' => '2024-03-10 10:00:00',
+                'finished_at' => '2024-03-10 11:00:00',
+            ]);
+            
+            $workout2 = Workout::factory()->create([
+                'plan_id' => $this->plan->id,
+                'user_id' => $this->user->id,
+                'started_at' => '2024-03-12 10:00:00',
+                'finished_at' => '2024-03-12 11:00:00',
+            ]);
+            
+            $workout3 = Workout::factory()->create([
+                'plan_id' => $this->plan->id,
+                'user_id' => $this->user->id,
+                'started_at' => '2024-03-14 10:00:00',
+                'finished_at' => '2024-03-14 11:00:00',
+            ]);
+            
+            // Создаем подходы для каждой тренировки
+            \App\Models\WorkoutSet::factory()->create([
+                'workout_id' => $workout1->id,
+                'plan_exercise_id' => $planExercise->id,
+                'weight' => 80.0,
+                'reps' => 10,
+            ]);
+            
+            \App\Models\WorkoutSet::factory()->create([
+                'workout_id' => $workout2->id,
+                'plan_exercise_id' => $planExercise->id,
+                'weight' => 82.5,
+                'reps' => 10,
+            ]);
+            
+            \App\Models\WorkoutSet::factory()->create([
+                'workout_id' => $workout3->id,
+                'plan_exercise_id' => $planExercise->id,
+                'weight' => 85.0,
+                'reps' => 10,
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->getJson("/api/v1/workouts/{$this->workout->id}");
+
+            $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'data' => [
+                        'id',
+                        'started_at',
+                        'finished_at',
+                        'duration_minutes',
+                        'exercise_count',
+                        'total_volume',
+                        'plan' => [
+                            'id',
+                            'name',
+                        ],
+                        'user' => [
+                            'id',
+                            'name',
+                        ],
+                        'exercises' => [
+                            '*' => [
+                                'id',
+                                'order',
+                                'exercise' => [
+                                    'id',
+                                    'name',
+                                    'description',
+                                    'muscle_group' => [
+                                        'id',
+                                        'name',
+                                    ],
+                                ],
+                                'history' => [
+                                    '*' => [
+                                        'workout_id',
+                                        'workout_date',
+                                        'sets' => [
+                                            '*' => [
+                                                'id',
+                                                'weight',
+                                                'reps',
+                                            ],
+                                        ],
+                                    ],
+                                ],
+                            ],
+                        ],
+                        'created_at',
+                        'updated_at',
+                    ],
+                    'message'
+                ]);
+
+            // Проверяем, что упражнения загружены
+            $exercises = $response->json('data.exercises');
+            expect($exercises)->toHaveCount(1);
+            
+            $exerciseData = $exercises[0];
+            expect($exerciseData['exercise']['name'])->toBe('Жим лежа');
+            expect($exerciseData['exercise']['muscle_group']['name'])->toBe('Грудь');
+            
+            // Проверяем историю (должна быть за последние 3 тренировки)
+            expect($exerciseData['history'])->toHaveCount(3);
+            
+            // Проверяем, что история отсортирована по дате (новые сначала)
+            $history = $exerciseData['history'];
+            expect($history[0]['workout_date'])->toBe('2024-03-14T08:00:00.000000Z');
+            expect($history[1]['workout_date'])->toBe('2024-03-12T08:00:00.000000Z');
+            expect($history[2]['workout_date'])->toBe('2024-03-10T08:00:00.000000Z');
+        });
     });
 
     describe('PUT /api/v1/workouts/{id}', function () {

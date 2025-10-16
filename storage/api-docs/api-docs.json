@@ -5169,7 +5169,7 @@
                     "Workouts"
                 ],
                 "summary": "Получение конкретной тренировки",
-                "description": "Возвращает детальную информацию о тренировке по ID",
+                "description": "Возвращает детальную информацию о тренировке по ID, включая список упражнений из плана с историей их выполнения за последние 3 тренировки",
                 "operationId": "b3a8af3b943df6a5325a01d1e2219d12",
                 "parameters": [
                     {
@@ -5454,9 +5454,10 @@
                     "Workouts"
                 ],
                 "summary": "Запуск тренировки",
-                "description": "Создает новую тренировку на основе плана и устанавливает время начала. Если plan_id не передан, автоматически определяет план на основе активного цикла и прогресса тренировок.",
+                "description": "Создает новую тренировку на основе плана и устанавливает время начала. Если plan_id не передан, автоматически определяет план на основе активного цикла и прогресса тренировок. Логика выбора: выбирается план с наименьшим количеством завершенных тренировок, при равенстве - первый по порядку.",
                 "operationId": "7b519fa4220a0f7cc29db894e1443c4a",
                 "requestBody": {
+                    "description": "Тело запроса может быть пустым для автоматического определения плана или содержать plan_id для указания конкретного плана",
                     "required": false,
                     "content": {
                         "application/json": {
@@ -5481,7 +5482,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/WorkoutResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -5652,14 +5653,14 @@
                 ]
             }
         },
-        "/api/v1/workout-sets": {
+        "/api/workout-sets": {
             "get": {
                 "tags": [
                     "Workout Sets"
                 ],
                 "summary": "Получение списка подходов",
                 "description": "Возвращает пагинированный список подходов текущего пользователя с возможностью фильтрации",
-                "operationId": "38d4a0e27ea712e9fae4ca192cdf54df",
+                "operationId": "f29b83f3e7c981430bebbe1ced4f3b51",
                 "parameters": [
                     {
                         "name": "page",
@@ -5895,7 +5896,7 @@
                 ],
                 "summary": "Создание нового подхода",
                 "description": "Создает новый подход для упражнения в тренировке",
-                "operationId": "789dd0b8836b1e99b74889a375e0d7da",
+                "operationId": "f6e7ca6aa85c602b23e1091e517532fa",
                 "requestBody": {
                     "required": true,
                     "content": {
@@ -5926,11 +5927,6 @@
                                         "description": "Количество повторений",
                                         "type": "integer",
                                         "example": 10
-                                    },
-                                    "rest_seconds": {
-                                        "description": "Отдых в секундах",
-                                        "type": "integer",
-                                        "example": 120
                                     }
                                 },
                                 "type": "object"
@@ -5946,7 +5942,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/WorkoutSetResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -6233,6 +6229,90 @@
                         },
                         "type": "object"
                     },
+                    "exercises": {
+                        "type": "array",
+                        "items": {
+                            "properties": {
+                                "id": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "order": {
+                                    "type": "integer",
+                                    "example": 1
+                                },
+                                "exercise": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "name": {
+                                            "type": "string",
+                                            "example": "Жим лежа"
+                                        },
+                                        "description": {
+                                            "type": "string",
+                                            "example": "Базовое упражнение для груди"
+                                        },
+                                        "muscle_group": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "name": {
+                                                    "type": "string",
+                                                    "example": "Грудь"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                },
+                                "history": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "workout_id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "workout_date": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2024-01-01T11:30:00.000000Z"
+                                            },
+                                            "sets": {
+                                                "type": "array",
+                                                "items": {
+                                                    "properties": {
+                                                        "id": {
+                                                            "type": "integer",
+                                                            "example": 1
+                                                        },
+                                                        "weight": {
+                                                            "type": "number",
+                                                            "format": "float",
+                                                            "example": 80.5
+                                                        },
+                                                        "reps": {
+                                                            "type": "integer",
+                                                            "example": 10
+                                                        }
+                                                    },
+                                                    "type": "object"
+                                                }
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            },
+                            "type": "object"
+                        }
+                    },
                     "created_at": {
                         "type": "string",
                         "format": "date-time",
@@ -6249,6 +6329,14 @@
             "WorkoutSetResource": {
                 "properties": {
                     "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "workout_id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "plan_exercise_id": {
                         "type": "integer",
                         "example": 1
                     },

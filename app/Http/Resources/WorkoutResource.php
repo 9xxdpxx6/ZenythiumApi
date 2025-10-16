@@ -11,7 +11,20 @@ use Illuminate\Http\Resources\Json\JsonResource;
  * API ресурс для тренировок
  * 
  * Преобразует модель тренировки в массив для JSON ответа API.
- * Включает основную информацию о тренировке, связанные данные плана и пользователя.
+ * Включает основную информацию о тренировке, связанные данные плана и пользователя,
+ * а также список упражнений из плана с историей их выполнения за последние 3 тренировки.
+ * 
+ * @property int $id ID тренировки
+ * @property string|null $started_at Время начала тренировки в ISO 8601 формате
+ * @property string|null $finished_at Время окончания тренировки в ISO 8601 формате
+ * @property int|null $duration_minutes Продолжительность тренировки в минутах
+ * @property int $exercise_count Количество упражнений в тренировке
+ * @property float $total_volume Общий объем тренировки (вес × повторения)
+ * @property object $plan Данные плана тренировки (id, name)
+ * @property object $user Данные пользователя (id, name)
+ * @property array $exercises Список упражнений из плана с историей выполнения
+ * @property string|null $created_at Время создания записи в ISO 8601 формате
+ * @property string|null $updated_at Время последнего обновления в ISO 8601 формате
  */
 final class WorkoutResource extends JsonResource
 {
@@ -27,8 +40,18 @@ final class WorkoutResource extends JsonResource
      * - duration_minutes: продолжительность в минутах (вычисляемый атрибут)
      * - exercise_count: количество упражнений (вычисляемый атрибут)
      * - total_volume: общий объем тренировки (вычисляемый атрибут)
-     * - plan: данные плана тренировки (id, name)
-     * - user: данные пользователя (id, name)
+     * - plan: объект с данными плана тренировки (id, name)
+     * - user: объект с данными пользователя (id, name)
+     * - exercises: массив упражнений из плана с историей выполнения за последние 3 тренировки
+     *   - id: ID упражнения в плане
+     *   - order: порядок выполнения упражнения
+     *   - exercise: объект с информацией об упражнении (id, name, description, muscle_group)
+     *   - history: массив истории выполнения за последние 3 тренировки
+     *     - workout_id: ID тренировки
+     *     - workout_date: дата завершения тренировки
+     *     - sets: массив подходов (id, weight, reps)
+     * - created_at: время создания записи в ISO 8601 формате
+     * - updated_at: время последнего обновления в ISO 8601 формате
      */
     public function toArray(Request $request): array
     {
@@ -47,8 +70,70 @@ final class WorkoutResource extends JsonResource
                 'id' => $this->user->id,
                 'name' => $this->user->name,
             ],
-            'created_at' => $this->created_at?->toISOString(),
-            'updated_at' => $this->updated_at?->toISOString(),
+            'exercises' => $this->when($this->relationLoaded('plan') && $this->plan->relationLoaded('planExercises'), function () {
+                return $this->plan->planExercises->map(function ($planExercise) {
+                    return [
+                        'id' => $planExercise->id,
+                        'order' => $planExercise->order,
+                        'exercise' => [
+                            'id' => $planExercise->exercise->id,
+                            'name' => $planExercise->exercise->name,
+                            'description' => $planExercise->exercise->description,
+                            'muscle_group' => [
+                                'id' => $planExercise->exercise->muscleGroup->id,
+                                'name' => $planExercise->exercise->muscleGroup->name,
+                            ],
+                        ],
+                        'history' => $this->getExerciseHistory($planExercise->id),
+                    ];
+                });
+            }),
+            'created_at' => $this->created_at?->toISOString() ?? null,
+            'updated_at' => $this->updated_at?->toISOString() ?? null,
         ];
+    }
+
+    /**
+     * Получить историю выполнения упражнения за последние 3 тренировки
+     * 
+     * @param int $planExerciseId ID упражнения в плане
+     * 
+     * @return array Массив с историей подходов. Каждый элемент содержит:
+     * - workout_id: ID тренировки
+     * - workout_date: дата завершения тренировки в ISO 8601 формате
+     * - sets: массив подходов с id, weight, reps
+     */
+    private function getExerciseHistory(int $planExerciseId): array
+    {
+        if (!$this->relationLoaded('plan') || !$this->plan->relationLoaded('planExercises')) {
+            return [];
+        }
+
+        $planExercise = $this->plan->planExercises->firstWhere('id', $planExerciseId);
+        
+        if (!$planExercise || !$planExercise->relationLoaded('workoutSets')) {
+            return [];
+        }
+
+        // Группируем подходы по тренировкам и берем только последние 3
+        $workoutSets = $planExercise->workoutSets
+            ->sortByDesc('workout.finished_at')
+            ->groupBy('workout.id')
+            ->take(3);
+
+        return $workoutSets->map(function ($sets, $workoutId) {
+            $workout = $sets->first()->workout;
+            return [
+                'workout_id' => $workoutId,
+                'workout_date' => $workout->finished_at?->toISOString(),
+                'sets' => $sets->map(function ($set) {
+                    return [
+                        'id' => $set->id,
+                        'weight' => $set->weight,
+                        'reps' => $set->reps,
+                    ];
+                })->values()->toArray(),
+            ];
+        })->values()->toArray();
     }
 }
