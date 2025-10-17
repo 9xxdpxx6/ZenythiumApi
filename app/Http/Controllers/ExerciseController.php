@@ -65,9 +65,9 @@ final class ExerciseController extends Controller
      *     @OA\Parameter(
      *         name="is_active",
      *         in="query",
-     *         description="Фильтр по статусу активности",
+     *         description="Фильтр по статусу активности упражнений. Поддерживает значения: '1' или 'true' для активных, '0' или 'false' для неактивных. Пустое значение возвращает все упражнения.",
      *         required=false,
-     *         @OA\Schema(type="string", enum={"true", "false", "1", "0"}, example="true")
+     *         @OA\Schema(type="string", enum={"true", "false", "1", "0"}, example="1")
      *     ),
      *     @OA\Parameter(
      *         name="date_from",

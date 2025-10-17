@@ -111,6 +111,44 @@ describe('ExerciseController', function () {
             expect($response->json('data'))->toHaveCount(10);
             expect($response->json('meta.per_page'))->toBe(10);
         });
+
+        it('supports is_active filtering', function () {
+            $muscleGroup = MuscleGroup::factory()->create();
+            
+            Exercise::factory()->create([
+                'name' => 'Active Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+                'is_active' => true,
+            ]);
+            
+            Exercise::factory()->create([
+                'name' => 'Inactive Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+                'is_active' => false,
+            ]);
+
+            // Тест фильтра активных упражнений
+            $response = $this->getJson('/api/v1/exercises?is_active=1');
+
+            $response->assertStatus(200);
+            expect($response->json('data'))->toHaveCount(1);
+            expect($response->json('data.0.name'))->toBe('Active Exercise');
+
+            // Тест фильтра неактивных упражнений
+            $response = $this->getJson('/api/v1/exercises?is_active=0');
+
+            $response->assertStatus(200);
+            expect($response->json('data'))->toHaveCount(1);
+            expect($response->json('data.0.name'))->toBe('Inactive Exercise');
+
+            // Тест без фильтра (все упражнения)
+            $response = $this->getJson('/api/v1/exercises');
+
+            $response->assertStatus(200);
+            expect($response->json('data'))->toHaveCount(2);
+        });
     });
 
     describe('POST /api/exercises', function () {

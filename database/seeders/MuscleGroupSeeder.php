@@ -21,7 +21,9 @@ final class MuscleGroupSeeder extends Seeder
             ['name' => 'Руки'],
             ['name' => 'Ноги'],
             ['name' => 'Пресс'],
-            ['name' => 'Общее'],
+            ['name' => 'Поясница'],
+            ['name' => 'Тазовые мышцы'],
+            ['name' => 'Мышцы шеи'],
         ];
 
         foreach ($muscleGroups as $group) {

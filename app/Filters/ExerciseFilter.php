@@ -47,8 +47,14 @@ final class ExerciseFilter extends BaseFilter
 
     private function applyActiveFilter(Builder $query): void
     {
-        if ($this->hasFilter('is_active')) {
-            $query->where('is_active', $this->getFilter('is_active'));
+        if (isset($this->filters['is_active']) && $this->filters['is_active'] !== '') {
+            $isActive = $this->filters['is_active'];
+            // Преобразуем строковые значения в boolean
+            if ($isActive === '1' || $isActive === 1 || $isActive === true) {
+                $query->where('is_active', true);
+            } elseif ($isActive === '0' || $isActive === 0 || $isActive === false) {
+                $query->where('is_active', false);
+            }
         }
     }
 

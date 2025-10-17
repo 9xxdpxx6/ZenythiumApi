@@ -90,7 +90,7 @@ describe('ExerciseFilter', function () {
             expect($result->first()->name)->toBe('Chest Exercise');
         });
 
-        it('applies is_active filter', function () {
+        it('applies is_active filter for active exercises', function () {
             $muscleGroup = MuscleGroup::factory()->create();
             
             Exercise::factory()->create([
@@ -115,6 +115,95 @@ describe('ExerciseFilter', function () {
 
             expect($result)->toHaveCount(1);
             expect($result->first()->name)->toBe('Active Exercise');
+        });
+
+        it('applies is_active filter for inactive exercises', function () {
+            $muscleGroup = MuscleGroup::factory()->create();
+            
+            Exercise::factory()->create([
+                'name' => 'Active Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+                'is_active' => true,
+            ]);
+            
+            Exercise::factory()->create([
+                'name' => 'Inactive Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+                'is_active' => false,
+            ]);
+
+            $filter = new ExerciseFilter(['is_active' => false]);
+            $query = Exercise::query();
+            $filter->apply($query);
+
+            $result = $query->get();
+
+            expect($result)->toHaveCount(1);
+            expect($result->first()->name)->toBe('Inactive Exercise');
+        });
+
+        it('applies is_active filter with string values', function () {
+            $muscleGroup = MuscleGroup::factory()->create();
+            
+            Exercise::factory()->create([
+                'name' => 'Active Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+                'is_active' => true,
+            ]);
+            
+            Exercise::factory()->create([
+                'name' => 'Inactive Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+                'is_active' => false,
+            ]);
+
+            // Тест с строковым значением "1"
+            $filter = new ExerciseFilter(['is_active' => '1']);
+            $query = Exercise::query();
+            $filter->apply($query);
+
+            $result = $query->get();
+            expect($result)->toHaveCount(1);
+            expect($result->first()->name)->toBe('Active Exercise');
+
+            // Тест с строковым значением "0"
+            $filter = new ExerciseFilter(['is_active' => '0']);
+            $query = Exercise::query();
+            $filter->apply($query);
+
+            $result = $query->get();
+            expect($result)->toHaveCount(1);
+            expect($result->first()->name)->toBe('Inactive Exercise');
+        });
+
+        it('ignores is_active filter when empty', function () {
+            $muscleGroup = MuscleGroup::factory()->create();
+            
+            Exercise::factory()->create([
+                'name' => 'Active Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+                'is_active' => true,
+            ]);
+            
+            Exercise::factory()->create([
+                'name' => 'Inactive Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'user_id' => $this->user->id,
+                'is_active' => false,
+            ]);
+
+            $filter = new ExerciseFilter(['is_active' => '']);
+            $query = Exercise::query();
+            $filter->apply($query);
+
+            $result = $query->get();
+
+            expect($result)->toHaveCount(2);
         });
 
         it('applies sorting', function () {
