@@ -451,7 +451,7 @@ final class WorkoutController extends Controller
      * @OA\Post(
      *     path="/api/v1/workouts/start",
      *     summary="Запуск тренировки",
-     *     description="Создает новую тренировку на основе плана и устанавливает время начала. Если plan_id не передан, автоматически определяет план на основе активного цикла и прогресса тренировок. Логика выбора: выбирается план с наименьшим количеством завершенных тренировок, при равенстве - первый по порядку.",
+     *     description="Создает новую тренировку на основе плана и устанавливает время начала. Если plan_id не передан, автоматически определяет план на основе активного цикла и прогресса тренировок. Логика выбора: выбирается план с наименьшим количеством тренировок среди доступных (без активных тренировок), при равенстве - первый по порядку.",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
@@ -484,6 +484,13 @@ final class WorkoutController extends Controller
      *         )
      *     ),
      *     @OA\Response(
+     *         response=409,
+     *         description="Все планы имеют активные тренировки",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Все планы имеют активные тренировки. Завершите текущие тренировки перед началом новых.")
+     *         )
+     *     ),
+     *     @OA\Response(
      *         response=422,
      *         description="Ошибка валидации",
      *         @OA\JsonContent(
@@ -510,10 +517,16 @@ final class WorkoutController extends Controller
         if (!$planId) {
             $planId = $this->workoutService->determineNextPlan($userId);
             
-            if (!$planId) {
+            if ($planId === null) {
                 return response()->json([
                     'message' => 'Не найден активный цикл с планами'
                 ], 404);
+            }
+            
+            if ($planId === -1) {
+                return response()->json([
+                    'message' => 'Все планы имеют активные тренировки. Завершите текущие тренировки перед началом новых.'
+                ], 409);
             }
         } else {
             // Если plan_id передан, проверяем что план принадлежит активному циклу пользователя

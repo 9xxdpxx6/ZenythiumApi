@@ -35,13 +35,13 @@
                                 <form id="createForm">
                                     <div class="mb-3">
                                         <label for="createPlanId" class="form-label">План *</label>
-                                        <select class="form-control" id="createPlanId" required>
+                                        <select class="form-control" id="createPlanId">
                                             <option value="">Выберите план</option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
                                         <label for="createStartedAt" class="form-label">Время начала *</label>
-                                        <input type="datetime-local" class="form-control" id="createStartedAt" required>
+                                        <input type="datetime-local" class="form-control" id="createStartedAt">
                                     </div>
                                     <div class="mb-3">
                                         <label for="createFinishedAt" class="form-label">Время окончания</label>
@@ -63,7 +63,7 @@
                                 <form id="startForm">
                                     <div class="mb-3">
                                         <label for="startPlanId" class="form-label">План *</label>
-                                        <select class="form-control" id="startPlanId" required>
+                                        <select class="form-control" id="startPlanId">
                                             <option value="">Выберите план</option>
                                         </select>
                                     </div>
@@ -83,7 +83,7 @@
                                 <form id="finishForm">
                                     <div class="mb-3">
                                         <label for="finishWorkoutId" class="form-label">ID тренировки *</label>
-                                        <input type="number" class="form-control" id="finishWorkoutId" required>
+                                        <input type="number" class="form-control" id="finishWorkoutId">
                                     </div>
                                     <button type="submit" class="btn btn-warning">
                                         <i class="fas fa-stop"></i> Завершить тренировку
@@ -192,17 +192,17 @@
                                 <form id="updateForm">
                                     <div class="mb-3">
                                         <label for="updateId" class="form-label">ID *</label>
-                                        <input type="number" class="form-control" id="updateId" required>
+                                        <input type="number" class="form-control" id="updateId">
                                     </div>
                                     <div class="mb-3">
                                         <label for="updatePlanId" class="form-label">План *</label>
-                                        <select class="form-control" id="updatePlanId" required>
+                                        <select class="form-control" id="updatePlanId">
                                             <option value="">Выберите план</option>
                                         </select>
                                     </div>
                                     <div class="mb-3">
                                         <label for="updateStartedAt" class="form-label">Время начала *</label>
-                                        <input type="datetime-local" class="form-control" id="updateStartedAt" required>
+                                        <input type="datetime-local" class="form-control" id="updateStartedAt">
                                     </div>
                                     <div class="mb-3">
                                         <label for="updateFinishedAt" class="form-label">Время окончания</label>
@@ -224,7 +224,7 @@
                                 <form id="showForm">
                                     <div class="mb-3">
                                         <label for="showId" class="form-label">ID *</label>
-                                        <input type="number" class="form-control" id="showId" required>
+                                        <input type="number" class="form-control" id="showId">
                                     </div>
                                     <button type="submit" class="btn btn-info">
                                         <i class="fas fa-eye"></i> Показать
@@ -243,7 +243,7 @@
                                 <form id="deleteForm">
                                     <div class="mb-3">
                                         <label for="deleteId" class="form-label">ID *</label>
-                                        <input type="number" class="form-control" id="deleteId" required>
+                                        <input type="number" class="form-control" id="deleteId">
                                     </div>
                                     <button type="submit" class="btn btn-danger">
                                         <i class="fas fa-trash"></i> Удалить

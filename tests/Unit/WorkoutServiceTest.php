@@ -341,7 +341,7 @@ describe('WorkoutService', function () {
             expect($result)->toBe($plan1->id);
         });
 
-        it('returns plan with least completed workouts', function () {
+        it('returns plan with least total workouts', function () {
             // Создаем новый цикл для этого теста
             $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
             
@@ -458,6 +458,43 @@ describe('WorkoutService', function () {
             $result = $this->workoutService->determineNextPlan($this->user->id);
 
             expect($result)->toBeNull();
+        });
+
+        it('returns -1 when all plans have active workouts', function () {
+            // Создаем новый цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            
+            // Создаем цикл с несколькими планами
+            $plan1 = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 1,
+                'is_active' => true,
+                'name' => 'Plan 1'
+            ]);
+            $plan2 = Plan::factory()->create([
+                'cycle_id' => $testCycle->id,
+                'order' => 2,
+                'is_active' => true,
+                'name' => 'Plan 2'
+            ]);
+
+            // Создаем активные тренировки для обоих планов
+            Workout::factory()->create([
+                'plan_id' => $plan1->id,
+                'user_id' => $this->user->id,
+                'started_at' => now(),
+                'finished_at' => null, // Активная тренировка
+            ]);
+            Workout::factory()->create([
+                'plan_id' => $plan2->id,
+                'user_id' => $this->user->id,
+                'started_at' => now(),
+                'finished_at' => null, // Активная тренировка
+            ]);
+
+            $result = $this->workoutService->determineNextPlan($this->user->id);
+
+            expect($result)->toBe(-1);
         });
 
         it('selects from most recent cycle when user has multiple cycles', function () {

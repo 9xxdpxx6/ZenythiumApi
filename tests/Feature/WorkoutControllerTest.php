@@ -948,29 +948,65 @@ describe('WorkoutController', function () {
                 ]);
         });
 
-        it('ignores incomplete workouts when counting completed workouts', function () {
-            // Создаем незавершенную тренировку для первого плана
+        it('excludes plans with active workouts from selection', function () {
+            // Создаем активную тренировку для plan1
             Workout::factory()->create([
                 'plan_id' => $this->plan1->id,
                 'user_id' => $this->user->id,
                 'started_at' => now()->subHour(),
-                'finished_at' => null, // Не завершена
+                'finished_at' => null, // Активная тренировка
             ]);
 
-            // Завершаем тренировку для второго плана
+            // Создаем активную тренировку для plan2
             Workout::factory()->create([
                 'plan_id' => $this->plan2->id,
                 'user_id' => $this->user->id,
-                'started_at' => now()->subDays(2),
-                'finished_at' => now()->subDays(2)->addHour(),
+                'started_at' => now()->subHour(),
+                'finished_at' => null, // Активная тренировка
             ]);
 
             $response = $this->actingAs($this->user)
                 ->postJson('/api/v1/workouts/start');
 
             $response->assertStatus(201);
-            // Должен выбрать первый план, так как у него 0 завершенных тренировок
-            expect($response->json('data.plan.id'))->toBe($this->plan1->id);
+            // Должен выбрать plan3, так как у plan1 и plan2 есть активные тренировки
+            expect($response->json('data.plan.id'))->toBe($this->plan3->id);
+        });
+
+        it('returns 409 when all plans have active workouts', function () {
+            // Создаем активные тренировки для всех планов
+            Workout::factory()->create([
+                'plan_id' => $this->plan->id, // план из основного beforeEach
+                'user_id' => $this->user->id,
+                'started_at' => now()->subHour(),
+                'finished_at' => null, // Активная тренировка
+            ]);
+            Workout::factory()->create([
+                'plan_id' => $this->plan1->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subHour(),
+                'finished_at' => null, // Активная тренировка
+            ]);
+            Workout::factory()->create([
+                'plan_id' => $this->plan2->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subHour(),
+                'finished_at' => null, // Активная тренировка
+            ]);
+            Workout::factory()->create([
+                'plan_id' => $this->plan3->id,
+                'user_id' => $this->user->id,
+                'started_at' => now()->subHour(),
+                'finished_at' => null, // Активная тренировка
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start');
+
+            $response->assertStatus(409)
+                ->assertJson([
+                    'message' => 'Все планы имеют активные тренировки. Завершите текущие тренировки перед началом новых.'
+                ]);
         });
 
         it('uses latest cycle when multiple cycles exist', function () {

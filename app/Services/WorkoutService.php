@@ -167,7 +167,7 @@ final class WorkoutService
      * 
      * @param int $userId ID пользователя
      * 
-     * @return int|null ID плана для следующей тренировки или null если не найден активный цикл
+     * @return int|null ID плана для следующей тренировки, null если не найден активный цикл, -1 если все планы имеют активные тренировки
      */
     public function determineNextPlan(int $userId): ?int
     {
@@ -194,31 +194,47 @@ final class WorkoutService
             return null;
         }
 
-        // Подсчитываем завершенные тренировки для каждого плана
+        // Анализируем каждый план: считаем все тренировки и проверяем активные
         $planProgress = [];
         foreach ($plans as $plan) {
-            $completedWorkouts = $plan->workouts()
+            // Считаем все тренировки для плана (не только завершенные)
+            $totalWorkouts = $plan->workouts()
                 ->where('user_id', $userId)
-                ->whereNotNull('finished_at')
                 ->count();
+            
+            // Проверяем, есть ли активная тренировка (запущенная, но не завершенная)
+            $hasActiveWorkout = $plan->workouts()
+                ->where('user_id', $userId)
+                ->whereNotNull('started_at')
+                ->whereNull('finished_at')
+                ->exists();
             
             $planProgress[$plan->id] = [
                 'plan' => $plan,
-                'completed_workouts' => $completedWorkouts,
+                'total_workouts' => $totalWorkouts,
+                'has_active_workout' => $hasActiveWorkout,
                 'order' => $plan->order
             ];
         }
 
-        // Определяем следующий план на основе логики:
-        // Выбираем план с наименьшим количеством завершенных тренировок
-        // Если несколько планов имеют одинаковое минимальное количество, берем первый по порядку
+        // Исключаем планы с активными тренировками
+        $availablePlans = array_filter($planProgress, function ($progress) {
+            return !$progress['has_active_workout'];
+        });
+
+        if (empty($availablePlans)) {
+            // Все планы имеют активные тренировки - возвращаем специальное значение
+            // чтобы контроллер мог отличить это от отсутствия активного цикла
+            return -1; // Все планы имеют активные тренировки
+        }
+
+        // Находим план с наименьшим количеством тренировок
+        $minWorkouts = min(array_column($availablePlans, 'total_workouts'));
         
-        $minCompletedWorkouts = min(array_column($planProgress, 'completed_workouts'));
-        
-        // Находим план с минимальным количеством завершенных тренировок
         // Если несколько планов имеют одинаковое минимальное количество, берем первый по порядку
         foreach ($plans as $plan) {
-            if ($planProgress[$plan->id]['completed_workouts'] === $minCompletedWorkouts) {
+            if (isset($availablePlans[$plan->id]) && 
+                $availablePlans[$plan->id]['total_workouts'] === $minWorkouts) {
                 return $plan->id;
             }
         }
