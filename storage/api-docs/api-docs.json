@@ -2290,7 +2290,7 @@
                     "Metrics"
                 ],
                 "summary": "Создание новой метрики",
-                "description": "Создает новую запись метрики (вес, объемы тела) для текущего пользователя",
+                "description": "Создает новую запись метрики (вес, объемы тела) для текущего пользователя. Если метрика на указанную дату уже существует, возвращает ошибку 422.",
                 "operationId": "866556ca684e7d8cabafdcd50be144cc",
                 "requestBody": {
                     "required": true,
@@ -2308,17 +2308,10 @@
                                         "format": "float",
                                         "example": 75.5
                                     },
-                                    "body_fat_percentage": {
-                                        "description": "Процент жира в теле",
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 15.2
-                                    },
-                                    "muscle_mass": {
-                                        "description": "Мышечная масса в килограммах",
-                                        "type": "number",
-                                        "format": "float",
-                                        "example": 60
+                                    "note": {
+                                        "description": "Заметка к метрике",
+                                        "type": "string",
+                                        "example": "Утренний вес"
                                     },
                                     "date": {
                                         "description": "Дата измерения",
@@ -2340,7 +2333,7 @@
                                 "schema": {
                                     "properties": {
                                         "data": {
-                                            "type": "object"
+                                            "$ref": "#/components/schemas/MetricResource"
                                         },
                                         "message": {
                                             "type": "string",
@@ -2369,16 +2362,25 @@
                         }
                     },
                     "422": {
-                        "description": "Ошибка валидации",
+                        "description": "Ошибка валидации или дублирование записи",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Ошибка валидации"
+                                            "example": "Метрика на эту дату уже существует"
                                         },
                                         "errors": {
+                                            "properties": {
+                                                "date": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Метрика на дату 2024-01-15 уже существует. Используйте обновление для изменения существующей записи."
+                                                    }
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },

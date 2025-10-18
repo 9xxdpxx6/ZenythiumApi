@@ -160,7 +160,7 @@ final class MetricController extends Controller
      * @OA\Post(
      *     path="/api/v1/metrics",
      *     summary="Создание новой метрики",
-     *     description="Создает новую запись метрики (вес, объемы тела) для текущего пользователя",
+     *     description="Создает новую запись метрики (вес, объемы тела) для текущего пользователя. Если метрика на указанную дату уже существует, возвращает ошибку 422.",
      *     tags={"Metrics"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
@@ -168,8 +168,7 @@ final class MetricController extends Controller
      *         @OA\JsonContent(
      *             required={"weight","date"},
      *             @OA\Property(property="weight", type="number", format="float", example=75.5, description="Вес в килограммах"),
-     *             @OA\Property(property="body_fat_percentage", type="number", format="float", example=15.2, description="Процент жира в теле"),
-     *             @OA\Property(property="muscle_mass", type="number", format="float", example=60.0, description="Мышечная масса в килограммах"),
+     *             @OA\Property(property="note", type="string", example="Утренний вес", description="Заметка к метрике"),
      *             @OA\Property(property="date", type="string", format="date", example="2024-01-15", description="Дата измерения")
      *         )
      *     ),
@@ -177,7 +176,7 @@ final class MetricController extends Controller
      *         response=201,
      *         description="Метрика успешно создана",
      *         @OA\JsonContent(
-     *             @OA\Property(property="data", type="object"),
+     *             @OA\Property(property="data", ref="#/components/schemas/MetricResource"),
      *             @OA\Property(property="message", type="string", example="Метрика успешно создана")
      *         )
      *     ),
@@ -190,10 +189,12 @@ final class MetricController extends Controller
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Ошибка валидации",
+     *         description="Ошибка валидации или дублирование записи",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
-     *             @OA\Property(property="errors", type="object")
+     *             @OA\Property(property="message", type="string", example="Метрика на эту дату уже существует"),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="date", type="array", @OA\Items(type="string", example="Метрика на дату 2024-01-15 уже существует. Используйте обновление для изменения существующей записи."))
+     *             )
      *         )
      *     )
      * )
@@ -202,6 +203,20 @@ final class MetricController extends Controller
     {
         $data = $request->validated();
         $data['user_id'] = $request->user()?->id;
+        
+        // Проверяем, существует ли уже метрика с такой датой
+        $existingMetric = Metric::where('user_id', $data['user_id'])
+            ->where('date', $data['date'])
+            ->first();
+        
+        if ($existingMetric) {
+            return response()->json([
+                'message' => 'Метрика на эту дату уже существует',
+                'errors' => [
+                    'date' => ['Метрика на дату ' . $data['date'] . ' уже существует. Используйте обновление для изменения существующей записи.']
+                ]
+            ], 422);
+        }
         
         $metric = $this->metricService->create($data);
         
