@@ -187,6 +187,7 @@ final class PlanService
      * @param int|null $newCycleId ID нового цикла для копии (опционально, по умолчанию null)
      * @param int|null $userId ID пользователя для проверки доступа (опционально)
      * @param string|null $newName Новое название для копии (опционально)
+     * @param bool|null $isActive Статус активности копии (опционально, по умолчанию true - всегда активна)
      * 
      * @return Plan|null Созданная копия плана или null если исходный план не найден
      * 
@@ -219,7 +220,7 @@ final class PlanService
             'cycle_id' => $newCycleId,
             'name' => $copyName,
             'order' => $originalPlan->order,
-            'is_active' => $isActive ?? $originalPlan->is_active,
+            'is_active' => true, // По умолчанию копия всегда активна
         ]);
 
         // Копируем упражнения плана
