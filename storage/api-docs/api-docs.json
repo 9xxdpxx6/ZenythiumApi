@@ -2584,16 +2584,25 @@
                         }
                     },
                     "422": {
-                        "description": "Ошибка валидации",
+                        "description": "Ошибка валидации или конфликт даты",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Ошибка валидации"
+                                            "example": "Метрика на эту дату уже существует"
                                         },
                                         "errors": {
+                                            "properties": {
+                                                "date": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string",
+                                                        "example": "Метрика на дату 2024-01-15 уже существует. Выберите другую дату."
+                                                    }
+                                                }
+                                            },
                                             "type": "object"
                                         }
                                     },

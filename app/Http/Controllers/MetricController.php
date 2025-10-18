@@ -327,23 +327,48 @@ final class MetricController extends Controller
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Ошибка валидации",
+     *         description="Ошибка валидации или конфликт даты",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
-     *             @OA\Property(property="errors", type="object")
+     *             @OA\Property(property="message", type="string", example="Метрика на эту дату уже существует"),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="date", type="array", @OA\Items(type="string", example="Метрика на дату 2024-01-15 уже существует. Выберите другую дату."))
+     *             )
      *         )
      *     )
      * )
      */
     public function update(MetricRequest $request, int $id): JsonResponse
     {
-        $metric = $this->metricService->update($id, $request->validated(), $request->user()?->id);
+        $data = $request->validated();
+        $userId = $request->user()?->id;
         
-        if (!$metric) {
+        // Получаем текущую метрику
+        $currentMetric = $this->metricService->getById($id, $userId);
+        
+        if (!$currentMetric) {
             return response()->json([
                 'message' => 'Метрика не найдена'
             ], 404);
         }
+        
+        // Проверяем, если дата изменилась, не конфликтует ли она с существующими записями
+        if (isset($data['date']) && $data['date'] !== $currentMetric->date->format('Y-m-d')) {
+            $existingMetric = Metric::where('user_id', $userId)
+                ->where('date', $data['date'])
+                ->where('id', '!=', $id) // Исключаем текущую запись
+                ->first();
+            
+            if ($existingMetric) {
+                return response()->json([
+                    'message' => 'Метрика на эту дату уже существует',
+                    'errors' => [
+                        'date' => ['Метрика на дату ' . $data['date'] . ' уже существует. Выберите другую дату.']
+                    ]
+                ], 422);
+            }
+        }
+        
+        $metric = $this->metricService->update($id, $data, $userId);
         
         return response()->json([
             'data' => new MetricResource($metric),
