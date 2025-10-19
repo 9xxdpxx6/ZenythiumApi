@@ -138,10 +138,18 @@ final class CycleService
      */
     private function syncPlansToCycle(Cycle $cycle, array $planIds): void
     {
-        // Сначала отвязываем все планы от этого цикла, перемещая их в другой цикл
+        // Получаем текущие планы цикла
         $existingPlans = \App\Models\Plan::where('cycle_id', $cycle->id)->get();
+        $existingPlanIds = $existingPlans->pluck('id')->toArray();
         
-        if ($existingPlans->isNotEmpty()) {
+        // Планы, которые нужно отвязать (есть в цикле, но нет в новом списке)
+        $plansToDetach = array_diff($existingPlanIds, $planIds);
+        
+        // Планы, которые нужно привязать (есть в новом списке, но нет в цикле)
+        $plansToAttach = array_diff($planIds, $existingPlanIds);
+        
+        // Отвязываем планы, которых нет в новом списке
+        if (!empty($plansToDetach)) {
             // Находим другой цикл пользователя или создаем новый
             $otherCycle = \App\Models\Cycle::where('user_id', $cycle->user_id)
                 ->where('id', '!=', $cycle->id)
@@ -155,12 +163,15 @@ final class CycleService
                 ]);
             }
             
-            foreach ($existingPlans as $plan) {
-                $plan->update(['cycle_id' => $otherCycle->id]);
+            foreach ($plansToDetach as $planId) {
+                $plan = \App\Models\Plan::find($planId);
+                if ($plan) {
+                    $plan->update(['cycle_id' => $otherCycle->id]);
+                }
             }
         }
         
-        // Затем привязываем новые планы в порядке массива
+        // Привязываем новые планы и обновляем порядок всех планов
         foreach ($planIds as $index => $planId) {
             $plan = \App\Models\Plan::find($planId);
             
