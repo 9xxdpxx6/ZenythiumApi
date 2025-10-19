@@ -27,11 +27,11 @@ final class StatisticsController extends Controller
      *                 @OA\Property(property="total_workouts", type="integer", example=45),
      *                 @OA\Property(property="completed_workouts", type="integer", example=42),
      *                 @OA\Property(property="total_training_time", type="integer", example=3150),
-     *                 @OA\Property(property="total_volume", type="integer", example=125000),
+     *                 @OA\Property(property="total_volume", type="string", example="125000.00"),
      *                 @OA\Property(property="current_weight", type="number", format="float", example=75.5),
      *                 @OA\Property(property="active_cycles_count", type="integer", example=2),
-     *                 @OA\Property(property="weight_change_30_days", type="number", format="float", example=2.5),
-     *                 @OA\Property(property="training_frequency_4_weeks", type="number", format="float", example=3.2),
+     *                 @OA\Property(property="weight_change_30_days", type="number", example=2),
+     *                 @OA\Property(property="training_frequency_4_weeks", type="number", example=3),
      *                 @OA\Property(property="training_streak_days", type="integer", example=12, description="Количество подряд выполненных тренировок без пропусков в циклах")
      *             ),
      *             @OA\Property(property="message", type="string", example="Статистика пользователя успешно получена")

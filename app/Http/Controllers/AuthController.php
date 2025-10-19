@@ -82,7 +82,11 @@ final class AuthController extends Controller
 
         return response()->json([
             'message' => 'Пользователь успешно зарегистрирован',
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
             'token' => $token,
             'token_type' => 'Bearer',
         ], 201);
@@ -160,7 +164,11 @@ final class AuthController extends Controller
 
         return response()->json([
             'message' => 'Вход выполнен успешно',
-            'user' => $user,
+            'user' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+            ],
             'token' => $token,
             'token_type' => 'Bearer',
         ]);
@@ -266,7 +274,12 @@ final class AuthController extends Controller
     public function me(Request $request): JsonResponse
     {
         return response()->json([
-            'data' => $request->user(),
+            'data' => [
+                'id' => $request->user()->id,
+                'name' => $request->user()->name,
+                'email' => $request->user()->email,
+                'created_at' => $request->user()->created_at?->toISOString(),
+            ],
             'message' => 'Данные пользователя успешно получены'
         ]);
     }
@@ -538,7 +551,11 @@ final class AuthController extends Controller
 
         return response()->json([
             'data' => [
-                'user' => $user,
+                'user' => [
+                    'id' => $user->id,
+                    'name' => $user->name,
+                    'email' => $user->email,
+                ],
                 'token' => $token,
                 'token_type' => 'Bearer'
             ],

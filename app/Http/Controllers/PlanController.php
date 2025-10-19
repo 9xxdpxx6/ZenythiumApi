@@ -205,7 +205,7 @@ final class PlanController extends Controller
         $plan = $this->planService->create($data);
         
         return response()->json([
-            'data' => new PlanResource($plan->load('cycle')),
+            'data' => new PlanResource($plan->load(['cycle', 'planExercises.exercise'])),
             'message' => 'План успешно создан'
         ], 201);
     }
@@ -259,7 +259,7 @@ final class PlanController extends Controller
         }
         
         return response()->json([
-            'data' => new PlanDetailResource($plan),
+            'data' => new PlanDetailResource($plan->load(['cycle', 'planExercises.exercise.muscleGroup'])),
             'message' => 'План успешно получен'
         ]);
     }
@@ -331,7 +331,7 @@ final class PlanController extends Controller
         }
         
         return response()->json([
-            'data' => new PlanResource($plan),
+            'data' => new PlanResource($plan->load(['cycle', 'planExercises.exercise'])),
             'message' => 'План успешно обновлен'
         ]);
     }

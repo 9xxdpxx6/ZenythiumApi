@@ -275,7 +275,7 @@ final class MetricController extends Controller
         }
         
         return response()->json([
-            'data' => new MetricResource($metric),
+            'data' => new MetricResource($metric->load('user')),
             'message' => 'Метрика успешно получена'
         ]);
     }

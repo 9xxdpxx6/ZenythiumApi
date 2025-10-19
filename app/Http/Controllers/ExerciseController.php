@@ -181,14 +181,14 @@ final class ExerciseController extends Controller
      *                 @OA\Property(property="id", type="integer", example=1),
      *                 @OA\Property(property="name", type="string", example="Жим лежа"),
      *                 @OA\Property(property="description", type="string", example="Базовое упражнение для груди"),
+     *                 @OA\Property(property="user_id", type="integer", example=1),
      *                 @OA\Property(property="muscle_group", type="object",
      *                     @OA\Property(property="id", type="integer", example=1),
      *                     @OA\Property(property="name", type="string", example="Грудь")
      *                 ),
-     *                 @OA\Property(property="user", type="object",
-     *                     @OA\Property(property="id", type="integer", example=1),
-     *                     @OA\Property(property="name", type="string", example="Иван Петров")
-     *                 )
+     *                 @OA\Property(property="is_active", type="boolean", example=true),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
      *             ),
      *             @OA\Property(property="message", type="string", example="Упражнение успешно создано")
      *         )

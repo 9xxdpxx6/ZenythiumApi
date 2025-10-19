@@ -1710,6 +1710,10 @@
                                                     "type": "string",
                                                     "example": "Базовое упражнение для груди"
                                                 },
+                                                "user_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
                                                 "muscle_group": {
                                                     "properties": {
                                                         "id": {
@@ -1723,18 +1727,19 @@
                                                     },
                                                     "type": "object"
                                                 },
-                                                "user": {
-                                                    "properties": {
-                                                        "id": {
-                                                            "type": "integer",
-                                                            "example": 1
-                                                        },
-                                                        "name": {
-                                                            "type": "string",
-                                                            "example": "Иван Петров"
-                                                        }
-                                                    },
-                                                    "type": "object"
+                                                "is_active": {
+                                                    "type": "boolean",
+                                                    "example": true
+                                                },
+                                                "created_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T00:00:00.000000Z"
+                                                },
+                                                "updated_at": {
+                                                    "type": "string",
+                                                    "format": "date-time",
+                                                    "example": "2024-01-01T00:00:00.000000Z"
                                                 }
                                             },
                                             "type": "object"
@@ -4377,8 +4382,8 @@
                                                     "example": 3150
                                                 },
                                                 "total_volume": {
-                                                    "type": "integer",
-                                                    "example": 125000
+                                                    "type": "string",
+                                                    "example": "125000.00"
                                                 },
                                                 "current_weight": {
                                                     "type": "number",
@@ -4391,13 +4396,11 @@
                                                 },
                                                 "weight_change_30_days": {
                                                     "type": "number",
-                                                    "format": "float",
-                                                    "example": 2.5
+                                                    "example": 2
                                                 },
                                                 "training_frequency_4_weeks": {
                                                     "type": "number",
-                                                    "format": "float",
-                                                    "example": 3.2
+                                                    "example": 3
                                                 },
                                                 "training_streak_days": {
                                                     "description": "Количество подряд выполненных тренировок без пропусков в циклах",
@@ -6359,6 +6362,172 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Подход не найден"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/workout-sets/workout/{workoutId}": {
+            "get": {
+                "tags": [
+                    "Workout Sets"
+                ],
+                "summary": "Получение подходов по тренировке",
+                "description": "Возвращает все подходы для конкретной тренировки",
+                "operationId": "02a20e28cb01d82474eed9837923d0aa",
+                "parameters": [
+                    {
+                        "name": "workoutId",
+                        "in": "path",
+                        "description": "ID тренировки",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Подходы тренировки успешно получены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WorkoutSetResource"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Подходы тренировки успешно получены"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Тренировка не найдена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Тренировка не найдена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/workout-sets/plan-exercise/{planExerciseId}": {
+            "get": {
+                "tags": [
+                    "Workout Sets"
+                ],
+                "summary": "Получение подходов по упражнению в плане",
+                "description": "Возвращает все подходы для конкретного упражнения в плане",
+                "operationId": "7359a53a263c53ef945df09089652b17",
+                "parameters": [
+                    {
+                        "name": "planExerciseId",
+                        "in": "path",
+                        "description": "ID упражнения в плане",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Подходы упражнения успешно получены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/WorkoutSetResource"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Подходы упражнения успешно получены"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Упражнение в плане не найдено",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Упражнение в плане не найдено"
                                         }
                                     },
                                     "type": "object"

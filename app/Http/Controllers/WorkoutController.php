@@ -250,7 +250,7 @@ final class WorkoutController extends Controller
         $workout = $this->workoutService->create($data);
         
         return response()->json([
-            'data' => new WorkoutResource($workout),
+            'data' => new WorkoutResource($workout->load(['plan.planExercises.exercise.muscleGroup', 'user'])),
             'message' => 'Тренировка успешно создана'
         ], 201);
     }
@@ -388,7 +388,7 @@ final class WorkoutController extends Controller
         }
         
         return response()->json([
-            'data' => new WorkoutResource($workout),
+            'data' => new WorkoutResource($workout->load(['plan.planExercises.exercise.muscleGroup', 'user'])),
             'message' => 'Тренировка успешно обновлена'
         ]);
     }
@@ -615,7 +615,7 @@ final class WorkoutController extends Controller
             }
             
             return response()->json([
-                'data' => new WorkoutResource($workout),
+                'data' => new WorkoutResource($workout->load(['plan.planExercises.exercise.muscleGroup', 'user'])),
                 'message' => 'Тренировка успешно завершена',
                 'duration_minutes' => $workout->duration_minutes
             ]);

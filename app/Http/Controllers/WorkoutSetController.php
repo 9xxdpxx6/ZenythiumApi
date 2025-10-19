@@ -309,7 +309,7 @@ final class WorkoutSetController extends Controller
         }
         
         return response()->json([
-            'data' => new WorkoutSetResource($workoutSet),
+            'data' => new WorkoutSetResource($workoutSet->load(['workout.plan', 'workout.user', 'planExercise.exercise'])),
             'message' => 'Подход успешно получен'
         ]);
     }
@@ -378,7 +378,7 @@ final class WorkoutSetController extends Controller
         }
         
         return response()->json([
-            'data' => new WorkoutSetResource($workoutSet),
+            'data' => new WorkoutSetResource($workoutSet->load(['workout.plan', 'workout.user', 'planExercise.exercise'])),
             'message' => 'Подход успешно обновлен'
         ]);
     }
@@ -438,34 +438,42 @@ final class WorkoutSetController extends Controller
     }
 
     /**
-     * @group Workout Sets
-     * @authenticated
-     * Получение подходов по тренировке
-     * 
-     * Возвращает все подходы для конкретной тренировки.
-     * 
-     * @urlParam workoutId integer required ID тренировки. Example: 1
-     * 
-     * @response 200 scenario="success" {
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "workout_id": 1,
-     *       "plan_exercise_id": 1,
-     *       "weight": 80.0,
-     *       "reps": 10,
-     *       "workout": {"id": 1, "started_at": "2024-01-15T10:00:00.000000Z"},
-     *       "plan_exercise": {"id": 1, "exercise": {"name": "Жим лежа"}}
-     *     }
-     *   ],
-     *   "message": "Подходы тренировки успешно получены"
-     * }
-     * @response 401 scenario="unauthenticated" {
-     *   "message": "Unauthenticated."
-     * }
-     * @response 404 scenario="not found" {
-     *   "message": "Тренировка не найдена"
-     * }
+     * @OA\Get(
+     *     path="/api/workout-sets/workout/{workoutId}",
+     *     summary="Получение подходов по тренировке",
+     *     description="Возвращает все подходы для конкретной тренировки",
+     *     tags={"Workout Sets"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="workoutId",
+     *         in="path",
+     *         description="ID тренировки",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Подходы тренировки успешно получены",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/WorkoutSetResource")),
+     *             @OA\Property(property="message", type="string", example="Подходы тренировки успешно получены")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Тренировка не найдена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Тренировка не найдена")
+     *         )
+     *     )
+     * )
      */
     public function getByWorkout(Request $request, int $workoutId): JsonResponse
     {
@@ -478,34 +486,42 @@ final class WorkoutSetController extends Controller
     }
 
     /**
-     * @group Workout Sets
-     * @authenticated
-     * Получение подходов по упражнению в плане
-     * 
-     * Возвращает все подходы для конкретного упражнения в плане.
-     * 
-     * @urlParam planExerciseId integer required ID упражнения в плане. Example: 1
-     * 
-     * @response 200 scenario="success" {
-     *   "data": [
-     *     {
-     *       "id": 1,
-     *       "workout_id": 1,
-     *       "plan_exercise_id": 1,
-     *       "weight": 80.0,
-     *       "reps": 10,
-     *       "workout": {"id": 1, "started_at": "2024-01-15T10:00:00.000000Z"},
-     *       "plan_exercise": {"id": 1, "exercise": {"name": "Жим лежа"}}
-     *     }
-     *   ],
-     *   "message": "Подходы упражнения успешно получены"
-     * }
-     * @response 401 scenario="unauthenticated" {
-     *   "message": "Unauthenticated."
-     * }
-     * @response 404 scenario="not found" {
-     *   "message": "Упражнение в плане не найдено"
-     * }
+     * @OA\Get(
+     *     path="/api/workout-sets/plan-exercise/{planExerciseId}",
+     *     summary="Получение подходов по упражнению в плане",
+     *     description="Возвращает все подходы для конкретного упражнения в плане",
+     *     tags={"Workout Sets"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="planExerciseId",
+     *         in="path",
+     *         description="ID упражнения в плане",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Подходы упражнения успешно получены",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(ref="#/components/schemas/WorkoutSetResource")),
+     *             @OA\Property(property="message", type="string", example="Подходы упражнения успешно получены")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Упражнение в плане не найдено",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Упражнение в плане не найдено")
+     *         )
+     *     )
+     * )
      */
     public function getByPlanExercise(Request $request, int $planExerciseId): JsonResponse
     {

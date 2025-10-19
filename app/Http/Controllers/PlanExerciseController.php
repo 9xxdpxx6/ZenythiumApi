@@ -66,7 +66,7 @@ final class PlanExerciseController extends Controller
         $planExercises = $this->planExerciseService->getAllForUser($request->user()?->id);
         
         return response()->json([
-            'data' => PlanExerciseResource::collection($planExercises),
+            'data' => PlanExerciseResource::collection($planExercises->load('exercise.muscleGroup')),
             'message' => 'Упражнения плана успешно получены'
         ]);
     }
@@ -120,7 +120,7 @@ final class PlanExerciseController extends Controller
         }
         
         return response()->json([
-            'data' => PlanExerciseResource::collection($planExercises),
+            'data' => PlanExerciseResource::collection($planExercises->load('exercise.muscleGroup')),
             'message' => 'Упражнения плана успешно получены'
         ]);
     }
@@ -193,7 +193,7 @@ final class PlanExerciseController extends Controller
         }
         
         return response()->json([
-            'data' => new PlanExerciseResource($planExercise),
+            'data' => new PlanExerciseResource($planExercise->load('exercise.muscleGroup')),
             'message' => 'Упражнение успешно добавлено в план'
         ], 201);
     }
@@ -268,7 +268,7 @@ final class PlanExerciseController extends Controller
         }
         
         return response()->json([
-            'data' => new PlanExerciseResource($planExercise),
+            'data' => new PlanExerciseResource($planExercise->load('exercise.muscleGroup')),
             'message' => 'Упражнение в плане успешно обновлено'
         ]);
     }
