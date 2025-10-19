@@ -150,23 +150,10 @@ final class CycleService
         
         // Отвязываем планы, которых нет в новом списке
         if (!empty($plansToDetach)) {
-            // Находим другой цикл пользователя или создаем новый
-            $otherCycle = \App\Models\Cycle::where('user_id', $cycle->user_id)
-                ->where('id', '!=', $cycle->id)
-                ->first();
-                
-            if (!$otherCycle) {
-                $otherCycle = \App\Models\Cycle::create([
-                    'name' => 'Unassigned Plans',
-                    'weeks' => 1,
-                    'user_id' => $cycle->user_id
-                ]);
-            }
-            
             foreach ($plansToDetach as $planId) {
                 $plan = \App\Models\Plan::find($planId);
                 if ($plan) {
-                    $plan->update(['cycle_id' => $otherCycle->id]);
+                    $plan->update(['cycle_id' => null]);
                 }
             }
         }

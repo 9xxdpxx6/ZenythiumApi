@@ -136,10 +136,9 @@ describe('CycleController with plan_ids', function () {
 
             $response->assertStatus(200);
 
-            // Проверяем, что старые планы отвязаны (перемещены в другой цикл)
+            // Проверяем, что старые планы отвязаны (cycle_id = null)
             $this->plan1->refresh();
-            expect($this->plan1->cycle_id)->not->toBe($cycle->id);
-            expect($this->plan1->cycle_id)->not->toBeNull();
+            expect($this->plan1->cycle_id)->toBeNull();
 
             // Проверяем, что новые планы привязаны
             $this->plan2->refresh();
@@ -165,10 +164,9 @@ describe('CycleController with plan_ids', function () {
 
             $response->assertStatus(200);
 
-            // План должен быть перемещен в другой цикл (не null)
+            // План должен быть отвязан (cycle_id = null)
             $this->plan1->refresh();
-            expect($this->plan1->cycle_id)->not->toBe($cycle->id);
-            expect($this->plan1->cycle_id)->not->toBeNull();
+            expect($this->plan1->cycle_id)->toBeNull();
         });
 
         it('updates cycle without changing plan_ids when not provided', function () {
