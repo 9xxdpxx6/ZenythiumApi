@@ -124,8 +124,7 @@ final class CycleService
         foreach ($planIds as $index => $planId) {
             $plan = \App\Models\Plan::find($planId);
             
-            // Проверяем, что план принадлежит тому же пользователю
-            if ($plan && $plan->cycle && $plan->cycle->user_id === $cycle->user_id) {
+            if ($plan) {
                 $plan->update([
                     'cycle_id' => $cycle->id,
                     'order' => $index + 1
@@ -165,8 +164,7 @@ final class CycleService
         foreach ($planIds as $index => $planId) {
             $plan = \App\Models\Plan::find($planId);
             
-            // Проверяем, что план принадлежит тому же пользователю
-            if ($plan && $plan->cycle && $plan->cycle->user_id === $cycle->user_id) {
+            if ($plan) {
                 $plan->update([
                     'cycle_id' => $cycle->id,
                     'order' => $index + 1
