@@ -14,6 +14,8 @@ final class MuscleGroup extends Model
 
     protected $fillable = [
         'name',
+        'size_factor',
+        'optimal_frequency_per_week',
     ];
 
     /**

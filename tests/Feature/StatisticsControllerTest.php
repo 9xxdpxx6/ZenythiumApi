@@ -170,11 +170,16 @@ test('can get muscle group statistics', function () {
                 'muscle_group_stats' => [
                     '*' => [
                         'muscle_group_name',
+                        'size_factor',
+                        'optimal_frequency_per_week',
                         'total_volume',
                         'workout_count',
                         'exercise_count',
                         'avg_volume_per_workout',
                         'last_trained',
+                        'first_trained',
+                        'unique_training_days',
+                        'days_since_last_training',
                     ]
                 ],
                 'balance_analysis' => [

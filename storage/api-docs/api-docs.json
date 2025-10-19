@@ -4692,6 +4692,12 @@
                                                             "muscle_group_name": {
                                                                 "type": "string"
                                                             },
+                                                            "size_factor": {
+                                                                "type": "number"
+                                                            },
+                                                            "optimal_frequency_per_week": {
+                                                                "type": "integer"
+                                                            },
                                                             "total_volume": {
                                                                 "type": "number"
                                                             },
@@ -4707,6 +4713,16 @@
                                                             "last_trained": {
                                                                 "type": "string",
                                                                 "format": "date"
+                                                            },
+                                                            "first_trained": {
+                                                                "type": "string",
+                                                                "format": "date"
+                                                            },
+                                                            "unique_training_days": {
+                                                                "type": "integer"
+                                                            },
+                                                            "days_since_last_training": {
+                                                                "type": "integer"
                                                             }
                                                         },
                                                         "type": "object"

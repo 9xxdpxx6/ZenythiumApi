@@ -400,11 +400,16 @@ final class StatisticsController extends Controller
      *             @OA\Property(property="data", type="object",
      *                 @OA\Property(property="muscle_group_stats", type="array", @OA\Items(
      *                     @OA\Property(property="muscle_group_name", type="string"),
+     *                     @OA\Property(property="size_factor", type="number"),
+     *                     @OA\Property(property="optimal_frequency_per_week", type="integer"),
      *                     @OA\Property(property="total_volume", type="number"),
      *                     @OA\Property(property="workout_count", type="integer"),
      *                     @OA\Property(property="exercise_count", type="integer"),
      *                     @OA\Property(property="avg_volume_per_workout", type="number"),
-     *                     @OA\Property(property="last_trained", type="string", format="date")
+     *                     @OA\Property(property="last_trained", type="string", format="date"),
+     *                     @OA\Property(property="first_trained", type="string", format="date"),
+     *                     @OA\Property(property="unique_training_days", type="integer"),
+     *                     @OA\Property(property="days_since_last_training", type="integer")
      *                 )),
      *                 @OA\Property(property="balance_analysis", type="object",
      *                     @OA\Property(property="most_trained", type="string"),
@@ -768,23 +773,39 @@ final class StatisticsController extends Controller
             ->whereNotNull('workout_sets.reps')
             ->select([
                 'muscle_groups.name as muscle_group_name',
+                'muscle_groups.size_factor',
+                'muscle_groups.optimal_frequency_per_week',
                 DB::raw('SUM(workout_sets.weight * workout_sets.reps) as total_volume'),
                 DB::raw('COUNT(DISTINCT workouts.id) as workout_count'),
                 DB::raw('COUNT(DISTINCT exercises.id) as exercise_count'),
-                DB::raw('MAX(workouts.finished_at) as last_trained')
+                DB::raw('MAX(workouts.finished_at) as last_trained'),
+                DB::raw('MIN(workouts.finished_at) as first_trained'),
+                DB::raw('COUNT(DISTINCT DATE(workouts.finished_at)) as unique_training_days')
             ])
             ->groupBy('muscle_groups.id', 'muscle_groups.name')
             ->get()
             ->map(function ($item) {
                 $avgVolumePerWorkout = $item->workout_count > 0 ? $item->total_volume / $item->workout_count : 0;
                 
+                // Рассчитываем дни с последней тренировки в PHP
+                $daysSinceLastTraining = 0;
+                if ($item->last_trained) {
+                    $lastTrainedDate = \Carbon\Carbon::parse($item->last_trained);
+                    $daysSinceLastTraining = $lastTrainedDate->diffInDays(now());
+                }
+                
                 return [
                     'muscle_group_name' => $item->muscle_group_name,
+                    'size_factor' => (float) $item->size_factor,
+                    'optimal_frequency_per_week' => (int) $item->optimal_frequency_per_week,
                     'total_volume' => (float) $item->total_volume,
                     'workout_count' => (int) $item->workout_count,
                     'exercise_count' => (int) $item->exercise_count,
                     'avg_volume_per_workout' => round($avgVolumePerWorkout, 2),
                     'last_trained' => $item->last_trained ? \Carbon\Carbon::parse($item->last_trained)->toDateString() : null,
+                    'first_trained' => $item->first_trained ? \Carbon\Carbon::parse($item->first_trained)->toDateString() : null,
+                    'unique_training_days' => (int) $item->unique_training_days,
+                    'days_since_last_training' => $daysSinceLastTraining,
                 ];
             })
             ->toArray();
@@ -801,23 +822,26 @@ final class StatisticsController extends Controller
             ];
         }
 
-        $volumes = array_column($muscleGroupStats, 'total_volume');
-        $maxVolume = max($volumes);
-        $minVolume = min($volumes);
+        // Рассчитываем временные факторы и нормализованные объемы
+        $enhancedStats = $this->calculateTemporalFactors($muscleGroupStats);
         
-        $mostTrained = $muscleGroupStats[array_search($maxVolume, $volumes)];
-        $leastTrained = $muscleGroupStats[array_search($minVolume, $volumes)];
+        // Сортируем расширенную статистику по combined_balance_factor
+        // Это более надежный способ найти мин/макс элементы, особенно с float
+        usort($enhancedStats, function ($a, $b) {
+            return $a['combined_balance_factor'] <=> $b['combined_balance_factor'];
+        });
+
+        $leastTrained = reset($enhancedStats); // Первый элемент после сортировки по возрастанию
+        $mostTrained = end($enhancedStats);   // Последний элемент после сортировки по возрастанию
+
+        $minFactor = $leastTrained['combined_balance_factor'];
+        $maxFactor = $mostTrained['combined_balance_factor'];
         
-        // Коэффициент баланса (чем ближе к 1, тем более сбалансированно)
-        $balanceScore = $minVolume > 0 ? round($minVolume / $maxVolume, 2) : 0;
+        // Улучшенный коэффициент баланса
+        $balanceScore = $minFactor > 0 ? round($minFactor / $maxFactor, 2) : 0;
         
-        $recommendations = [];
-        if ($balanceScore < 0.3) {
-            $recommendations[] = "Рекомендуется увеличить нагрузку на группу мышц: {$leastTrained['muscle_group_name']}";
-        }
-        if ($balanceScore > 0.7) {
-            $recommendations[] = "Отличный баланс между мышечными группами!";
-        }
+        // Генерация рекомендаций на основе улучшенного анализа
+        $recommendations = $this->generateAdvancedRecommendations($balanceScore, $enhancedStats, $leastTrained);
 
         return [
             'most_trained' => $mostTrained['muscle_group_name'],
@@ -825,6 +849,62 @@ final class StatisticsController extends Controller
             'balance_score' => $balanceScore,
             'recommendations' => $recommendations
         ];
+    }
+
+    /**
+     * Рассчитывает временные факторы для каждой группы мышц
+     */
+    private function calculateTemporalFactors(array $stats): array
+    {
+        foreach ($stats as &$stat) {
+            // Частота тренировок в неделю
+            $weeksSinceFirst = max(1, \Carbon\Carbon::parse($stat['first_trained'])->diffInWeeks(now()));
+            $stat['frequency_per_week'] = $stat['unique_training_days'] / $weeksSinceFirst;
+            
+            // Отношение к оптимальной частоте
+            $stat['frequency_ratio'] = $stat['frequency_per_week'] / $stat['optimal_frequency_per_week'];
+            
+            // Актуальность (чем дольше не тренировались, тем хуже)
+            $stat['recency_factor'] = max(0.1, 1 - ($stat['days_since_last_training'] / 14));
+            
+            // Нормализованный объем с учетом размера группы
+            $stat['normalized_volume'] = $stat['total_volume'] / $stat['size_factor'];
+            
+            // Временной фактор (частота + актуальность)
+            $stat['temporal_factor'] = ($stat['frequency_ratio'] + $stat['recency_factor']) / 2;
+            
+            // Комбинированный показатель баланса
+            $stat['combined_balance_factor'] = $stat['normalized_volume'] * $stat['temporal_factor'];
+        }
+        
+        return $stats;
+    }
+
+    /**
+     * Генерирует улучшенные рекомендации на основе комплексного анализа
+     */
+    private function generateAdvancedRecommendations(float $balanceScore, array $stats, array $leastTrained): array
+    {
+        $recommendations = [];
+        
+        if ($balanceScore < 0.3) {
+            $recommendations[] = "Рекомендуется увеличить нагрузку на группу мышц: {$leastTrained['muscle_group_name']}";
+            
+            // Дополнительные рекомендации на основе временных факторов
+            if ($leastTrained['days_since_last_training'] > 7) {
+                $recommendations[] = "Группа мышц '{$leastTrained['muscle_group_name']}' не тренировалась более недели";
+            }
+            
+            if ($leastTrained['frequency_ratio'] < 0.5) {
+                $recommendations[] = "Частота тренировок группы '{$leastTrained['muscle_group_name']}' ниже оптимальной";
+            }
+        } elseif ($balanceScore > 0.7) {
+            $recommendations[] = "Отличный баланс между мышечными группами!";
+        } else {
+            $recommendations[] = "Баланс тренировок удовлетворительный, есть возможности для улучшения";
+        }
+        
+        return $recommendations;
     }
 
     private function getPersonalRecords(int $userId): array
