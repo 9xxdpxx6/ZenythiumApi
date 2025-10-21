@@ -66,12 +66,7 @@ final class PlanService
         $query = Plan::query()->with(['cycle', 'planExercises.exercise.muscleGroup']);
 
         if ($userId) {
-            // План может принадлежать пользователю через цикл или быть без цикла (общие планы)
-            $query->where(function ($q) use ($userId) {
-                $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
-                    $cycleQuery->where('user_id', $userId);
-                })->orWhereNull('cycle_id');
-            });
+            $query->where('user_id', $userId);
         }
 
         return $query->find($id);
@@ -82,7 +77,8 @@ final class PlanService
      * 
      * @param array $data Данные для создания плана
      * @param string $data['name'] Название плана
-     * @param int $data['cycle_id'] ID цикла тренировок
+     * @param int|null $data['user_id'] ID пользователя
+     * @param int|null $data['cycle_id'] ID цикла тренировок
      * @param int|null $data['order'] Порядок плана
      * @param bool|null $data['is_active'] Статус активности плана
      * @param array|null $data['exercise_ids'] Массив ID упражнений для добавления в план
@@ -127,11 +123,7 @@ final class PlanService
         $query = Plan::query();
 
         if ($userId) {
-            $query->where(function ($q) use ($userId) {
-                $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
-                    $cycleQuery->where('user_id', $userId);
-                })->orWhereNull('cycle_id');
-            });
+            $query->where('user_id', $userId);
         }
 
         $plan = $query->find($id);
@@ -165,11 +157,7 @@ final class PlanService
         $query = Plan::query();
 
         if ($userId) {
-            $query->where(function ($q) use ($userId) {
-                $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
-                    $cycleQuery->where('user_id', $userId);
-                })->orWhereNull('cycle_id');
-            });
+            $query->where('user_id', $userId);
         }
 
         $plan = $query->find($id);
@@ -217,6 +205,7 @@ final class PlanService
 
         // Создаем копию плана
         $newPlan = Plan::create([
+            'user_id' => $userId,
             'cycle_id' => $newCycleId,
             'name' => $copyName,
             'order' => $originalPlan->order,
@@ -254,7 +243,7 @@ final class PlanService
             if ($exercise) {
                 // Для планов с циклом проверяем принадлежность пользователю
                 if ($plan->cycle_id !== null) {
-                    if ($exercise->user_id === $plan->cycle->user_id) {
+                    if ($exercise->user_id === $plan->user_id) {
                         \App\Models\PlanExercise::create([
                             'plan_id' => $plan->id,
                             'exercise_id' => $exerciseId,
@@ -297,7 +286,7 @@ final class PlanService
             if ($exercise) {
                 // Для планов с циклом проверяем принадлежность пользователю
                 if ($plan->cycle_id !== null) {
-                    if ($exercise->user_id === $plan->cycle->user_id) {
+                    if ($exercise->user_id === $plan->user_id) {
                         \App\Models\PlanExercise::create([
                             'plan_id' => $plan->id,
                             'exercise_id' => $exerciseId,

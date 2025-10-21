@@ -201,6 +201,7 @@ final class PlanController extends Controller
     public function store(PlanRequest $request): JsonResponse
     {
         $data = $request->validated();
+        $data['user_id'] = $request->user()?->id;
         
         $plan = $this->planService->create($data);
         

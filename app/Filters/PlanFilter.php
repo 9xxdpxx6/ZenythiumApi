@@ -36,13 +36,7 @@ final class PlanFilter extends BaseFilter
     {
         if ($this->hasFilter('user_id')) {
             $userId = $this->getFilter('user_id');
-            
-            // Показываем все планы пользователя (включая standalone)
-            $query->where(function ($q) use ($userId) {
-                $q->whereHas('cycle', function ($cycleQuery) use ($userId) {
-                    $cycleQuery->where('user_id', $userId);
-                })->orWhereNull('cycle_id');
-            });
+            $query->where('user_id', $userId);
         }
     }
 

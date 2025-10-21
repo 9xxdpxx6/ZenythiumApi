@@ -14,6 +14,7 @@ final class Plan extends Model
 {
     use HasFactory;
     protected $fillable = [
+        'user_id',
         'cycle_id',
         'name',
         'order',
@@ -28,6 +29,14 @@ final class Plan extends Model
     protected $appends = [
         'exercise_count',
     ];
+
+    /**
+     * Get the user that owns the plan.
+     */
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     /**
      * Get the cycle that owns the plan.
