@@ -20,7 +20,10 @@ final class MuscleGroupFilter extends BaseFilter
 
     private function applySearchFilter(Builder $query): void
     {
-        parent::applySearch($query, 'name');
+        if ($this->hasFilter('search')) {
+            $searchTerm = $this->getFilter('search');
+            $this->applySmartSearch($query, ['name'], $searchTerm);
+        }
     }
 
     private function applyUserFilter(Builder $query): void

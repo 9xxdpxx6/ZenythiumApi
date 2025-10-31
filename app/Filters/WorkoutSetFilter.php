@@ -25,14 +25,10 @@ final class WorkoutSetFilter extends BaseFilter
     {
         if ($this->hasFilter('search')) {
             $searchTerm = $this->getFilter('search');
-            $query->where(function ($q) use ($searchTerm) {
-                $q->whereHas('workout.plan', function ($planQuery) use ($searchTerm) {
-                    $planQuery->where('name', 'like', '%' . $searchTerm . '%');
-                })->orWhereHas('planExercise.exercise', function ($exerciseQuery) use ($searchTerm) {
-                    $exerciseQuery->where('name', 'like', '%' . $searchTerm . '%');
-                })->orWhereHas('workout.user', function ($userQuery) use ($searchTerm) {
-                    $userQuery->where('name', 'like', '%' . $searchTerm . '%');
-                });
+            $query->where(function ($q) use ($searchTerm): void {
+                $this->applySmartSearchInRelation($q, 'workout.plan', ['name'], $searchTerm);
+                $this->applySmartSearchInRelationOr($q, 'planExercise.exercise', ['name'], $searchTerm);
+                $this->applySmartSearchInRelationOr($q, 'workout.user', ['name'], $searchTerm);
             });
         }
     }

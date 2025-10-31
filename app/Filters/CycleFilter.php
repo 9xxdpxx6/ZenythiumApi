@@ -23,9 +23,7 @@ final class CycleFilter extends BaseFilter
     {
         if ($this->hasFilter('search')) {
             $searchTerm = $this->getFilter('search');
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', '%' . $searchTerm . '%');
-            });
+            $this->applySmartSearch($query, ['name'], $searchTerm);
         }
     }
 

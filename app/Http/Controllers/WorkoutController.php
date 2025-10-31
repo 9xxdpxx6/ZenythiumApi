@@ -88,9 +88,9 @@ final class WorkoutController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Поиск по названию плана или имени пользователя",
+     *         description="Умный поиск по словам в названии плана или имени пользователя. Поисковая строка разбивается на слова, и находятся записи, содержащие все слова (в любом порядке). Например: 'программа масса' найдет 'программа на массу', 'масса программа' и т.д. Игнорируются слова короче 2 символов.",
      *         required=false,
-     *         @OA\Schema(type="string", example="Программа на массу")
+     *         @OA\Schema(type="string", example="программа масса")
      *     ),
      *     @OA\Parameter(
      *         name="user_id",
@@ -205,7 +205,7 @@ final class WorkoutController extends Controller
      * @OA\Post(
      *     path="/api/v1/workouts",
      *     summary="Создание новой тренировки",
-     *     description="Создает новую тренировку для указанного плана",
+     *     description="Создает новую тренировку для указанного плана. Если тренировка создается сразу с finished_at, автоматически проверяется связанный цикл - если его прогресс достиг 100%, цикл автоматически завершается.",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\RequestBody(
@@ -327,7 +327,7 @@ final class WorkoutController extends Controller
      * @OA\Put(
      *     path="/api/v1/workouts/{workout}",
      *     summary="Обновление тренировки",
-     *     description="Обновляет информацию о существующей тренировке",
+     *     description="Обновляет информацию о существующей тренировке. Если тренировка обновляется с установкой finished_at (ранее тренировка не была завершена), автоматически проверяется связанный цикл - если его прогресс достиг 100%, цикл автоматически завершается.",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
@@ -556,7 +556,7 @@ final class WorkoutController extends Controller
      * @OA\Post(
      *     path="/api/v1/workouts/{workout}/finish",
      *     summary="Завершение тренировки",
-     *     description="Завершает активную тренировку, устанавливая время окончания и рассчитывая продолжительность",
+     *     description="Завершает активную тренировку, устанавливая время окончания и рассчитывая продолжительность. После завершения тренировки автоматически проверяется связанный цикл - если его прогресс достиг 100%, цикл автоматически завершается (устанавливается end_date в текущую дату).",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(

@@ -23,11 +23,9 @@ final class MetricFilter extends BaseFilter
     {
         if ($this->hasFilter('search')) {
             $searchTerm = $this->getFilter('search');
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('note', 'like', '%' . $searchTerm . '%')
-                  ->orWhereHas('user', function ($userQuery) use ($searchTerm) {
-                      $userQuery->where('name', 'like', '%' . $searchTerm . '%');
-                  });
+            $query->where(function ($q) use ($searchTerm): void {
+                $this->applySmartSearch($q, ['note'], $searchTerm);
+                $this->applySmartSearchInRelationOr($q, 'user', ['name'], $searchTerm);
             });
         }
     }

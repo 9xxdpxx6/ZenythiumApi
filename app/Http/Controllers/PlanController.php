@@ -84,9 +84,9 @@ final class PlanController extends Controller
  *     @OA\Parameter(
  *         name="search",
  *         in="query",
- *         description="Фильтр по названию плана",
+ *         description="Умный поиск по словам в названии плана. Поисковая строка разбивается на слова, и находятся записи, содержащие все слова (в любом порядке). Например: 'силовая программа' найдет 'силовая тренировочная программа', 'программа силовая' и т.д. Игнорируются слова короче 2 символов.",
  *         required=false,
- *         @OA\Schema(type="string", example="силовая")
+ *         @OA\Schema(type="string", example="силовая программа")
  *     ),
  *     @OA\Parameter(
  *         name="is_active",

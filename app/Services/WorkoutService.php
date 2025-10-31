@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Workout;
 use App\Filters\WorkoutFilter;
+use App\Services\CycleService;
 use App\Traits\HasPagination;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -13,6 +14,10 @@ use Illuminate\Pagination\LengthAwarePaginator;
 final class WorkoutService
 {
     use HasPagination;
+
+    public function __construct(
+        private readonly CycleService $cycleService
+    ) {}
     
     /**
      * Получить все тренировки с фильтрацией и пагинацией
@@ -83,7 +88,19 @@ final class WorkoutService
      */
     public function create(array $data): Workout
     {
-        return Workout::create($data);
+        $workout = Workout::create($data);
+        
+        // Если тренировка создана сразу с finished_at, проверяем завершение цикла
+        if ($workout->finished_at) {
+            // Загружаем связи для проверки
+            $workout->load('plan.cycle');
+            
+            if ($workout->plan && $workout->plan->cycle) {
+                $this->cycleService->autoCompleteIfFinished($workout->plan->cycle);
+            }
+        }
+        
+        return $workout;
     }
 
     /**
@@ -111,9 +128,21 @@ final class WorkoutService
             return null;
         }
         
+        // Запоминаем, была ли тренировка завершена до обновления
+        $wasFinished = $workout->finished_at !== null;
+        
         $workout->update($data);
         
-        return $workout->fresh(['plan.cycle', 'user']);
+        // Получаем обновленную тренировку со связями
+        $workout = $workout->fresh(['plan.cycle', 'user']);
+        
+        // Если тренировка только что была завершена (finished_at был null, а теперь установлен),
+        // проверяем и автоматически завершаем цикл при достижении 100%
+        if (!$wasFinished && $workout->finished_at && $workout->plan && $workout->plan->cycle) {
+            $this->cycleService->autoCompleteIfFinished($workout->plan->cycle);
+        }
+        
+        return $workout;
     }
 
     /**
@@ -272,7 +301,15 @@ final class WorkoutService
 
         $workout->update(['finished_at' => now()]);
         
-        return $workout->fresh(['plan.cycle', 'user']);
+        // Получаем обновленную тренировку со связями
+        $workout = $workout->fresh(['plan.cycle', 'user']);
+        
+        // Если тренировка связана с циклом, проверяем и автоматически завершаем цикл при достижении 100%
+        if ($workout->plan && $workout->plan->cycle) {
+            $this->cycleService->autoCompleteIfFinished($workout->plan->cycle);
+        }
+        
+        return $workout;
     }
 
     /**

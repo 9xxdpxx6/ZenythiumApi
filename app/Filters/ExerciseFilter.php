@@ -24,10 +24,7 @@ final class ExerciseFilter extends BaseFilter
     {
         if ($this->hasFilter('search')) {
             $searchTerm = $this->getFilter('search');
-            $query->where(function ($q) use ($searchTerm) {
-                $q->where('name', 'like', '%' . $searchTerm . '%')
-                  ->orWhere('description', 'like', '%' . $searchTerm . '%');
-            });
+            $this->applySmartSearch($query, ['name', 'description'], $searchTerm);
         }
     }
 

@@ -93,6 +93,9 @@ final class CycleService
             $this->syncPlansToCycle($cycle, $planIds);
         }
         
+        // Проверяем и автоматически завершаем цикл при достижении 100%
+        $this->autoCompleteIfFinished($cycle);
+        
         return $cycle->fresh();
     }
 
@@ -169,5 +172,76 @@ final class CycleService
                 ]);
             }
         }
+    }
+
+    /**
+     * Автоматически завершить цикл при достижении 100% прогресса
+     * 
+     * Проверяет прогресс цикла и если он достиг 100%, 
+     * автоматически устанавливает end_date в текущую дату
+     * (только если end_date еще не установлена).
+     * 
+     * @param Cycle $cycle Цикл для проверки
+     * 
+     * @return bool True если цикл был завершен, false если нет
+     */
+    public function autoCompleteIfFinished(Cycle $cycle): bool
+    {
+        // Если цикл уже завершен (end_date установлена), ничего не делаем
+        if ($cycle->end_date !== null) {
+            return false;
+        }
+
+        // Перезагружаем цикл из БД для получения актуальных данных
+        // Используем fresh() с загрузкой связей, чтобы убедиться в актуальности данных
+        $freshCycle = Cycle::with('plans')->find($cycle->id);
+        
+        if (!$freshCycle) {
+            return false;
+        }
+        
+        // Проверяем прогресс цикла
+        // progress_percentage - это computed attribute, который использует связи plans и workouts
+        // Связи workouts загружаются автоматически через hasManyThrough при обращении к методу
+        $progress = $freshCycle->progress_percentage;
+        
+        // Если прогресс достиг 100%, автоматически завершаем цикл
+        if ($progress >= 100) {
+            $freshCycle->update([
+                'end_date' => now()->toDateString()
+            ]);
+            
+            return true;
+        }
+        
+        return false;
+    }
+
+    /**
+     * Проверить и завершить цикл при необходимости
+     * 
+     * Публичный метод для ручной проверки и завершения цикла.
+     * Полезно для проверки существующих циклов, которые могли быть заполнены до добавления автоматической логики.
+     * 
+     * @param int $id ID цикла
+     * @param int|null $userId ID пользователя для проверки доступа (опционально)
+     * 
+     * @return bool True если цикл был завершен, false если нет
+     */
+    public function checkAndCompleteCycle(int $id, ?int $userId = null): bool
+    {
+        $query = Cycle::query();
+
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        $cycle = $query->find($id);
+        
+        if (!$cycle) {
+            return false;
+        }
+        
+        return $this->autoCompleteIfFinished($cycle);
     }
 }

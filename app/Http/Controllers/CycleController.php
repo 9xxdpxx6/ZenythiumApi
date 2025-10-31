@@ -40,11 +40,11 @@ final class CycleController extends Controller
      *         @OA\Schema(type="integer", example=15)
      *     ),
      *     @OA\Parameter(
-     *         name="name",
+     *         name="search",
      *         in="query",
-     *         description="Фильтр по названию цикла",
+     *         description="Умный поиск по словам в названии цикла. Поисковая строка разбивается на слова, и находятся записи, содержащие все слова (в любом порядке). Например: 'набор масса' найдет 'набор мышечной массы', 'масса набор' и т.д. Игнорируются слова короче 2 символов.",
      *         required=false,
-     *         @OA\Schema(type="string", example="набор")
+     *         @OA\Schema(type="string", example="набор масса")
      *     ),
      *     @OA\Parameter(
      *         name="start_date",
@@ -234,7 +234,7 @@ final class CycleController extends Controller
      * @OA\Put(
      *     path="/api/v1/cycles/{cycle}",
      *     summary="Обновление цикла тренировок",
-     *     description="Обновляет информацию о существующем цикле тренировок",
+     *     description="Обновляет информацию о существующем цикле тренировок. При обновлении автоматически проверяется прогресс цикла и если он достиг 100%, цикл автоматически завершается (устанавливается end_date в текущую дату).",
      *     tags={"Cycles"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
@@ -299,6 +299,73 @@ final class CycleController extends Controller
         return response()->json([
             'data' => new CycleResource($cycle),
             'message' => 'Цикл успешно обновлен'
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/cycles/{cycle}/check-completion",
+     *     summary="Проверка и автоматическое завершение цикла",
+     *     description="Проверяет прогресс цикла и автоматически завершает его (устанавливает end_date), если прогресс достиг 100%. Полезно для проверки существующих циклов, которые могли быть заполнены до добавления автоматической логики завершения.",
+     *     tags={"Cycles"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="cycle",
+     *         in="path",
+     *         description="ID цикла",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Проверка завершена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/CycleResource"),
+     *             @OA\Property(property="message", type="string", example="Цикл успешно проверен и завершен"),
+     *             @OA\Property(property="completed", type="boolean", example=true, description="Был ли цикл завершен (true) или уже был завершен/не достиг 100% (false)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Цикл не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Цикл не найден")
+     *         )
+     *     )
+     * )
+     */
+    public function checkCompletion(Request $request, int $id): JsonResponse
+    {
+        $cycle = $this->cycleService->getById($id, $request->user()?->id);
+        
+        if (!$cycle) {
+            return response()->json([
+                'message' => 'Цикл не найден'
+            ], 404);
+        }
+
+        $wasCompleted = $this->cycleService->checkAndCompleteCycle($id, $request->user()?->id);
+        
+        // Обновляем цикл для получения актуальных данных
+        $cycle = $cycle->fresh();
+        
+        $message = $wasCompleted 
+            ? 'Цикл успешно проверен и завершен' 
+            : ($cycle->end_date !== null 
+                ? 'Цикл уже был завершен ранее' 
+                : 'Цикл проверен, прогресс менее 100%');
+        
+        return response()->json([
+            'data' => new CycleResource($cycle),
+            'message' => $message,
+            'completed' => $wasCompleted
         ]);
     }
 

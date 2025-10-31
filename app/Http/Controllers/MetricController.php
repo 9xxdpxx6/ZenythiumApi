@@ -71,9 +71,9 @@ final class MetricController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Поиск по заметкам и имени пользователя",
+     *         description="Умный поиск по словам в заметках и имени пользователя. Поисковая строка разбивается на слова, и находятся записи, содержащие все слова (в любом порядке). Например: 'утренний вес' найдет 'утренний вес измерение', 'вес утренний' и т.д. Игнорируются слова короче 2 символов.",
      *         required=false,
-     *         @OA\Schema(type="string", example="прогресс")
+     *         @OA\Schema(type="string", example="утренний вес")
      *     ),
      *     @OA\Parameter(
      *         name="user_id",

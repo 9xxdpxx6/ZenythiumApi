@@ -58,6 +58,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::get('/cycles/{id}', [CycleController::class, 'show']);
     Route::put('/cycles/{id}', [CycleController::class, 'update']);
     Route::delete('/cycles/{id}', [CycleController::class, 'destroy']);
+    Route::post('/cycles/{id}/check-completion', [CycleController::class, 'checkCompletion']);
     
     // Exercises CRUD routes
     Route::get('/exercises', [ExerciseController::class, 'index']);

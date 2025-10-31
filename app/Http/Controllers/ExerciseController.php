@@ -93,9 +93,9 @@ final class ExerciseController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Поиск по названию и описанию упражнения",
+     *         description="Умный поиск по словам в названии и описании упражнения. Поисковая строка разбивается на слова, и находятся записи, содержащие все слова (в любом порядке). Например: 'жим лежа' найдет 'жим штанги лежа', 'лежа жим' и т.д. Игнорируются слова короче 2 символов.",
      *         required=false,
-     *         @OA\Schema(type="string", example="жим")
+     *         @OA\Schema(type="string", example="жим лежа")
      *     ),
      *     @OA\Parameter(
      *         name="sort_by",

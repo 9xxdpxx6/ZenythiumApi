@@ -49,11 +49,11 @@ final class MuscleGroupController extends Controller
      *         @OA\Schema(type="integer", example=15)
      *     ),
      *     @OA\Parameter(
-     *         name="name",
+     *         name="search",
      *         in="query",
-     *         description="Фильтр по названию группы мышц",
+     *         description="Умный поиск по словам в названии группы мышц. Поисковая строка разбивается на слова, и находятся записи, содержащие все слова (в любом порядке). Например: 'грудь плечи' найдет 'грудь и плечи', 'плечи грудь' и т.д. Игнорируются слова короче 2 символов.",
      *         required=false,
-     *         @OA\Schema(type="string", example="грудь")
+     *         @OA\Schema(type="string", example="грудь плечи")
      *     ),
      *     @OA\Parameter(
      *         name="sort_by",

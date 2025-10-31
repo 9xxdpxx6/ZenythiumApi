@@ -93,9 +93,9 @@ final class WorkoutSetController extends Controller
      *     @OA\Parameter(
      *         name="search",
      *         in="query",
-     *         description="Поиск по названию плана, упражнения или имени пользователя",
+     *         description="Умный поиск по словам в названии плана, упражнения или имени пользователя. Поисковая строка разбивается на слова, и находятся записи, содержащие все слова (в любом порядке). Например: 'жим лежа' найдет 'жим штанги лежа', 'лежа жим' и т.д. Игнорируются слова короче 2 символов.",
      *         required=false,
-     *         @OA\Schema(type="string", example="жим")
+     *         @OA\Schema(type="string", example="жим лежа")
      *     ),
      *     @OA\Parameter(
      *         name="user_id",
