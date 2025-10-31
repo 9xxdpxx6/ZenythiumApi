@@ -216,32 +216,4 @@ final class CycleService
         
         return false;
     }
-
-    /**
-     * Проверить и завершить цикл при необходимости
-     * 
-     * Публичный метод для ручной проверки и завершения цикла.
-     * Полезно для проверки существующих циклов, которые могли быть заполнены до добавления автоматической логики.
-     * 
-     * @param int $id ID цикла
-     * @param int|null $userId ID пользователя для проверки доступа (опционально)
-     * 
-     * @return bool True если цикл был завершен, false если нет
-     */
-    public function checkAndCompleteCycle(int $id, ?int $userId = null): bool
-    {
-        $query = Cycle::query();
-
-        if ($userId) {
-            $query->where('user_id', $userId);
-        }
-
-        $cycle = $query->find($id);
-        
-        if (!$cycle) {
-            return false;
-        }
-        
-        return $this->autoCompleteIfFinished($cycle);
-    }
 }

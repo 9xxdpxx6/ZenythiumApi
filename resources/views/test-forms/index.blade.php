@@ -133,6 +133,20 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Training Programs -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-book fa-3x mb-3" style="color: #6f42c1;"></i>
+                                <h5 class="card-title">Программы тренировок</h5>
+                                <p class="card-text">Каталог программ, установка и удаление</p>
+                                <a href="/test-forms/training-programs" class="btn" style="background-color: #6f42c1; border-color: #6f42c1; color: white;">
+                                    <i class="fas fa-book"></i> Открыть
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-5 text-center">

@@ -12,6 +12,7 @@ use App\Http\Controllers\PlanExerciseController;
 use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\WorkoutSetController;
+use App\Http\Controllers\TrainingProgramController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -58,7 +59,6 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::get('/cycles/{id}', [CycleController::class, 'show']);
     Route::put('/cycles/{id}', [CycleController::class, 'update']);
     Route::delete('/cycles/{id}', [CycleController::class, 'destroy']);
-    Route::post('/cycles/{id}/check-completion', [CycleController::class, 'checkCompletion']);
     
     // Exercises CRUD routes
     Route::get('/exercises', [ExerciseController::class, 'index']);
@@ -108,4 +108,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     // Additional WorkoutSet routes
     Route::get('/workouts/{workoutId}/workout-sets', [WorkoutSetController::class, 'getByWorkout']);
     Route::get('/plan-exercises/{planExerciseId}/workout-sets', [WorkoutSetController::class, 'getByPlanExercise']);
+    
+    // Training Programs routes
+    Route::get('/training-programs', [TrainingProgramController::class, 'index']);
+    Route::get('/training-programs/{id}', [TrainingProgramController::class, 'show']);
+    Route::post('/training-programs/{id}/install', [TrainingProgramController::class, 'install']);
+    Route::delete('/training-programs/{id}/uninstall', [TrainingProgramController::class, 'uninstall']);
 });

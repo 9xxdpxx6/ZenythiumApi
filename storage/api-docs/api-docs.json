@@ -1447,91 +1447,6 @@
                 ]
             }
         },
-        "/api/v1/cycles/{cycle}/check-completion": {
-            "post": {
-                "tags": [
-                    "Cycles"
-                ],
-                "summary": "Проверка и автоматическое завершение цикла",
-                "description": "Проверяет прогресс цикла и автоматически завершает его (устанавливает end_date), если прогресс достиг 100%. Полезно для проверки существующих циклов, которые могли быть заполнены до добавления автоматической логики завершения.",
-                "operationId": "27599f2ca9789d0e75ecb3cc7d4b1558",
-                "parameters": [
-                    {
-                        "name": "cycle",
-                        "in": "path",
-                        "description": "ID цикла",
-                        "required": true,
-                        "schema": {
-                            "type": "integer",
-                            "example": 1
-                        }
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Проверка завершена",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "data": {
-                                            "$ref": "#/components/schemas/CycleResource"
-                                        },
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Цикл успешно проверен и завершен"
-                                        },
-                                        "completed": {
-                                            "description": "Был ли цикл завершен (true) или уже был завершен/не достиг 100% (false)",
-                                            "type": "boolean",
-                                            "example": true
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "401": {
-                        "description": "Не авторизован",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Unauthenticated."
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    },
-                    "404": {
-                        "description": "Цикл не найден",
-                        "content": {
-                            "application/json": {
-                                "schema": {
-                                    "properties": {
-                                        "message": {
-                                            "type": "string",
-                                            "example": "Цикл не найден"
-                                        }
-                                    },
-                                    "type": "object"
-                                }
-                            }
-                        }
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
-            }
-        },
         "/api/v1/exercises": {
             "get": {
                 "tags": [
@@ -5004,6 +4919,409 @@
                 ]
             }
         },
+        "/api/v1/training-programs": {
+            "get": {
+                "tags": [
+                    "Training Programs"
+                ],
+                "summary": "Получение списка программ тренировок",
+                "description": "Возвращает пагинированный список программ тренировок из каталога",
+                "operationId": "c0e2ed0d62163bbc3f8faf178d8e2c13",
+                "parameters": [
+                    {
+                        "name": "page",
+                        "in": "query",
+                        "description": "Номер страницы",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "per_page",
+                        "in": "query",
+                        "description": "Количество элементов на странице",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 15
+                        }
+                    },
+                    {
+                        "name": "search",
+                        "in": "query",
+                        "description": "Поиск по названию и описанию",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "новичок"
+                        }
+                    },
+                    {
+                        "name": "is_active",
+                        "in": "query",
+                        "description": "Фильтр по активности программы. Принимает значения: '1'/'true' для активных, '0'/'false' для неактивных. Если не указан, возвращаются все программы.",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "0",
+                                "1",
+                                "true",
+                                "false"
+                            ],
+                            "example": "1"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Программы успешно получены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/TrainingProgramResource"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Программы успешно получены"
+                                        },
+                                        "meta": {
+                                            "properties": {
+                                                "current_page": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "last_page": {
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "per_page": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 25
+                                                },
+                                                "from": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "to": {
+                                                    "type": "integer",
+                                                    "example": 15
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/training-programs/{id}": {
+            "get": {
+                "tags": [
+                    "Training Programs"
+                ],
+                "summary": "Получение конкретной программы тренировок",
+                "description": "Возвращает детальную информацию о программе тренировок по ID",
+                "operationId": "c350a687f1c9cbca45ae18247c5ee0f7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID программы",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Программа успешно получена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/TrainingProgramDetailResource"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Программа успешно получена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Программа не найдена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Программа не найдена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/training-programs/{id}/install": {
+            "post": {
+                "tags": [
+                    "Training Programs"
+                ],
+                "summary": "Установка программы тренировок",
+                "description": "Устанавливает программу тренировок для текущего пользователя. Создает упражнения, планы и цикл. Проверяет конфликты названий и разрешает их автоматически.",
+                "operationId": "ea49aa8d648e536470997f9498eedd1a",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID программы",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Программа успешно установлена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Программа успешно установлена"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "install_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "cycle_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "plans_count": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "exercises_count": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка установки",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Программа уже установлена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Программа не найдена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Программа не найдена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/training-programs/{id}/uninstall": {
+            "delete": {
+                "tags": [
+                    "Training Programs"
+                ],
+                "summary": "Отмена установки программы тренировок",
+                "description": "Отменяет установку программы тренировок. Удаляет только элементы, созданные при установке программы, не трогая пользовательские элементы.",
+                "operationId": "d9f777048e9b61fc624560192c3474af",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID установки программы (training_program_installation_id), который можно получить из ответа после установки программы",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Установка программы успешно отменена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Установка программы успешно отменена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка отмены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Установка программы не найдена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/workouts": {
             "get": {
                 "tags": [
@@ -7408,6 +7726,188 @@
                     }
                 },
                 "type": "object"
+            },
+            "TrainingProgramDetailResource": {
+                "description": "Детальная информация о программе тренировок со структурой",
+                "properties": {
+                    "id": {
+                        "description": "Уникальный идентификатор программы",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Название программы",
+                        "type": "string",
+                        "example": "Beginner"
+                    },
+                    "description": {
+                        "description": "Описание программы",
+                        "type": "string",
+                        "example": "Программа тренировок: Beginner",
+                        "nullable": true
+                    },
+                    "author": {
+                        "description": "Автор программы",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Иван Петров"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "duration_weeks": {
+                        "description": "Продолжительность программы в неделях",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "is_active": {
+                        "description": "Активна ли программа",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_installed": {
+                        "description": "Установлена ли программа у текущего пользователя",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "structure": {
+                        "description": "Структура программы: циклы, планы и упражнения",
+                        "properties": {
+                            "cycles": {
+                                "description": "Список циклов программы",
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "name": {
+                                            "description": "Название цикла",
+                                            "type": "string",
+                                            "example": "Базовый цикл для новичков"
+                                        },
+                                        "plans": {
+                                            "description": "Список планов в цикле",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "name": {
+                                                        "description": "Название плана",
+                                                        "type": "string",
+                                                        "example": "День 1: Грудь и трицепс"
+                                                    },
+                                                    "exercises": {
+                                                        "description": "Список упражнений в плане",
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "name": {
+                                                                    "description": "Название упражнения",
+                                                                    "type": "string",
+                                                                    "example": "Жим лежа"
+                                                                },
+                                                                "muscle_group_id": {
+                                                                    "description": "ID группы мышц",
+                                                                    "type": "integer",
+                                                                    "example": 1
+                                                                },
+                                                                "description": {
+                                                                    "description": "Описание упражнения",
+                                                                    "type": "string",
+                                                                    "example": "Базовое упражнение для развития грудных мышц",
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Дата создания",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Дата обновления",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
+            "TrainingProgramResource": {
+                "description": "Ресурс для списка программ тренировок из каталога",
+                "properties": {
+                    "id": {
+                        "description": "Уникальный идентификатор программы",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Название программы",
+                        "type": "string",
+                        "example": "Beginner"
+                    },
+                    "author": {
+                        "description": "Автор программы",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Иван Петров"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "duration_weeks": {
+                        "description": "Продолжительность программы в неделях",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "is_active": {
+                        "description": "Активна ли программа",
+                        "type": "boolean",
+                        "example": true
+                    },
+                    "is_installed": {
+                        "description": "Установлена ли программа у текущего пользователя",
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "created_at": {
+                        "description": "Дата создания",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Дата обновления",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
             }
         },
         "securitySchemes": {
@@ -7455,6 +7955,10 @@
         {
             "name": "Statistics",
             "description": "Статистика пользователя"
+        },
+        {
+            "name": "Training Programs",
+            "description": "Управление программами тренировок"
         },
         {
             "name": "Plan Exercises",
