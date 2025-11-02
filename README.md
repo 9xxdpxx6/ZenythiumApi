@@ -1,61 +1,497 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Zenythium Fitness API
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+[![PHP Version](https://img.shields.io/badge/PHP-8.2%2B-blue.svg)](https://www.php.net/)
+[![Laravel Version](https://img.shields.io/badge/Laravel-12.0-red.svg)](https://laravel.com)
+[![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Tests](https://img.shields.io/badge/Tests-Pest-purple.svg)](https://pestphp.com)
 
-## About Laravel
+RESTful API для управления тренировками, упражнениями, планами тренировок и аналитикой фитнес-данных.
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+## 📋 Содержание
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+- [Возможности](#-возможности)
+- [Технологический стек](#-технологический-стек)
+- [Требования](#-требования)
+- [Установка](#-установка)
+- [Конфигурация](#-конфигурация)
+- [Структура проекта](#-структура-проекта)
+- [API документация](#-api-документация)
+- [Разработка](#-разработка)
+- [Тестирование](#-тестирование)
+- [Архитектура](#-архитектура)
+- [Безопасность](#-безопасность)
+- [Развертывание](#-развертывание)
+- [Contributing](#-contributing)
+- [Лицензия](#-лицензия)
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+## 🚀 Возможности
 
-## Learning Laravel
+### Управление тренировками
+- Создание и отслеживание тренировок
+- Управление подходами (Workout Sets)
+- Фиксация времени начала и окончания тренировок
+- Связь тренировок с планами и упражнениями
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework.
+### Управление упражнениями
+- CRUD операции для упражнений
+- Категоризация по группам мышц
+- Поддержка различных метрик (вес, повторения, время, расстояние)
+- Фильтрация и поиск упражнений
 
-You may also try the [Laravel Bootcamp](https://bootcamp.laravel.com), where you will be guided through building a modern Laravel application from scratch.
+### Управление планами тренировок
+- Создание пользовательских планов
+- Связь упражнений с планами через PlanExercise
+- Дублирование планов
+- Управление циклами тренировок
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+### Программы тренировок
+- Предустановленные программы тренировок
+- Установка программ в аккаунт пользователя
+- Автоматическое создание циклов, планов и упражнений
 
-## Laravel Sponsors
+### Аналитика и статистика
+- Общая статистика тренировок
+- Статистика по упражнениям
+- Аналитика по группам мышц
+- Временная аналитика тренировок
+- Отслеживание личных рекордов
+- Серии тренировок (streaks)
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+### Аутентификация и авторизация
+- Регистрация и вход пользователей
+- JWT токены через Laravel Sanctum
+- Сброс пароля
+- Обновление токенов
+- Выход из всех устройств
 
-### Premium Partners
+## 🛠 Технологический стек
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+### Backend
+- **PHP 8.2+** - Язык программирования
+- **Laravel 12.0** - Web-фреймворк
+- **Laravel Sanctum** - Аутентификация API
+- **MySQL/PostgreSQL** - База данных
 
-## Contributing
+### Инструменты разработки
+- **Pest** - Фреймворк для тестирования
+- **Laravel Pint** - Инструмент форматирования кода
+- **L5-Swagger** - Генерация Swagger/OpenAPI документации
+- **Laravel Sail** - Docker окружение для разработки
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+### Архитектурные паттерны
+- **Service Layer** - Бизнес-логика в сервисах
+- **Repository Pattern** - Абстракция доступа к данным
+- **Filter Pattern** - Фильтрация запросов
+- **Resource Layer** - Форматирование API ответов
 
-## Code of Conduct
+## 📦 Требования
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+- PHP >= 8.2
+- Composer >= 2.0
+- MySQL >= 8.0 или PostgreSQL >= 13
+- Node.js >= 18 (для фронтенд-активов)
+- Git
 
-## Security Vulnerabilities
+## 🔧 Установка
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+### Клонирование репозитория
 
-## License
+```bash
+git clone https://github.com/your-org/zenythium-api.git
+cd zenythium-api
+```
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+### Установка зависимостей
+
+```bash
+composer install
+npm install
+```
+
+### Настройка окружения
+
+```bash
+cp .env.example .env
+php artisan key:generate
+```
+
+Отредактируйте файл `.env` и укажите:
+- `DB_CONNECTION` - тип базы данных (mysql/pgsql)
+- `DB_HOST` - хост базы данных
+- `DB_PORT` - порт базы данных
+- `DB_DATABASE` - имя базы данных
+- `DB_USERNAME` - пользователь базы данных
+- `DB_PASSWORD` - пароль базы данных
+- `APP_URL` - URL приложения
+- `SANCTUM_STATEFUL_DOMAINS` - домены для Sanctum
+
+### Запуск миграций и сидеров
+
+```bash
+php artisan migrate
+php artisan db:seed
+```
+
+### Генерация Swagger документации
+
+```bash
+php artisan l5-swagger:generate
+```
+
+### Запуск приложения
+
+```bash
+# Разработка (сервер, очередь, vite одновременно)
+composer dev
+
+# Или отдельно:
+php artisan serve
+php artisan queue:listen
+npm run dev
+```
+
+API будет доступен по адресу: `http://localhost:8000/api/v1`
+
+## ⚙️ Конфигурация
+
+### Основные конфигурационные файлы
+
+- `config/app.php` - Основные настройки приложения
+- `config/database.php` - Настройки базы данных
+- `config/sanctum.php` - Настройки аутентификации
+- `config/cors.php` - Настройки CORS
+- `config/l5-swagger.php` - Настройки Swagger документации
+
+### Переменные окружения
+
+Ключевые переменные в `.env`:
+
+```env
+APP_NAME=Zenythium
+APP_ENV=local
+APP_DEBUG=true
+APP_URL=http://localhost:8000
+
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=zenythium
+DB_USERNAME=root
+DB_PASSWORD=
+
+SANCTUM_STATEFUL_DOMAINS=localhost:3000,localhost:5173
+SESSION_DRIVER=cookie
+SESSION_DOMAIN=localhost
+```
+
+## 📁 Структура проекта
+
+```
+app/
+├── Enums/                      # Перечисления
+├── Filters/                    # Фильтры для запросов
+│   ├── BaseFilter.php         # Базовый класс фильтра
+│   └── [Model]Filter.php      # Фильтры для моделей
+├── Http/
+│   ├── Controllers/           # Контроллеры API
+│   ├── Middleware/           # Промежуточное ПО
+│   ├── Requests/             # Валидация запросов
+│   └── Resources/            # Форматирование ответов
+├── Models/                    # Eloquent модели
+├── Services/                  # Бизнес-логика
+└── Traits/                    # Трейты
+
+database/
+├── factories/                # Фабрики для тестов
+├── migrations/               # Миграции базы данных
+└── seeders/                  # Наполнители данных
+    └── TrainingPrograms/    # Предустановленные программы
+
+routes/
+└── api.php                   # API маршруты
+
+tests/
+├── Feature/                  # Функциональные тесты
+└── Unit/                     # Юнит-тесты
+```
+
+### Принципы организации кода
+
+- **Контроллеры** - тонкий слой, делегируют логику сервисам
+- **Сервисы** - содержат бизнес-логику, финальные классы
+- **Модели** - финальные классы, только отношения и базовые методы
+- **Фильтры** - стандартизированная фильтрация запросов
+- **Resources** - единообразное форматирование ответов API
+
+## 📚 API документация
+
+Swagger документация доступна по адресу:
+
+```
+http://localhost:8000/api/documentation
+```
+
+### Основные эндпоинты
+
+#### Аутентификация
+- `POST /api/v1/register` - Регистрация пользователя
+- `POST /api/v1/login` - Вход в систему
+- `POST /api/v1/logout` - Выход из системы
+- `POST /api/v1/forgot-password` - Запрос сброса пароля
+- `POST /api/v1/reset-password` - Сброс пароля
+
+#### Пользователь
+- `GET /api/v1/user` - Информация о текущем пользователе
+- `GET /api/v1/user/statistics` - Общая статистика
+- `GET /api/v1/user/exercise-statistics` - Статистика по упражнениям
+- `GET /api/v1/user/time-analytics` - Временная аналитика
+- `GET /api/v1/user/muscle-group-statistics` - Статистика по группам мышц
+- `GET /api/v1/user/records` - Личные рекорды
+
+#### Ресурсы
+- `GET|POST /api/v1/exercises` - Управление упражнениями
+- `GET|POST /api/v1/workouts` - Управление тренировками
+- `GET|POST /api/v1/plans` - Управление планами
+- `GET|POST /api/v1/cycles` - Управление циклами
+- `GET|POST /api/v1/muscle-groups` - Управление группами мышц
+- `GET|POST /api/v1/metrics` - Управление метриками
+- `GET|POST /api/v1/training-programs` - Управление программами тренировок
+
+### Формат запросов
+
+Все защищенные эндпоинты требуют заголовок авторизации:
+
+```
+Authorization: Bearer {token}
+```
+
+### Пагинация
+
+Все списковые эндпоинты поддерживают пагинацию:
+
+```
+GET /api/v1/exercises?page=1&per_page=20
+```
+
+### Фильтрация
+
+Поддерживается расширенная фильтрация через query параметры:
+
+```
+GET /api/v1/exercises?name=присед&muscle_group_id=1
+GET /api/v1/workouts?date_from=2024-01-01&date_to=2024-12-31
+```
+
+## 💻 Разработка
+
+### Стандарты кода
+
+Проект следует стандартам:
+- **PSR-12** - Coding Style Guide
+- **SOLID принципы** - Принципы объектно-ориентированного программирования
+- **Laravel Best Practices** - Рекомендации Laravel
+
+### Форматирование кода
+
+```bash
+# Автоматическое форматирование
+composer pint
+```
+
+### Git workflow
+
+```bash
+# Создание feature ветки
+git checkout -b feature/new-feature
+
+# Коммит изменений
+git add .
+git commit -m "feat: описание изменения"
+
+# Push в репозиторий
+git push origin feature/new-feature
+```
+
+### Conventional Commits
+
+Используется формат Conventional Commits:
+- `feat:` - новая функциональность
+- `fix:` - исправление ошибок
+- `docs:` - изменения в документации
+- `style:` - форматирование кода
+- `refactor:` - рефакторинг
+- `test:` - добавление тестов
+- `chore:` - обновление зависимостей и т.д.
+
+## 🧪 Тестирование
+
+### Запуск тестов
+
+```bash
+# Все тесты
+composer test
+
+# Или через Pest напрямую
+php artisan test
+
+# С покрытием кода
+php artisan test --coverage
+```
+
+### Типы тестов
+
+- **Unit тесты** - тестирование отдельных компонентов (сервисы, фильтры)
+- **Feature тесты** - тестирование API эндпоинтов
+
+### Структура тестов
+
+```
+tests/
+├── Feature/
+│   ├── AuthTest.php
+│   ├── ExerciseControllerTest.php
+│   └── ...
+└── Unit/
+    ├── ExerciseServiceTest.php
+    ├── ExerciseFilterTest.php
+    └── ...
+```
+
+### Пример теста
+
+```php
+test('user can create exercise', function () {
+    $user = User::factory()->create();
+    
+    $response = $this->actingAs($user)
+        ->postJson('/api/v1/exercises', [
+            'name' => 'Приседания',
+            'muscle_group_id' => 1,
+        ]);
+    
+    $response->assertStatus(201)
+        ->assertJsonStructure([
+            'data' => ['id', 'name', 'muscle_group_id']
+        ]);
+});
+```
+
+## 🏗 Архитектура
+
+### Слои приложения
+
+1. **Presentation Layer** (Controllers)
+   - Обработка HTTP запросов
+   - Валидация входных данных
+   - Форматирование ответов
+
+2. **Service Layer** (Services)
+   - Бизнес-логика приложения
+   - Координация между моделями
+   - Обработка транзакций
+
+3. **Data Layer** (Models, Filters)
+   - Доступ к данным
+   - Фильтрация запросов
+   - Определение отношений
+
+### Паттерны проектирования
+
+- **Service Pattern** - Инкапсуляция бизнес-логики
+- **Repository Pattern** - Абстракция доступа к данным
+- **Filter Pattern** - Стандартизация фильтрации
+- **Resource Pattern** - Форматирование API ответов
+- **Factory Pattern** - Создание тестовых данных
+
+### Принципы
+
+- **DRY** (Don't Repeat Yourself)
+- **SOLID** принципы
+- **Separation of Concerns**
+- **Dependency Injection**
+
+## 🔒 Безопасность
+
+### Меры безопасности
+
+- **Laravel Sanctum** - Аутентификация через токены
+- **CORS** - Настройка кросс-доменных запросов
+- **Rate Limiting** - Ограничение частоты запросов (200 запросов/минуту)
+- **Input Validation** - Валидация всех входящих данных
+- **SQL Injection Protection** - Использование Eloquent ORM
+- **XSS Protection** - Экранирование выходных данных
+- **CSRF Protection** - Защита от CSRF атак
+
+### Рекомендации
+
+- Используйте HTTPS в production
+- Регулярно обновляйте зависимости
+- Храните секреты в `.env` файле
+- Не коммитьте `.env` в репозиторий
+- Используйте сильные пароли для базы данных
+
+## 🚢 Развертывание
+
+### Production требования
+
+- PHP >= 8.2 с расширениями:
+  - OpenSSL
+  - PDO
+  - Mbstring
+  - Tokenizer
+  - XML
+  - Ctype
+  - JSON
+  - BCMath
+- Composer
+- MySQL/PostgreSQL
+- Web-сервер (Nginx/Apache)
+
+### Шаги развертывания
+
+1. Клонируйте репозиторий на сервер
+2. Установите зависимости: `composer install --no-dev --optimize-autoloader`
+3. Настройте `.env` файл для production
+4. Сгенерируйте ключ: `php artisan key:generate`
+5. Запустите миграции: `php artisan migrate --force`
+6. Опубликуйте конфигурацию: `php artisan config:cache`
+7. Оптимизируйте маршруты: `php artisan route:cache`
+8. Оптимизируйте представления: `php artisan view:cache`
+9. Настройте веб-сервер для указания на `public/` директорию
+
+### Оптимизация производительности
+
+```bash
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+php artisan event:cache
+composer dump-autoload --optimize --classmap-authoritative
+```
+
+## 🤝 Contributing
+
+Мы приветствуем вклад в проект! Пожалуйста, следуйте этим шагам:
+
+1. Fork проекта
+2. Создайте feature ветку (`git checkout -b feature/AmazingFeature`)
+3. Commit ваши изменения (`git commit -m 'feat: Add some AmazingFeature'`)
+4. Push в ветку (`git push origin feature/AmazingFeature`)
+5. Откройте Pull Request
+
+### Code Review
+
+Все изменения должны пройти code review перед мержем в main ветку.
+
+## 📄 Лицензия
+
+Проект распространяется под лицензией MIT. См. файл `LICENSE` для подробностей.
+
+## 📞 Контакты
+
+- **Email**: support@zenythium.com
+- **Документация API**: `/api/documentation`
+
+---
+
+**Разработано с ❤️ для фитнес-сообщества**
