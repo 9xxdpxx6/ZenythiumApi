@@ -175,7 +175,10 @@ describe('PlanFilter', function () {
 
     describe('standalone filter', function () {
         it('filters standalone plans (without cycle)', function () {
-            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $standalonePlan = Plan::factory()->create([
+                'cycle_id' => null,
+                'user_id' => $this->user->id,
+            ]);
             $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
             
             $filter = new PlanFilter(['standalone' => true, 'user_id' => $this->user->id]);
@@ -191,7 +194,10 @@ describe('PlanFilter', function () {
         });
 
         it('filters standalone plans with string true', function () {
-            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $standalonePlan = Plan::factory()->create([
+                'cycle_id' => null,
+                'user_id' => $this->user->id,
+            ]);
             $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
             
             $filter = new PlanFilter(['standalone' => 'true', 'user_id' => $this->user->id]);
@@ -206,7 +212,10 @@ describe('PlanFilter', function () {
         });
 
         it('filters standalone plans with string 1', function () {
-            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $standalonePlan = Plan::factory()->create([
+                'cycle_id' => null,
+                'user_id' => $this->user->id,
+            ]);
             $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
             
             $filter = new PlanFilter(['standalone' => '1', 'user_id' => $this->user->id]);
@@ -485,6 +494,7 @@ describe('PlanFilter', function () {
         it('applies standalone filter with other filters', function () {
             $standalonePlan = Plan::factory()->create([
                 'cycle_id' => null,
+                'user_id' => $this->user->id,
                 'name' => 'Standalone Test Plan',
                 'order' => 1,
             ]);

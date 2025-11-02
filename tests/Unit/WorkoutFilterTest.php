@@ -17,9 +17,12 @@ dataset('date_range_filters', [
 ]);
 
 beforeEach(function () {
-    $this->user = User::factory()->create();
+    $this->user = User::factory()->create(['name' => 'Default User']);
     $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
-    $this->plan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
+    $this->plan = Plan::factory()->create([
+        'cycle_id' => $this->cycle->id,
+        'name' => 'Default Plan',
+    ]);
     $this->workout = Workout::factory()->create([
         'plan_id' => $this->plan->id,
         'user_id' => $this->user->id,
@@ -48,7 +51,7 @@ describe('WorkoutFilter', function () {
                 'user_id' => $this->user->id,
             ]);
             
-            $filter = new WorkoutFilter(['search' => 'Test']);
+            $filter = new WorkoutFilter(['search' => 'Test', 'user_id' => $this->user->id]);
             $query = Workout::query();
             
             $filter->apply($query);
@@ -73,7 +76,7 @@ describe('WorkoutFilter', function () {
                 'user_id' => $user2->id,
             ]);
             
-            $filter = new WorkoutFilter(['search' => 'Test']);
+            $filter = new WorkoutFilter(['search' => 'Test', 'user_id' => $user1->id]);
             $query = Workout::query();
             
             $filter->apply($query);
@@ -95,7 +98,7 @@ describe('WorkoutFilter', function () {
                 'user_id' => $this->user->id,
             ]);
             
-            $filter = new WorkoutFilter(['search' => 'test']);
+            $filter = new WorkoutFilter(['search' => 'test', 'user_id' => $this->user->id]);
             $query = Workout::query();
             
             $filter->apply($query);
@@ -137,7 +140,7 @@ describe('WorkoutFilter', function () {
                 'user_id' => $this->user->id,
             ]);
             
-            $filter = new WorkoutFilter(['search' => 'Test']);
+            $filter = new WorkoutFilter(['search' => 'Test', 'user_id' => $this->user->id]);
             $query = Workout::query();
             
             $filter->apply($query);

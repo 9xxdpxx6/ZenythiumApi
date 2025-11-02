@@ -43,9 +43,15 @@ return new class extends Migration
 
     /**
      * Добавить CHECK constraint для проверки допустимых значений item_type
+     * SQLite не поддерживает CHECK constraints через ALTER TABLE, поэтому пропускаем для SQLite
      */
     private function addItemTypeCheckConstraint(): void
     {
+        // SQLite не поддерживает ALTER TABLE ADD CONSTRAINT для CHECK constraints
+        if (DB::getDriverName() === 'sqlite') {
+            return;
+        }
+
         $allowedValues = array_map(
             fn(string $value): string => DB::getPdo()->quote($value),
             TrainingProgramInstallationItemType::values()

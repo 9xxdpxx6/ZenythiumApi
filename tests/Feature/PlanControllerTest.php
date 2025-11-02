@@ -122,7 +122,10 @@ describe('PlanController', function () {
         });
 
         it('supports standalone filtering', function () {
-            $standalonePlan = Plan::factory()->create(['cycle_id' => null]);
+            $standalonePlan = Plan::factory()->create([
+                'cycle_id' => null,
+                'user_id' => $this->user->id,
+            ]);
             $cyclePlan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
 
             // Тест фильтрации standalone планов
@@ -639,6 +642,7 @@ describe('PlanController', function () {
             // Создаем план без цикла
             $standalonePlan = Plan::factory()->create([
                 'cycle_id' => null,
+                'user_id' => $this->user->id,
                 'name' => 'Standalone Plan',
             ]);
 

@@ -86,6 +86,8 @@ final class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'created_at' => $user->created_at?->toISOString(),
+                'updated_at' => $user->updated_at?->toISOString(),
             ],
             'token' => $token,
             'token_type' => 'Bearer',
@@ -168,6 +170,8 @@ final class AuthController extends Controller
                 'id' => $user->id,
                 'name' => $user->name,
                 'email' => $user->email,
+                'created_at' => $user->created_at?->toISOString(),
+                'updated_at' => $user->updated_at?->toISOString(),
             ],
             'token' => $token,
             'token_type' => 'Bearer',
@@ -279,6 +283,7 @@ final class AuthController extends Controller
                 'name' => $request->user()->name,
                 'email' => $request->user()->email,
                 'created_at' => $request->user()->created_at?->toISOString(),
+                'updated_at' => $request->user()->updated_at?->toISOString(),
             ],
             'message' => 'Данные пользователя успешно получены'
         ]);

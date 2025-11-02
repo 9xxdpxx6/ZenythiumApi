@@ -24,9 +24,35 @@ final class WorkoutFilter extends BaseFilter
     {
         if ($this->hasFilter('search')) {
             $searchTerm = $this->getFilter('search');
-            $query->where(function ($q) use ($searchTerm): void {
-                $this->applySmartSearchInRelation($q, 'plan', ['name'], $searchTerm);
-                $this->applySmartSearchInRelationOr($q, 'user', ['name'], $searchTerm);
+            $words = array_filter(
+                array_map('trim', explode(' ', $searchTerm)),
+                fn(string $word): bool => mb_strlen($word) >= 2
+            );
+            
+            if (empty($words)) {
+                return;
+            }
+            
+            $query->where(function ($q) use ($words): void {
+                // Поиск по имени плана
+                $q->whereHas('plan', function ($relationQuery) use ($words): void {
+                    $relationQuery->where(function ($fieldQuery) use ($words): void {
+                        foreach ($words as $word) {
+                            $escapedWord = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word);
+                            $fieldQuery->where('name', 'like', '%' . $escapedWord . '%');
+                        }
+                    });
+                });
+                
+                // ИЛИ поиск по имени пользователя
+                $q->orWhereHas('user', function ($relationQuery) use ($words): void {
+                    $relationQuery->where(function ($fieldQuery) use ($words): void {
+                        foreach ($words as $word) {
+                            $escapedWord = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word);
+                            $fieldQuery->where('name', 'like', '%' . $escapedWord . '%');
+                        }
+                    });
+                });
             });
         }
     }

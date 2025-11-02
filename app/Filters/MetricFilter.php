@@ -25,7 +25,20 @@ final class MetricFilter extends BaseFilter
             $searchTerm = $this->getFilter('search');
             $query->where(function ($q) use ($searchTerm): void {
                 $this->applySmartSearch($q, ['note'], $searchTerm);
-                $this->applySmartSearchInRelationOr($q, 'user', ['name'], $searchTerm);
+                $q->orWhereHas('user', function ($relationQuery) use ($searchTerm): void {
+                    $words = array_filter(
+                        array_map('trim', explode(' ', $searchTerm)),
+                        fn(string $word): bool => mb_strlen($word) >= 2
+                    );
+                    if (!empty($words)) {
+                        $relationQuery->where(function ($fieldQuery) use ($words): void {
+                            foreach ($words as $word) {
+                                $escapedWord = str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $word);
+                                $fieldQuery->where('name', 'like', '%' . $escapedWord . '%');
+                            }
+                        });
+                    }
+                });
             });
         }
     }

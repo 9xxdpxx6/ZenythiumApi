@@ -7,6 +7,7 @@ use App\Models\Plan;
 use App\Models\User;
 use App\Models\Workout;
 use App\Services\WorkoutService;
+use App\Services\CycleService;
 
 dataset('exception_scenarios', [
     'non_existent' => [PHP_INT_MAX, 'non-existent workout'],
@@ -21,7 +22,8 @@ beforeEach(function () {
         'plan_id' => $this->plan->id,
         'user_id' => $this->user->id,
     ]);
-    $this->workoutService = new WorkoutService();
+    $this->cycleService = new CycleService();
+    $this->workoutService = new WorkoutService($this->cycleService);
 });
 
 describe('WorkoutService', function () {
@@ -315,7 +317,8 @@ describe('WorkoutService', function () {
         beforeEach(function () {
             // Для тестов determineNextPlan создаем только пользователя без циклов
             $this->user = User::factory()->create();
-            $this->workoutService = new WorkoutService();
+            $this->cycleService = new CycleService();
+            $this->workoutService = new WorkoutService($this->cycleService);
         });
 
         it('returns first plan when no workouts completed', function () {

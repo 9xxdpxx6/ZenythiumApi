@@ -6,6 +6,10 @@ namespace Database\Seeders;
 
 use App\Models\TrainingProgram;
 use Database\Seeders\TrainingPrograms\BeginnerProgram;
+use Database\Seeders\TrainingPrograms\IntermediateProgram;
+use Database\Seeders\TrainingPrograms\AdvancedProgram;
+use Database\Seeders\TrainingPrograms\StrengthProgram;
+use Database\Seeders\TrainingPrograms\HypertrophyEnduranceProgram;
 use Database\Seeders\TrainingPrograms\TrainingProgramDataInterface;
 use Illuminate\Database\Seeder;
 
@@ -18,6 +22,10 @@ final class TrainingProgramSeeder extends Seeder
      */
     private const PROGRAM_CLASSES = [
         BeginnerProgram::class,
+        IntermediateProgram::class,
+        AdvancedProgram::class,
+        StrengthProgram::class,
+        HypertrophyEnduranceProgram::class,
     ];
 
     /**

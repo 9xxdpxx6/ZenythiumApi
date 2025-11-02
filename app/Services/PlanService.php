@@ -66,7 +66,14 @@ final class PlanService
         $query = Plan::query()->with(['cycle', 'planExercises.exercise.muscleGroup']);
 
         if ($userId) {
-            $query->where('user_id', $userId);
+            $query->where(function ($q) use ($userId): void {
+                // Планы с прямым user_id (standalone планы)
+                $q->where('user_id', $userId)
+                  // ИЛИ планы через цикл
+                  ->orWhereHas('cycle', function ($cycleQuery) use ($userId): void {
+                      $cycleQuery->where('user_id', $userId);
+                  });
+            });
         }
 
         return $query->find($id);
@@ -123,7 +130,14 @@ final class PlanService
         $query = Plan::query();
 
         if ($userId) {
-            $query->where('user_id', $userId);
+            $query->where(function ($q) use ($userId): void {
+                // Планы с прямым user_id (standalone планы)
+                $q->where('user_id', $userId)
+                  // ИЛИ планы через цикл
+                  ->orWhereHas('cycle', function ($cycleQuery) use ($userId): void {
+                      $cycleQuery->where('user_id', $userId);
+                  });
+            });
         }
 
         $plan = $query->find($id);
@@ -157,7 +171,14 @@ final class PlanService
         $query = Plan::query();
 
         if ($userId) {
-            $query->where('user_id', $userId);
+            $query->where(function ($q) use ($userId): void {
+                // Планы с прямым user_id (standalone планы)
+                $q->where('user_id', $userId)
+                  // ИЛИ планы через цикл
+                  ->orWhereHas('cycle', function ($cycleQuery) use ($userId): void {
+                      $cycleQuery->where('user_id', $userId);
+                  });
+            });
         }
 
         $plan = $query->find($id);
@@ -243,7 +264,8 @@ final class PlanService
             if ($exercise) {
                 // Для планов с циклом проверяем принадлежность пользователю
                 if ($plan->cycle_id !== null) {
-                    if ($exercise->user_id === $plan->user_id) {
+                    $planUserId = $plan->user_id ?? $plan->cycle?->user_id;
+                    if ($exercise->user_id === $planUserId) {
                         \App\Models\PlanExercise::create([
                             'plan_id' => $plan->id,
                             'exercise_id' => $exerciseId,
@@ -286,7 +308,8 @@ final class PlanService
             if ($exercise) {
                 // Для планов с циклом проверяем принадлежность пользователю
                 if ($plan->cycle_id !== null) {
-                    if ($exercise->user_id === $plan->user_id) {
+                    $planUserId = $plan->user_id ?? $plan->cycle?->user_id;
+                    if ($exercise->user_id === $planUserId) {
                         \App\Models\PlanExercise::create([
                             'plan_id' => $plan->id,
                             'exercise_id' => $exerciseId,
