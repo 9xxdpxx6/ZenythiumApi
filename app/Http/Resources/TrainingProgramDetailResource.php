@@ -24,6 +24,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     @OA\Property(property="duration_weeks", type="integer", example=5, description="Продолжительность программы в неделях"),
  *     @OA\Property(property="is_active", type="boolean", example=true, description="Активна ли программа"),
  *     @OA\Property(property="is_installed", type="boolean", example=false, description="Установлена ли программа у текущего пользователя"),
+ *     @OA\Property(property="installations_count", type="integer", example=5, description="Общее количество установок программы"),
  *     @OA\Property(property="structure", type="object", nullable=true, description="Структура программы: циклы, планы и упражнения",
  *         @OA\Property(property="cycles", type="array", @OA\Items(type="object",
  *             @OA\Property(property="name", type="string", example="Базовый цикл для новичков", description="Название цикла"),
@@ -72,6 +73,11 @@ final class TrainingProgramDetailResource extends JsonResource
             'duration_weeks' => $this->duration_weeks,
             'is_active' => $this->is_active,
             'is_installed' => $isInstalled,
+            'installations_count' => $this->installs_count ?? $this->whenLoaded('installs', function () {
+                return $this->installs->count();
+            }, function () {
+                return $this->installs()->count();
+            }),
             'structure' => $programData ?? null,
             'created_at' => $this->created_at?->toISOString(),
             'updated_at' => $this->updated_at?->toISOString(),

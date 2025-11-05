@@ -39,6 +39,43 @@ describe('Authentication', function () {
                 'email' => 'test@example.com',
             ]);
         });
+
+        it('prevents registration with duplicate email', function () {
+            // Создаем существующего пользователя
+            User::factory()->create([
+                'email' => 'existing@example.com',
+            ]);
+
+            // Пытаемся зарегистрироваться с тем же email
+            $userData = [
+                'name' => 'Duplicate User',
+                'email' => 'existing@example.com',
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
+            ];
+
+            $response = $this->postJson('/api/v1/register', $userData);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['email'])
+                ->assertJson([
+                    'message' => 'Ошибка валидации',
+                ]);
+
+            // Проверяем, что второй пользователь не создан
+            $this->assertDatabaseCount('users', 1);
+            
+            // Проверяем точный формат ответа для мобильного приложения
+            $responseData = $response->json();
+            expect($responseData)->toHaveKey('message');
+            expect($responseData)->toHaveKey('errors');
+            expect($responseData['errors'])->toHaveKey('email');
+            expect($responseData['errors']['email'])->toBeArray();
+            expect($responseData['errors']['email'][0])->toBeString();
+            
+            // Проверяем, что сообщение на русском языке
+            expect($responseData['errors']['email'][0])->toBe('Пользователь с таким email уже зарегистрирован.');
+        });
     });
 
     describe('Login', function () {

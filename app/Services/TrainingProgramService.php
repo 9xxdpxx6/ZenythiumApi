@@ -14,9 +14,12 @@ use App\Models\TrainingProgramInstallation;
 use App\Models\TrainingProgramInstallationItem;
 use App\Filters\TrainingProgramFilter;
 use App\Traits\HasPagination;
+use Database\Seeders\TrainingPrograms\TrainingProgramDataInterface;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
 final class TrainingProgramService
@@ -37,7 +40,9 @@ final class TrainingProgramService
     public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new TrainingProgramFilter($filters);
-        $query = TrainingProgram::query()->with('author');
+        $query = TrainingProgram::query()
+            ->with('author')
+            ->withCount('installs');
         
         $filter->apply($query);
 
@@ -55,6 +60,7 @@ final class TrainingProgramService
     {
         return TrainingProgram::query()
             ->with('author')
+            ->withCount('installs')
             ->find($id);
     }
 
@@ -411,45 +417,89 @@ final class TrainingProgramService
             return null;
         }
 
-        // Получаем список всех классов программ из сидера
-        $programClasses = $this->getAvailableProgramClasses();
+        // Кэшируем структуру программы по ID и названию (инвалидируется при изменении программы)
+        $cacheKey = "training_program_data_{$programId}_{$program->name}";
+        
+        return Cache::remember($cacheKey, 3600, function () use ($program) {
+            // Получаем список всех классов программ из сидера
+            $programClasses = $this->getAvailableProgramClasses();
 
-        // Ищем класс программы по названию
-        foreach ($programClasses as $programClass) {
-            if (!class_exists($programClass)) {
-                continue;
+            // Ищем класс программы по названию
+            foreach ($programClasses as $programClass) {
+                if (!class_exists($programClass)) {
+                    continue;
+                }
+
+                $programInstance = new $programClass();
+
+                if (!($programInstance instanceof \Database\Seeders\TrainingPrograms\TrainingProgramDataInterface)) {
+                    continue;
+                }
+
+                // Проверяем, соответствует ли название программы
+                $className = class_basename($programClass);
+                $programNameFromClass = $this->extractProgramName($className);
+                
+                // Сравниваем названия (можно улучшить сравнение)
+                if ($this->namesMatch($program->name, $programNameFromClass)) {
+                    return $programInstance->getData();
+                }
             }
 
-            $programInstance = new $programClass();
-
-            if (!($programInstance instanceof \Database\Seeders\TrainingPrograms\TrainingProgramDataInterface)) {
-                continue;
-            }
-
-            // Проверяем, соответствует ли название программы
-            $className = class_basename($programClass);
-            $programNameFromClass = $this->extractProgramName($className);
-            
-            // Сравниваем названия (можно улучшить сравнение)
-            if ($this->namesMatch($program->name, $programNameFromClass)) {
-                return $programInstance->getData();
-            }
-        }
-
-        return null;
+            return null;
+        });
     }
 
     /**
      * Получить список доступных классов программ
      * 
+     * Автоматически находит все классы в директории TrainingPrograms,
+     * которые реализуют TrainingProgramDataInterface
+     * 
+     * Кэшируется, так как список классов программ не меняется часто
+     * 
      * @return array Массив имен классов
      */
     private function getAvailableProgramClasses(): array
     {
-        // Используем те же классы, что и в TrainingProgramSeeder
-        return [
-            \Database\Seeders\TrainingPrograms\BeginnerProgram::class,
-        ];
+        return Cache::remember('training_program_classes', 3600, function () {
+            $programClasses = [];
+            $programsPath = database_path('seeders/TrainingPrograms');
+            
+            if (!File::exists($programsPath)) {
+                return [];
+            }
+            
+            $files = File::files($programsPath);
+            
+            foreach ($files as $file) {
+                $filename = $file->getFilenameWithoutExtension();
+                
+                // Пропускаем интерфейс
+                if ($filename === 'TrainingProgramDataInterface') {
+                    continue;
+                }
+                
+                $className = "Database\\Seeders\\TrainingPrograms\\{$filename}";
+                
+                if (!class_exists($className)) {
+                    continue;
+                }
+                
+                $reflection = new \ReflectionClass($className);
+                
+                // Проверяем, что класс реализует интерфейс и не является абстрактным
+                if (
+                    $reflection->implementsInterface(TrainingProgramDataInterface::class) &&
+                    !$reflection->isAbstract() &&
+                    !$reflection->isInterface()
+                ) {
+                    $programClasses[] = $className;
+                }
+            }
+            
+            return $programClasses;
+        });
     }
 
     /**

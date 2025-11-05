@@ -6,6 +6,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Resources\TrainingProgramResource;
 use App\Http\Resources\TrainingProgramDetailResource;
+use App\Models\TrainingProgramInstallation;
 use App\Services\TrainingProgramService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -87,6 +88,17 @@ final class TrainingProgramController extends Controller
         $filters = $request->query();
         
         $programs = $this->trainingProgramService->getAll($filters);
+        
+        // Предзагружаем установки пользователя одним запросом для оптимизации
+        $userInstallations = [];
+        if ($request->user()) {
+            $userInstallations = TrainingProgramInstallation::where('user_id', $request->user()->id)
+                ->pluck('training_program_id')
+                ->toArray();
+        }
+        
+        // Передаем установки в request для использования в Resource
+        $request->merge(['_user_installations' => $userInstallations]);
         
         return response()->json([
             'data' => TrainingProgramResource::collection($programs->items()),

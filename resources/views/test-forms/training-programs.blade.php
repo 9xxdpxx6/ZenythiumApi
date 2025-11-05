@@ -250,6 +250,9 @@
                                             <th>Название</th>
                                             <th>Автор</th>
                                             <th>Длительность (недели)</th>
+                                            <th>Циклы</th>
+                                            <th>Планы</th>
+                                            <th>Упражнения</th>
                                             <th>Статус</th>
                                             <th>Установлена</th>
                                             <th>Создано</th>
@@ -263,6 +266,9 @@
                                                 <td><strong>${item.name}</strong></td>
                                                 <td>${item.author ? item.author.name : '<span class="text-muted">Не указан</span>'}</td>
                                                 <td>${item.duration_weeks || '-'}</td>
+                                                <td><span class="badge bg-info">${item.cycles_count || 0}</span></td>
+                                                <td><span class="badge bg-primary">${item.plans_count || 0}</span></td>
+                                                <td><span class="badge bg-success">${item.exercises_count || 0}</span></td>
                                                 <td><span class="badge ${item.is_active ? 'bg-success' : 'bg-secondary'}">${item.is_active ? 'Активна' : 'Неактивна'}</span></td>
                                                 <td>
                                                     ${item.is_installed 
@@ -385,6 +391,9 @@
                                         <p><strong>Установлена:</strong> ${program.is_installed ? '<span class="badge bg-primary">Да</span>' : '<span class="badge bg-secondary">Нет</span>'}</p>
                                     </div>
                                     <div class="col-md-6">
+                                        <p><strong>Циклов:</strong> <span class="badge bg-info">${program.cycles_count || 0}</span></p>
+                                        <p><strong>Планов:</strong> <span class="badge bg-primary">${program.plans_count || 0}</span></p>
+                                        <p><strong>Упражнений:</strong> <span class="badge bg-success">${program.exercises_count || 0}</span></p>
                                         <p><strong>Создано:</strong> ${new Date(program.created_at).toLocaleString('ru-RU')}</p>
                                         <p><strong>Обновлено:</strong> ${new Date(program.updated_at).toLocaleString('ru-RU')}</p>
                                     </div>

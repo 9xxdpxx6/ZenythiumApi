@@ -167,6 +167,28 @@ describe('TrainingProgram Model', function () {
             expect($installations)->toHaveCount(1);
             expect($installations->first()->user_id)->toBe($user1->id);
         });
+
+        it('can count installations with withCount', function () {
+            $program = TrainingProgram::factory()->create();
+            
+            TrainingProgramInstallation::factory()->count(3)->create([
+                'training_program_id' => $program->id,
+            ]);
+            
+            $programWithCount = TrainingProgram::withCount('installs')
+                ->find($program->id);
+            
+            expect($programWithCount->installs_count)->toBe(3);
+        });
+
+        it('returns 0 for installations_count when no installations', function () {
+            $program = TrainingProgram::factory()->create();
+            
+            $programWithCount = TrainingProgram::withCount('installs')
+                ->find($program->id);
+            
+            expect($programWithCount->installs_count)->toBe(0);
+        });
     });
 
     describe('scopes and queries', function () {

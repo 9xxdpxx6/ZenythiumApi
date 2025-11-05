@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Http\Requests\RegisterRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,27 +52,16 @@ final class AuthController extends Controller
      *         @OA\JsonContent(
      *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
      *             @OA\Property(property="errors", type="object",
-     *                 @OA\Property(property="email", type="array", @OA\Items(type="string"), example={"Поле email уже занято"})
+     *                 @OA\Property(property="email", type="array", @OA\Items(type="string"), example={"Пользователь с таким email уже зарегистрирован."}),
+     *                 @OA\Property(property="name", type="array", @OA\Items(type="string"), example={"Имя пользователя обязательно."}),
+     *                 @OA\Property(property="password", type="array", @OA\Items(type="string"), example={"Пароль должен содержать минимум 8 символов."})
      *             )
      *         )
      *     )
      * )
      */
-    public function register(Request $request): JsonResponse
+    public function register(RegisterRequest $request): JsonResponse
     {
-        $validator = Validator::make($request->all(), [
-            'name' => 'required|string|max:255',
-            'email' => 'required|string|email|max:255|unique:users',
-            'password' => 'required|string|min:8|confirmed',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json([
-                'message' => 'Ошибка валидации',
-                'errors' => $validator->errors(),
-            ], 422);
-        }
-
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,

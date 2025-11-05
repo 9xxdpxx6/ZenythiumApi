@@ -124,7 +124,25 @@
                                                         "type": "string"
                                                     },
                                                     "example": [
-                                                        "Поле email уже занято"
+                                                        "Пользователь с таким email уже зарегистрирован."
+                                                    ]
+                                                },
+                                                "name": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Имя пользователя обязательно."
+                                                    ]
+                                                },
+                                                "password": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    },
+                                                    "example": [
+                                                        "Пароль должен содержать минимум 8 символов."
                                                     ]
                                                 }
                                             },
@@ -7893,6 +7911,21 @@
                         "description": "Установлена ли программа у текущего пользователя",
                         "type": "boolean",
                         "example": false
+                    },
+                    "cycles_count": {
+                        "description": "Количество циклов в программе",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "plans_count": {
+                        "description": "Количество планов в программе",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "exercises_count": {
+                        "description": "Количество упражнений в программе",
+                        "type": "integer",
+                        "example": 15
                     },
                     "created_at": {
                         "description": "Дата создания",
