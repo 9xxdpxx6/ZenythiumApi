@@ -95,24 +95,35 @@ final class WorkoutSetRequest extends FormRequest
     public function withValidator($validator): void
     {
         $validator->after(function ($validator) {
-            // Проверяем, что workout принадлежит пользователю
-            if ($this->has('workout_id') && $this->has('user_id')) {
-                $workout = \App\Models\Workout::where('id', $this->workout_id)
-                    ->where('user_id', $this->user_id)
+            // Оптимизированная проверка: объединяем все проверки в один запрос с JOIN
+            if ($this->has('workout_id') && $this->has('user_id') && $this->has('plan_exercise_id')) {
+                $workout = \App\Models\Workout::where('workouts.id', $this->workout_id)
+                    ->where('workouts.user_id', $this->user_id)
+                    ->join('plan_exercises', 'plan_exercises.plan_id', '=', 'workouts.plan_id')
+                    ->where('plan_exercises.id', $this->plan_exercise_id)
+                    ->select('workouts.id', 'workouts.plan_id', 'plan_exercises.plan_id as plan_exercise_plan_id')
                     ->first();
                 
                 if (!$workout) {
-                    $validator->errors()->add('workout_id', 'Тренировка не принадлежит текущему пользователю.');
+                    // Проверяем отдельно, чтобы понять, какая именно проверка не прошла
+                    $workoutExists = \App\Models\Workout::where('id', $this->workout_id)
+                        ->where('user_id', $this->user_id)
+                        ->exists();
+                    
+                    if (!$workoutExists) {
+                        $validator->errors()->add('workout_id', 'Тренировка не принадлежит текущему пользователю.');
+                    } else {
+                        $validator->errors()->add('plan_exercise_id', 'Упражнение должно принадлежать тому же плану, что и тренировка.');
+                    }
                 }
-            }
-
-            // Проверяем, что plan_exercise принадлежит тому же плану, что и workout
-            if ($this->has('workout_id') && $this->has('plan_exercise_id')) {
-                $workout = \App\Models\Workout::find($this->workout_id);
-                $planExercise = \App\Models\PlanExercise::find($this->plan_exercise_id);
+            } elseif ($this->has('workout_id') && $this->has('user_id')) {
+                // Только проверка принадлежности workout пользователю
+                $workoutExists = \App\Models\Workout::where('id', $this->workout_id)
+                    ->where('user_id', $this->user_id)
+                    ->exists();
                 
-                if ($workout && $planExercise && $workout->plan_id !== $planExercise->plan_id) {
-                    $validator->errors()->add('plan_exercise_id', 'Упражнение должно принадлежать тому же плану, что и тренировка.');
+                if (!$workoutExists) {
+                    $validator->errors()->add('workout_id', 'Тренировка не принадлежит текущему пользователю.');
                 }
             }
         });

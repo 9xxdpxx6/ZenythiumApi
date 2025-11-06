@@ -254,8 +254,9 @@ final class WorkoutSetController extends Controller
         
         $workoutSet = $this->workoutSetService->create($data);
         
+        // Оптимизация: загружаем только нужные связи (убрали plan.cycle, т.к. он не используется в Resource)
         return response()->json([
-            'data' => new WorkoutSetResource($workoutSet->load(['workout.plan.cycle', 'workout.user', 'planExercise.exercise'])),
+            'data' => new WorkoutSetResource($workoutSet->load(['workout.plan', 'workout.user', 'planExercise.exercise'])),
             'message' => 'Подход успешно создан'
         ], 201);
     }

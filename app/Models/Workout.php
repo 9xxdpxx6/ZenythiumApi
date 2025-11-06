@@ -103,23 +103,45 @@ final class Workout extends Model
      * Получить количество упражнений в тренировке
      * 
      * Подсчитывает уникальные упражнения по plan_exercise_id.
+     * Оптимизировано: использует кэширование для избежания повторных запросов.
      * 
      * @return int Количество различных упражнений
      */
     public function getExerciseCountAttribute(): int
     {
-        return $this->workoutSets()->distinct('plan_exercise_id')->count();
+        // Используем кэширование через relationship, если уже загружена
+        if ($this->relationLoaded('workoutSets')) {
+            return $this->workoutSets->pluck('plan_exercise_id')->unique()->count();
+        }
+        
+        // Оптимизированный запрос: используем COUNT(DISTINCT) через selectRaw
+        $result = DB::table('workout_sets')
+            ->where('workout_id', $this->id)
+            ->selectRaw('COUNT(DISTINCT plan_exercise_id) as count')
+            ->value('count');
+        
+        return (int) ($result ?? 0);
     }
 
     /**
      * Получить общий объем тренировки
      * 
      * Вычисляет сумму произведений веса на количество повторений для всех подходов.
+     * Оптимизировано: использует кэширование для избежания повторных запросов.
      * 
      * @return float Общий объем (вес × повторения)
      */
     public function getTotalVolumeAttribute(): float
     {
+        // Используем кэширование через relationship, если уже загружена
+        if ($this->relationLoaded('workoutSets')) {
+            return (float) $this->workoutSets
+                ->whereNotNull('weight')
+                ->whereNotNull('reps')
+                ->sum(fn($set) => (float) $set->weight * (int) $set->reps);
+        }
+        
+        // Оптимизированный запрос: вычисляем в БД
         return (float) $this->workoutSets()
             ->whereNotNull('weight')
             ->whereNotNull('reps')
