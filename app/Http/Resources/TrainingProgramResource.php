@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Cache;
  *     @OA\Property(property="duration_weeks", type="integer", example=5, description="Продолжительность программы в неделях"),
  *     @OA\Property(property="is_active", type="boolean", example=true, description="Активна ли программа"),
  *     @OA\Property(property="is_installed", type="boolean", example=false, description="Установлена ли программа у текущего пользователя"),
+ *     @OA\Property(property="install_id", type="integer", nullable=true, example=1, description="ID установки программы для текущего пользователя (если установлена)"),
  *     @OA\Property(property="installations_count", type="integer", example=5, description="Общее количество установок программы"),
  *     @OA\Property(property="cycles_count", type="integer", example=1, description="Количество циклов в программе"),
  *     @OA\Property(property="plans_count", type="integer", example=3, description="Количество планов в программе"),
@@ -41,20 +42,30 @@ final class TrainingProgramResource extends JsonResource
     {
         $userId = $request->user()?->id;
         $isInstalled = false;
+        $installId = null;
 
         if ($userId) {
             // Используем предзагруженные установки пользователя из коллекции, если доступны
             // Это предотвращает N+1 запросы
+            // Формат: [program_id => install_id]
             $userInstallations = $request->input('_user_installations', []);
             
             if (empty($userInstallations)) {
                 // Если установки не предзагружены, делаем один запрос (для случая детального просмотра)
-                $isInstalled = TrainingProgramInstallation::where('user_id', $userId)
+                $installation = TrainingProgramInstallation::where('user_id', $userId)
                     ->where('training_program_id', $this->id)
-                    ->exists();
+                    ->first();
+                
+                if ($installation) {
+                    $isInstalled = true;
+                    $installId = $installation->id;
+                }
             } else {
                 // Проверяем в памяти по предзагруженным данным
-                $isInstalled = in_array($this->id, $userInstallations, true);
+                if (isset($userInstallations[$this->id])) {
+                    $isInstalled = true;
+                    $installId = $userInstallations[$this->id];
+                }
             }
         }
 
@@ -98,6 +109,7 @@ final class TrainingProgramResource extends JsonResource
             'duration_weeks' => $this->duration_weeks,
             'is_active' => $this->is_active,
             'is_installed' => $isInstalled,
+            'install_id' => $installId,
             'installations_count' => $this->installs_count ?? $this->whenLoaded('installs', function () {
                 return $this->installs->count();
             }, function () {

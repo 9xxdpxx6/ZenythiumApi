@@ -90,10 +90,11 @@ final class TrainingProgramController extends Controller
         $programs = $this->trainingProgramService->getAll($filters);
         
         // Предзагружаем установки пользователя одним запросом для оптимизации
+        // Формат: [program_id => install_id]
         $userInstallations = [];
         if ($request->user()) {
             $userInstallations = TrainingProgramInstallation::where('user_id', $request->user()->id)
-                ->pluck('training_program_id')
+                ->pluck('id', 'training_program_id')
                 ->toArray();
         }
         

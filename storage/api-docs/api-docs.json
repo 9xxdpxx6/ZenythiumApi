@@ -7794,6 +7794,17 @@
                         "type": "boolean",
                         "example": false
                     },
+                    "install_id": {
+                        "description": "ID установки программы для текущего пользователя (если установлена)",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "installations_count": {
+                        "description": "Общее количество установок программы",
+                        "type": "integer",
+                        "example": 5
+                    },
                     "structure": {
                         "description": "Структура программы: циклы, планы и упражнения",
                         "properties": {
@@ -7911,6 +7922,17 @@
                         "description": "Установлена ли программа у текущего пользователя",
                         "type": "boolean",
                         "example": false
+                    },
+                    "install_id": {
+                        "description": "ID установки программы для текущего пользователя (если установлена)",
+                        "type": "integer",
+                        "example": 1,
+                        "nullable": true
+                    },
+                    "installations_count": {
+                        "description": "Общее количество установок программы",
+                        "type": "integer",
+                        "example": 5
                     },
                     "cycles_count": {
                         "description": "Количество циклов в программе",

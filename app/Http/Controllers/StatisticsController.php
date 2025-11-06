@@ -147,7 +147,10 @@ final class StatisticsController extends Controller
             $weeks[$week] = ($weeks[$week] ?? 0) + 1;
         }
 
-        $avgWorkoutsPerWeek = count($weeks) > 0 ? array_sum($weeks) / count($weeks) : 0;
+        // Делим на 4 недели, а не на количество недель с тренировками
+        // Это дает правильное среднее количество тренировок в неделю за последние 4 недели
+        $totalWorkouts = array_sum($weeks);
+        $avgWorkoutsPerWeek = $totalWorkouts / 4;
         return round($avgWorkoutsPerWeek, 1);
     }
 
@@ -224,8 +227,22 @@ final class StatisticsController extends Controller
 
         $currentStreak = 0;
         $maxStreak = 0;
+        $previousWeekDate = null;
 
         foreach ($weeklyWorkouts as $weekKey => $weekWorkouts) {
+            // Получаем дату начала текущей недели из первой тренировки
+            $currentWeekDate = \Carbon\Carbon::parse($weekWorkouts[0]->finished_at)->startOfWeek();
+            
+            // Проверяем, что недели идут подряд без пропусков
+            if ($previousWeekDate !== null) {
+                $weeksDiff = $previousWeekDate->diffInWeeks($currentWeekDate);
+                
+                // Если между неделями есть пропуск (больше 1 недели), сбрасываем streak
+                if ($weeksDiff > 1) {
+                    $currentStreak = 0;
+                }
+            }
+
             // Получаем уникальные планы, выполненные на этой неделе
             $completedPlans = collect($weekWorkouts)
                 ->pluck('plan_id')
@@ -244,6 +261,8 @@ final class StatisticsController extends Controller
                 // Пропуск - сбрасываем streak
                 $currentStreak = 0;
             }
+
+            $previousWeekDate = $currentWeekDate;
         }
 
         return $maxStreak;
