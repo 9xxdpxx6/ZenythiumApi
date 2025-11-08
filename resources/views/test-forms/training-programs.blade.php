@@ -178,7 +178,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const API_BASE = 'http://localhost:8000/api/v1';
+        // Автоматически определяем API адрес из текущего URL
+        const API_BASE = `${window.location.protocol}//${window.location.host}/api/v1`;
         
         // Load data on page load
         document.addEventListener('DOMContentLoaded', function() {
@@ -226,12 +227,25 @@
                     headers: getAuthHeaders()
                 });
 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
+                    const listContainer = document.getElementById('listContainer');
+                    listContainer.innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Ошибка загрузки:</strong> ${errorData.message || errorData.detail || 'Не удалось загрузить список программ'}
+                            ${errorData.detail ? `<br><small>${errorData.detail}</small>` : ''}
+                        </div>
+                    `;
+                    showResponse(errorData, true);
+                    console.error('API Error:', errorData);
+                    return;
+                }
+
                 const data = await response.json();
                 
                 console.log('API Response:', data); // Debug
                 
-                if (response.ok) {
-                    if (data.data && Array.isArray(data.data) && data.data.length > 0) {
+                if (data.data && Array.isArray(data.data) && data.data.length > 0) {
                         const paginationInfo = data.meta ? `
                             <div class="mb-3">
                                 <small class="text-muted">
@@ -295,18 +309,18 @@
                             </div>
                         `;
                     } else {
-                        listContainer.innerHTML = '<div class="text-center text-muted">Нет данных</div>';
+                        listContainer.innerHTML = '<div class="text-center text-muted">Нет данных для отображения</div>';
                         console.log('No data in response:', data); // Debug
                     }
-                } else {
-                    listContainer.innerHTML = `<div class="alert alert-danger">Ошибка загрузки: ${data.message || 'Неизвестная ошибка'}</div>`;
-                    showResponse(data, true);
-                    console.error('API Error:', data); // Debug
-                }
             } catch (error) {
                 const listContainer = document.getElementById('listContainer');
-                listContainer.innerHTML = `<div class="alert alert-danger">Ошибка: ${error.message}</div>`;
-                showResponse({error: error.message}, true);
+                listContainer.innerHTML = `
+                    <div class="alert alert-danger">
+                        <strong>Ошибка сети:</strong> ${error.message}
+                        <br><small>Проверьте, что сервер запущен и доступен по адресу ${API_BASE}</small>
+                    </div>
+                `;
+                showResponse({error: error.message, type: 'network_error'}, true);
                 console.error('Fetch Error:', error); // Debug
             }
         }
@@ -343,37 +357,53 @@
                     headers: getAuthHeaders()
                 });
 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
+                    showResponse(errorData, true);
+                    document.getElementById('showResult').innerHTML = `
+                        <div class="alert alert-danger">
+                            <strong>Ошибка:</strong> ${errorData.message || errorData.detail || 'Не удалось загрузить программу'}
+                            ${errorData.detail ? `<br><small>${errorData.detail}</small>` : ''}
+                        </div>
+                    `;
+                    return;
+                }
+
                 const data = await response.json();
-                showResponse(data, !response.ok);
+                showResponse(data, false);
                 
-                if (response.ok && data.data) {
+                if (data.data) {
                     const program = data.data;
                     const showResult = document.getElementById('showResult');
                     
                     let structureHtml = '';
-                    if (program.structure && program.structure.cycles) {
-                        structureHtml = program.structure.cycles.map(cycle => `
+                    // Структура может быть напрямую в program.structure или program.structure.cycles
+                    const cycles = program.structure?.cycles || (program.structure && Array.isArray(program.structure) ? program.structure : []);
+                    
+                    if (cycles && cycles.length > 0) {
+                        structureHtml = cycles.map(cycle => `
                             <div class="structure-cycle">
-                                <h6><i class="fas fa-sync-alt"></i> ${cycle.name}</h6>
-                                ${cycle.plans && cycle.plans.map(plan => `
+                                <h6><i class="fas fa-sync-alt"></i> ${cycle.name || 'Цикл без названия'}</h6>
+                                ${cycle.plans && cycle.plans.length > 0 ? cycle.plans.map(plan => `
                                     <div class="structure-plan">
-                                        <strong><i class="fas fa-clipboard-list"></i> ${plan.name}</strong>
+                                        <strong><i class="fas fa-clipboard-list"></i> ${plan.name || 'План без названия'}</strong>
                                         ${plan.exercises && plan.exercises.length > 0 ? `
                                             <div class="mt-2">
                                                 ${plan.exercises.map(exercise => `
                                                     <div class="structure-exercise">
-                                                        <i class="fas fa-dumbbell"></i> ${exercise.name}
+                                                        <i class="fas fa-dumbbell"></i> ${exercise.name || 'Упражнение без названия'}
+                                                        ${exercise.muscle_group_id ? ` <span class="badge bg-secondary">Группа: ${exercise.muscle_group_id}</span>` : ''}
                                                         ${exercise.description ? ` <small class="text-muted">- ${exercise.description}</small>` : ''}
                                                     </div>
                                                 `).join('')}
                                             </div>
                                         ` : '<div class="structure-exercise text-muted">Нет упражнений</div>'}
                                     </div>
-                                `).join('')}
+                                `).join('') : '<div class="structure-plan text-muted">Нет планов</div>'}
                             </div>
                         `).join('');
                     } else {
-                        structureHtml = '<div class="text-muted">Структура не доступна</div>';
+                        structureHtml = '<div class="text-muted">Структура не доступна или программа не содержит циклов</div>';
                     }
                     
                     showResult.innerHTML = `
@@ -431,17 +461,23 @@
                     headers: getAuthHeaders()
                 });
 
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
+                    showResponse(errorData, true);
+                    alert(`Ошибка установки программы: ${errorData.message || errorData.detail || 'Неизвестная ошибка'}`);
+                    return;
+                }
+
                 const data = await response.json();
-                showResponse(data, !response.ok);
+                showResponse(data, false);
                 
-                if (response.ok) {
-                    loadList();
-                    if (data.data && data.data.install_id) {
-                        alert(`Программа успешно установлена!\nID установки: ${data.data.install_id}\nID цикла: ${data.data.cycle_id}\nСоздано планов: ${data.data.plans_count}\nСоздано упражнений: ${data.data.exercises_count}`);
-                    }
+                loadList();
+                if (data.data && data.data.install_id) {
+                    alert(`Программа успешно установлена!\nID установки: ${data.data.install_id}\nID цикла: ${data.data.cycle_id}\nСоздано планов: ${data.data.plans_count}\nСоздано упражнений: ${data.data.exercises_count}`);
                 }
             } catch (error) {
-                showResponse({error: error.message}, true);
+                showResponse({error: error.message, type: 'network_error'}, true);
+                alert(`Ошибка сети: ${error.message}\nПроверьте, что сервер запущен и доступен`);
             }
         }
 
@@ -487,15 +523,22 @@
                     headers: getAuthHeaders()
                 });
 
-                const data = await response.json();
-                showResponse(data, !response.ok);
-                
-                if (response.ok) {
-                    document.getElementById('uninstallForm').reset();
-                    loadList();
+                if (!response.ok) {
+                    const errorData = await response.json().catch(() => ({ message: 'Неизвестная ошибка' }));
+                    showResponse(errorData, true);
+                    alert(`Ошибка удаления установки: ${errorData.message || errorData.detail || 'Неизвестная ошибка'}`);
+                    return;
                 }
+
+                const data = await response.json();
+                showResponse(data, false);
+                
+                document.getElementById('uninstallForm').reset();
+                loadList();
+                alert('Установка программы успешно удалена');
             } catch (error) {
-                showResponse({error: error.message}, true);
+                showResponse({error: error.message, type: 'network_error'}, true);
+                alert(`Ошибка сети: ${error.message}\nПроверьте, что сервер запущен и доступен`);
             }
         });
     </script>

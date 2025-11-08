@@ -65,7 +65,7 @@ final class TrainingProgramDetailResource extends JsonResource
             }
         }
 
-        // Получаем структуру программы из сидера
+        // Получаем структуру программы из БД
         $programService = app(TrainingProgramService::class);
         $programData = $programService->getProgramStructure($this->id);
 

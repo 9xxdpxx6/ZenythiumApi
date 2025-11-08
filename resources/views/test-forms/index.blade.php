@@ -152,7 +152,7 @@
                 <div class="mt-5 text-center">
                     <div class="alert alert-light">
                         <i class="fas fa-code"></i>
-                        <strong>API Base URL:</strong> <code id="apiBaseUrl">http://localhost:8000/api/v1</code>
+                        <strong>API Base URL:</strong> <code id="apiBaseUrl"></code>
                         <button class="btn btn-sm btn-outline-secondary ms-2" onclick="copyToClipboard('apiBaseUrl')">
                             <i class="fas fa-copy"></i> Копировать
                         </button>
@@ -164,6 +164,12 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+        // Устанавливаем API Base URL при загрузке страницы
+        document.addEventListener('DOMContentLoaded', function() {
+            const apiBaseUrl = `${window.location.protocol}//${window.location.host}/api/v1`;
+            document.getElementById('apiBaseUrl').textContent = apiBaseUrl;
+        });
+
         function copyToClipboard(elementId) {
             const element = document.getElementById(elementId);
             navigator.clipboard.writeText(element.textContent).then(() => {

@@ -25,6 +25,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * 
  * @property-read \App\Models\User|null $author Автор программы
  * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TrainingProgramInstallation[] $installs Установки программы
+ * @property-read \Illuminate\Database\Eloquent\Collection|\App\Models\TrainingProgramCycle[] $cycles Циклы программы (шаблон)
  */
 final class TrainingProgram extends Model
 {
@@ -61,5 +62,15 @@ final class TrainingProgram extends Model
     public function installs(): HasMany
     {
         return $this->hasMany(TrainingProgramInstallation::class);
+    }
+
+    /**
+     * Получить циклы программы (шаблон)
+     * 
+     * @return HasMany Связь с коллекцией TrainingProgramCycle
+     */
+    public function cycles(): HasMany
+    {
+        return $this->hasMany(TrainingProgramCycle::class)->orderBy('order');
     }
 }

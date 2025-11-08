@@ -14,12 +14,13 @@ use App\Models\TrainingProgramInstallation;
 use App\Models\TrainingProgramInstallationItem;
 use App\Filters\TrainingProgramFilter;
 use App\Traits\HasPagination;
-use Database\Seeders\TrainingPrograms\TrainingProgramDataInterface;
+use App\Models\TrainingProgramCycle;
+use App\Models\TrainingProgramPlan;
+use App\Models\TrainingProgramExercise;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 
 final class TrainingProgramService
@@ -99,7 +100,7 @@ final class TrainingProgramService
             throw new \Exception('Программа уже установлена');
         }
 
-        // Получаем данные программы из сидера
+        // Получаем данные программы из БД
         $programData = $this->getProgramData($programId);
         
         if (!$programData) {
@@ -388,7 +389,7 @@ final class TrainingProgramService
     }
 
     /**
-     * Получить структуру программы из сидера для детального просмотра
+     * Получить структуру программы из БД для детального просмотра
      * 
      * @param int $programId ID программы
      * 
@@ -400,10 +401,28 @@ final class TrainingProgramService
     }
 
     /**
-     * Получить данные программы из сидера
+     * Получить данные программы из БД
      * 
-     * В реальной реализации это должно быть более гибко,
-     * возможно через JSON файлы или другую структуру данных.
+     * Возвращает структуру программы в формате:
+     * [
+     *   'cycles' => [
+     *     [
+     *       'name' => '...',
+     *       'plans' => [
+     *         [
+     *           'name' => '...',
+     *           'exercises' => [
+     *             [
+     *               'name' => '...',
+     *               'muscle_group_id' => 1,
+     *               'description' => '...'
+     *             ]
+     *           ]
+     *         ]
+     *       ]
+     *     ]
+     *   ]
+     * ]
      * 
      * @param int $programId ID программы
      * 
@@ -421,104 +440,49 @@ final class TrainingProgramService
         $cacheKey = "training_program_data_{$programId}_{$program->name}";
         
         return Cache::remember($cacheKey, 3600, function () use ($program) {
-            // Получаем список всех классов программ из сидера
-            $programClasses = $this->getAvailableProgramClasses();
+            // Загружаем циклы с планами и упражнениями
+            $cycles = TrainingProgramCycle::where('training_program_id', $program->id)
+                ->with(['plans.exercises.muscleGroup'])
+                ->orderBy('order')
+                ->get();
 
-            // Ищем класс программы по названию
-            foreach ($programClasses as $programClass) {
-                if (!class_exists($programClass)) {
-                    continue;
-                }
-
-                $programInstance = new $programClass();
-
-                if (!($programInstance instanceof \Database\Seeders\TrainingPrograms\TrainingProgramDataInterface)) {
-                    continue;
-                }
-
-                // Проверяем, соответствует ли название программы
-                $className = class_basename($programClass);
-                $programNameFromClass = $this->extractProgramName($className);
-                
-                // Сравниваем названия (можно улучшить сравнение)
-                if ($this->namesMatch($program->name, $programNameFromClass)) {
-                    return $programInstance->getData();
-                }
+            if ($cycles->isEmpty()) {
+                return null;
             }
 
-            return null;
+            // Формируем структуру в нужном формате
+            $structure = [
+                'cycles' => [],
+            ];
+
+            foreach ($cycles as $cycle) {
+                $cycleData = [
+                    'name' => $cycle->name,
+                    'plans' => [],
+                ];
+
+                foreach ($cycle->plans as $plan) {
+                    $planData = [
+                        'name' => $plan->name,
+                        'exercises' => [],
+                    ];
+
+                    foreach ($plan->exercises as $exercise) {
+                        $planData['exercises'][] = [
+                            'name' => $exercise->name,
+                            'muscle_group_id' => $exercise->muscle_group_id,
+                            'description' => $exercise->description,
+                        ];
+                    }
+
+                    $cycleData['plans'][] = $planData;
+                }
+
+                $structure['cycles'][] = $cycleData;
+            }
+
+            return $structure;
         });
-    }
-
-    /**
-     * Получить список доступных классов программ
-     * 
-     * Автоматически находит все классы в директории TrainingPrograms,
-     * которые реализуют TrainingProgramDataInterface
-     * 
-     * Кэшируется, так как список классов программ не меняется часто
-     * 
-     * @return array Массив имен классов
-     */
-    private function getAvailableProgramClasses(): array
-    {
-        return Cache::remember('training_program_classes', 3600, function () {
-            $programClasses = [];
-            $programsPath = database_path('seeders/TrainingPrograms');
-            
-            if (!File::exists($programsPath)) {
-                return [];
-            }
-            
-            $files = File::files($programsPath);
-            
-            foreach ($files as $file) {
-                $filename = $file->getFilenameWithoutExtension();
-                
-                // Пропускаем интерфейс
-                if ($filename === 'TrainingProgramDataInterface') {
-                    continue;
-                }
-                
-                $className = "Database\\Seeders\\TrainingPrograms\\{$filename}";
-                
-                if (!class_exists($className)) {
-                    continue;
-                }
-                
-                $reflection = new \ReflectionClass($className);
-                
-                // Проверяем, что класс реализует интерфейс и не является абстрактным
-                if (
-                    $reflection->implementsInterface(TrainingProgramDataInterface::class) &&
-                    !$reflection->isAbstract() &&
-                    !$reflection->isInterface()
-                ) {
-                    $programClasses[] = $className;
-                }
-            }
-            
-            return $programClasses;
-        });
-    }
-
-    /**
-     * Извлечь название программы из имени класса
-     */
-    private function extractProgramName(string $className): string
-    {
-        $name = str_replace('Program', '', $className);
-        $name = preg_replace('/([a-z])([A-Z])/', '$1 $2', $name);
-        return trim($name);
-    }
-
-    /**
-     * Проверить, совпадают ли названия программ
-     */
-    private function namesMatch(string $name1, string $name2): bool
-    {
-        // Простое сравнение с приведением к нижнему регистру и удалением пробелов
-        return mb_strtolower(trim($name1)) === mb_strtolower(trim($name2));
     }
 }
 

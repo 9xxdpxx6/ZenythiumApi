@@ -206,7 +206,8 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
-        const API_BASE = 'http://localhost:8000/api/v1';
+        // Автоматически определяем API адрес из текущего URL
+        const API_BASE = `${window.location.protocol}//${window.location.host}/api/v1`;
         
         // Load list on page load
         document.addEventListener('DOMContentLoaded', function() {

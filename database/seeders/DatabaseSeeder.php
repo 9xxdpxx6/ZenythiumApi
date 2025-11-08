@@ -31,6 +31,7 @@ class DatabaseSeeder extends Seeder
             WorkoutSeeder::class,
             WorkoutSetSeeder::class,
             MetricSeeder::class,
+            TrainingProgramSeeder::class,
         ]);
     }
 }
