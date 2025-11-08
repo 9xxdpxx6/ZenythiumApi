@@ -58,11 +58,12 @@ final class TrainingProgramSeeder extends Seeder
                     continue;
                 }
 
-                // Получаем название класса для использования как база для названия программы
-                $programName = $this->extractProgramName($filename);
-
                 // Получаем данные программы
                 $programData = $programInstance->getData();
+                
+                // Извлекаем название и описание из данных программы
+                $programName = $programData['name'] ?? $this->extractProgramName($filename);
+                $programDescription = $programData['description'] ?? null;
                 
                 // Вычисляем продолжительность
                 $weeks = $this->calculateDurationWeeks($programData);
@@ -71,7 +72,7 @@ final class TrainingProgramSeeder extends Seeder
                 $program = TrainingProgram::updateOrCreate(
                     ['name' => $programName],
                     [
-                        'description' => $this->extractProgramDescription($filename, $programData),
+                        'description' => $programDescription,
                         'author_id' => null,
                         'duration_weeks' => $weeks,
                         'is_active' => true,
@@ -136,7 +137,7 @@ final class TrainingProgramSeeder extends Seeder
     }
 
     /**
-     * Извлечь название программы из имени класса
+     * Извлечь название программы из имени класса (fallback)
      */
     private function extractProgramName(string $className): string
     {
@@ -144,15 +145,6 @@ final class TrainingProgramSeeder extends Seeder
         $name = str_replace('Program', '', $className);
         $name = preg_replace('/([a-z])([A-Z])/', '$1 $2', $name);
         return trim($name);
-    }
-
-    /**
-     * Извлечь описание программы
-     */
-    private function extractProgramDescription(string $className, array $programData): ?string
-    {
-        // Можно добавить логику для извлечения описания из данных или класса
-        return "Программа тренировок: " . $this->extractProgramName($className);
     }
 
     /**
