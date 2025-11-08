@@ -4,6 +4,10 @@ declare(strict_types=1);
 
 use App\Models\TrainingProgram;
 use App\Models\TrainingProgramInstallation;
+use App\Models\TrainingProgramCycle;
+use App\Models\TrainingProgramPlan;
+use App\Models\TrainingProgramExercise;
+use App\Models\MuscleGroup;
 use App\Models\User;
 use Illuminate\Support\Facades\Cache;
 
@@ -253,6 +257,29 @@ describe('TrainingProgramController', function () {
 
     describe('Caching', function () {
         it('caches program structure data', function () {
+            // Создаем структуру программы для теста кэширования
+            $muscleGroup = MuscleGroup::factory()->create();
+            
+            $cycle = TrainingProgramCycle::create([
+                'training_program_id' => $this->program->id,
+                'name' => 'Test Cycle',
+                'order' => 1,
+            ]);
+            
+            $plan = TrainingProgramPlan::create([
+                'training_program_cycle_id' => $cycle->id,
+                'name' => 'Test Plan',
+                'order' => 1,
+            ]);
+            
+            TrainingProgramExercise::create([
+                'training_program_plan_id' => $plan->id,
+                'name' => 'Test Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'description' => 'Test description',
+                'order' => 1,
+            ]);
+            
             Cache::flush();
             
             // Первый запрос - кэш пуст
@@ -274,6 +301,29 @@ describe('TrainingProgramController', function () {
         });
 
         it('caches program counts', function () {
+            // Создаем структуру программы для теста кэширования
+            $muscleGroup = MuscleGroup::factory()->create();
+            
+            $cycle = TrainingProgramCycle::create([
+                'training_program_id' => $this->program->id,
+                'name' => 'Test Cycle',
+                'order' => 1,
+            ]);
+            
+            $plan = TrainingProgramPlan::create([
+                'training_program_cycle_id' => $cycle->id,
+                'name' => 'Test Plan',
+                'order' => 1,
+            ]);
+            
+            TrainingProgramExercise::create([
+                'training_program_plan_id' => $plan->id,
+                'name' => 'Test Exercise',
+                'muscle_group_id' => $muscleGroup->id,
+                'description' => 'Test description',
+                'order' => 1,
+            ]);
+            
             Cache::flush();
             
             // Первый запрос - кэш пуст
