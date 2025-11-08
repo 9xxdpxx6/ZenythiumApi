@@ -15,11 +15,13 @@ namespace Database\Seeders\TrainingPrograms;
  *   — Используются тренажёры и изолирующие движения для контроля траектории.
  *   — Веса минимальны, но присутствуют — это всё ещё тренировка, а не ЛФК.
  */
-class RecoveryBlockProgram implements TrainingProgramDataInterface
+class VozvratVigruProgram implements TrainingProgramDataInterface
 {
     public function getData(): array
     {
         return [
+            'name' => 'Возврат в игру',
+            'description' => 'Восстановительная Full Body программа для безопасного возврата к тренировкам после перегрузки плеч, поясницы или локтей. 3 раза в неделю. Исключены упражнения с осевой нагрузкой на позвоночник и компрессией плеч. Используются тренажёры и изолирующие движения для контроля траектории.',
             'cycles' => [
                 [
                     'name' => 'Возврат в игру',

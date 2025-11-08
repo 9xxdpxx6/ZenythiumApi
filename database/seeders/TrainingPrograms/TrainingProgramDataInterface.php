@@ -17,6 +17,8 @@ interface TrainingProgramDataInterface
      * 
      * @return array Структура данных программы:
      *   [
+     *     'name' => 'Название программы',
+     *     'description' => 'Описание программы',
      *     'cycles' => [
      *       [
      *         'name' => 'Название цикла',

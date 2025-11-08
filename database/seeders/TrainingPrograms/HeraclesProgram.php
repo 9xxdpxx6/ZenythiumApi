@@ -12,11 +12,13 @@ namespace Database\Seeders\TrainingPrograms;
  * Уровень: Стаж 1.5–2+ года
  * Цель: Гипертрофия с акцентом на пампинг, рельеф и симметрию.
  */
-class HeraclesProgram implements TrainingProgramDataInterface
+class GeraklPentaklProgram implements TrainingProgramDataInterface
 {
     public function getData(): array
     {
         return [
+            'name' => 'Геракл: пентакль мощи',
+            'description' => '5-дневный сплит для гипертрофии с акцентом на пампинг, рельеф и симметрию. Подходит для стажа 1.5–2+ года.',
             'cycles' => [
                 [
                     'name' => 'Геракл: пентакль мощи',

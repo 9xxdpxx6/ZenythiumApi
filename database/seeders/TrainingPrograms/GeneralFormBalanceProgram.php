@@ -11,11 +11,13 @@ namespace Database\Seeders\TrainingPrograms;
  * Частота: 4 раза в неделю (Пн, Вт, Чт, Пт)
  * Цель: Систематический набор массы без акцента на силовые рекорды.
  */
-class GeneralFormBalanceProgram implements TrainingProgramDataInterface
+class ObshayaFormaProgram implements TrainingProgramDataInterface
 {
     public function getData(): array
     {
         return [
+            'name' => 'Общая форма (баланс)',
+            'description' => 'Upper/Lower Split программа для систематического набора массы без акцента на силовые рекорды. 4 раза в неделю (Пн, Вт, Чт, Пт).',
             'cycles' => [
                 [
                     'name' => 'Общая форма (баланс)',

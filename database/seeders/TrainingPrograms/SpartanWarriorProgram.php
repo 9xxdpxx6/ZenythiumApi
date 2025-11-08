@@ -12,11 +12,13 @@ namespace Database\Seeders\TrainingPrograms;
  * Уровень: Продвинутый
  * Цель: Максимизация мышечной массы и силы.
  */
-class SpartanWarriorProgram implements TrainingProgramDataInterface
+class VoinSpartiProgram implements TrainingProgramDataInterface
 {
     public function getData(): array
     {
         return [
+            'name' => 'Воин Спарты',
+            'description' => '6-дневный сплит Push/Pull/Legs для максимизации мышечной массы и силы. Продвинутый уровень.',
             'cycles' => [
                 [
                     'name' => 'Воин Спарты',

@@ -15,11 +15,13 @@ namespace Database\Seeders\TrainingPrograms;
  *   — Один акцент на базу силы, остальное — поддержка и баланс.
  *   — Включены укрепляющие элементы для профилактики травм.
  */
-class StrengthProgram implements TrainingProgramDataInterface
+class TitanFundamentProgram implements TrainingProgramDataInterface
 {
     public function getData(): array
     {
         return [
+            'name' => 'Титан: Фундамент',
+            'description' => 'Full Body программа с акцентом на рост силы через базовые движения. 3 дня в неделю. Каждая тренировка охватывает всё тело с одним акцентом на базу силы, остальное — поддержка и баланс. Включены укрепляющие элементы для профилактики травм.',
             'cycles' => [
                 [
                     'name' => 'Титан: Фундамент',

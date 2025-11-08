@@ -12,11 +12,13 @@ namespace Database\Seeders\TrainingPrograms;
  * Уровень: Стаж 1–2 года
  * Цель: Максимальная гипертрофия с балансом и восстановлением.
  */
-class AtlasProgram implements TrainingProgramDataInterface
+class AtlantTriOporiProgram implements TrainingProgramDataInterface
 {
     public function getData(): array
     {
         return [
+            'name' => 'Атлант: три опоры мироздания',
+            'description' => '3-дневный сплит Push/Pull/Legs для максимальной гипертрофии с балансом и восстановлением. Подходит для стажа 1–2 года.',
             'cycles' => [
                 [
                     'name' => 'Атлант: три опоры мироздания',
