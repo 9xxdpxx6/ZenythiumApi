@@ -25,15 +25,16 @@ return [
         'http://localhost:3001', 
         'http://127.0.0.1:3000',
         'http://127.0.0.1:3001',
-        
+        'http://127.0.0.1:5173',
+        'http://localhost:5173',
+        'http://127.0.0.1:8100',
+        'http://localhost:8100',
+
         // Flutter development origins
         'http://localhost',
         'http://127.0.0.1',
         'http://10.0.2.2', // Android emulator
         'http://localhost:8080', // Flutter web dev server
-
-        'http://127.0.0.1:5173',
-        'http://localhost:5173',
 
         // Production origins (из .env)
         ...(env('CORS_ALLOWED_ORIGINS') ? explode(',', env('CORS_ALLOWED_ORIGINS')) : []),

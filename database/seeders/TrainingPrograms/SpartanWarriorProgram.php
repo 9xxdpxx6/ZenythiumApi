@@ -18,7 +18,7 @@ class VoinSpartiProgram implements TrainingProgramDataInterface
     {
         return [
             'name' => 'Воин Спарты',
-            'description' => '6-дневный сплит Push/Pull/Legs для максимизации мышечной массы и силы. Продвинутый уровень.',
+            'description' => '3-дневный сплит Push/Pull/Legs для максимизации мышечной массы и силы. Продвинутый уровень.',
             'cycles' => [
                 [
                     'name' => 'Воин Спарты',
