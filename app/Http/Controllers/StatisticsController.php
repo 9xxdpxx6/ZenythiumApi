@@ -178,14 +178,16 @@ final class StatisticsController extends Controller
             return 0;
         }
 
-        $maxStreak = 0;
+        // Возвращаем максимальную текущую активную серию из всех циклов
+        // (не историческую максимальную, а текущую активную)
+        $maxCurrentStreak = 0;
         
         foreach ($cycles as $cycle) {
             $cycleStreak = $this->calculateCycleStreak($cycle);
-            $maxStreak = max($maxStreak, $cycleStreak);
+            $maxCurrentStreak = max($maxCurrentStreak, $cycleStreak);
         }
 
-        return $maxStreak;
+        return $maxCurrentStreak;
     }
 
     /**
@@ -201,7 +203,7 @@ final class StatisticsController extends Controller
         $planIds = $plans->pluck('id')->toArray();
         $expectedPlansPerWeek = count($planIds);
 
-        // Получаем все завершенные тренировки этого цикла, сгруппированные по неделям
+        // Получаем все завершенные тренировки этого цикла, отсортированные по дате
         $workouts = $cycle->workouts()
             ->whereNotNull('finished_at')
             ->whereIn('plan_id', $planIds)
@@ -212,55 +214,135 @@ final class StatisticsController extends Controller
             return 0;
         }
 
-        // Группируем тренировки по неделям
+        // Группируем тренировки по плавающим неделям (7 дней от первой тренировки в группе)
+        // Неделя включает дни 0-6 (всего 7 дней), день 7 - это уже новая неделя
         $weeklyWorkouts = [];
+        $currentWeekStart = null;
+        $currentWeekIndex = -1;
+
         foreach ($workouts as $workout) {
-            $weekKey = $workout->finished_at->format('Y-W');
-            if (!isset($weeklyWorkouts[$weekKey])) {
-                $weeklyWorkouts[$weekKey] = [];
+            $workoutDate = \Carbon\Carbon::parse($workout->finished_at)->startOfDay();
+            
+            // Если это первая тренировка или прошло 7+ дней от начала текущей недели
+            // diffInDays возвращает количество дней между датами
+            // Если неделя началась в день 0, то:
+            // - день 0 = 0 дней разницы
+            // - день 6 = 6 дней разницы (входит в неделю)
+            // - день 7 = 7 дней разницы (уже новая неделя)
+            if ($currentWeekStart === null) {
+                // Первая тренировка - начинаем новую неделю
+                $currentWeekIndex++;
+                $currentWeekStart = $workoutDate->copy();
+                $weeklyWorkouts[$currentWeekIndex] = [];
+            } else {
+                // Вычисляем разницу в днях
+                $daysDiff = $currentWeekStart->diffInDays($workoutDate, false);
+                
+                // Если прошло 7 или больше дней, начинаем новую неделю
+                if ($daysDiff >= 7) {
+                    $currentWeekIndex++;
+                    $currentWeekStart = $workoutDate->copy();
+                    $weeklyWorkouts[$currentWeekIndex] = [];
+                }
             }
-            $weeklyWorkouts[$weekKey][] = $workout;
+            
+            $weeklyWorkouts[$currentWeekIndex][] = $workout;
         }
 
-        // Сортируем недели по дате
-        ksort($weeklyWorkouts);
-
         $currentStreak = 0;
-        $previousWeekDate = null;
+        $previousWeekEnd = null;
 
-        foreach ($weeklyWorkouts as $weekKey => $weekWorkouts) {
-            // Получаем дату начала текущей недели из первой тренировки
-            $currentWeekDate = \Carbon\Carbon::parse($weekWorkouts[0]->finished_at)->startOfWeek();
+        // Получаем последнюю неделю для финальной проверки
+        $lastWeekIndex = array_key_last($weeklyWorkouts);
+        $lastWeekWorkouts = $lastWeekIndex !== null ? $weeklyWorkouts[$lastWeekIndex] : null;
+        $lastWeekStart = null;
+        if ($lastWeekWorkouts && !empty($lastWeekWorkouts)) {
+            $lastWeekStart = \Carbon\Carbon::parse($lastWeekWorkouts[0]->finished_at)->startOfDay();
+        }
+
+        // Обрабатываем недели в хронологическом порядке (от старых к новым)
+        foreach ($weeklyWorkouts as $weekIndex => $weekWorkouts) {
+            // Получаем дату начала недели (первая тренировка в неделе)
+            $weekStart = \Carbon\Carbon::parse($weekWorkouts[0]->finished_at)->startOfDay();
             
-            // Проверяем, что недели идут подряд без пропусков
-            if ($previousWeekDate !== null) {
-                $weeksDiff = $previousWeekDate->diffInWeeks($currentWeekDate);
+            // Проверяем, что между неделями нет большого пропуска (больше 7 дней)
+            if ($previousWeekEnd !== null) {
+                $daysBetweenWeeks = $previousWeekEnd->diffInDays($weekStart, false);
                 
-                // Если между неделями есть пропуск (больше 1 недели), сбрасываем streak
-                if ($weeksDiff > 1) {
+                // Если между неделями пропуск больше 7 дней, сбрасываем streak
+                // (недели должны идти подряд, максимум 7 дней между концом предыдущей и началом следующей)
+                if ($daysBetweenWeeks > 7) {
                     $currentStreak = 0;
                 }
             }
 
-            // Получаем уникальные планы, выполненные на этой неделе
-            $completedPlans = collect($weekWorkouts)
-                ->pluck('plan_id')
-                ->unique()
-                ->values()
-            ->toArray();
+            // Получаем уникальные планы, выполненные строго в пределах 7 дней от начала недели
+            // (день 0-6, день 7 уже не считается)
+            $completedPlans = [];
+            foreach ($weekWorkouts as $workout) {
+                $workoutDate = \Carbon\Carbon::parse($workout->finished_at)->startOfDay();
+                
+                // Вычисляем разницу в днях от начала недели
+                // diffInDays с false возвращает абсолютную разницу
+                // Если неделя началась в день 0, то:
+                // - день 0 = 0 дней разницы (входит)
+                // - день 6 = 6 дней разницы (входит)
+                // - день 7 = 7 дней разницы (не входит)
+                $daysFromStart = $weekStart->diffInDays($workoutDate, false);
+                if ($daysFromStart >= 0 && $daysFromStart < 7) {
+                    $completedPlans[] = $workout->plan_id;
+                }
+            }
+            $completedPlans = array_unique($completedPlans);
 
-            // Проверяем, выполнены ли все планы цикла на этой неделе
+            // Проверяем, выполнены ли все планы цикла строго в пределах 7 дней от начала недели
             $allPlansCompleted = count($completedPlans) === $expectedPlansPerWeek 
                 && empty(array_diff($planIds, $completedPlans));
 
             if ($allPlansCompleted) {
+                // Неделя полная - увеличиваем серию
                 $currentStreak += $expectedPlansPerWeek;
             } else {
-                // Пропуск - сбрасываем streak
+                // Неделя неполная - сбрасываем streak
                 $currentStreak = 0;
             }
 
-            $previousWeekDate = $currentWeekDate;
+            // Обновляем конец предыдущей недели для проверки пропусков
+            // Берем последнюю тренировку, которая точно в пределах недели (дни 0-6)
+            $lastValidWorkout = null;
+            foreach ($weekWorkouts as $workout) {
+                $workoutDate = \Carbon\Carbon::parse($workout->finished_at)->startOfDay();
+                $daysFromStart = $weekStart->diffInDays($workoutDate, false);
+                if ($daysFromStart >= 0 && $daysFromStart < 7) {
+                    $lastValidWorkout = $workout;
+                }
+            }
+            if ($lastValidWorkout) {
+                $previousWeekEnd = \Carbon\Carbon::parse($lastValidWorkout->finished_at)->startOfDay();
+            } else {
+                // Если нет валидных тренировок в неделе, берем начало недели
+                $previousWeekEnd = $weekStart;
+            }
+        }
+
+        // Финальная проверка: если последняя неделя неполная, серия должна быть 0
+        if ($lastWeekStart !== null) {
+            $lastWeekCompletedPlans = [];
+            foreach ($lastWeekWorkouts as $workout) {
+                $workoutDate = \Carbon\Carbon::parse($workout->finished_at)->startOfDay();
+                $daysFromStart = $lastWeekStart->diffInDays($workoutDate, false);
+                if ($daysFromStart >= 0 && $daysFromStart < 7) {
+                    $lastWeekCompletedPlans[] = $workout->plan_id;
+                }
+            }
+            $lastWeekCompletedPlans = array_unique($lastWeekCompletedPlans);
+            $lastWeekAllPlansCompleted = count($lastWeekCompletedPlans) === $expectedPlansPerWeek 
+                && empty(array_diff($planIds, $lastWeekCompletedPlans));
+            
+            // Если последняя неделя неполная, сбрасываем серию
+            if (!$lastWeekAllPlansCompleted) {
+                $currentStreak = 0;
+            }
         }
 
         return $currentStreak;
