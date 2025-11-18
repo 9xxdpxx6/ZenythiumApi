@@ -21,8 +21,10 @@ final class WorkoutFactory extends Factory
      */
     public function definition(): array
     {
-        $startedAt = $this->faker->dateTimeBetween('-1 month', 'now');
-        $finishedAt = $this->faker->optional(0.7)->dateTimeBetween($startedAt, '+3 hours');
+        // По умолчанию создаем завершенную тренировку из прошлого
+        // (активные тренировки должны быть явно указаны через inProgress())
+        $startedAt = $this->faker->dateTimeBetween('-1 month', '-1 hour');
+        $finishedAt = $this->faker->dateTimeBetween($startedAt, '+3 hours');
         
         return [
             'plan_id' => Plan::factory(),
@@ -38,7 +40,7 @@ final class WorkoutFactory extends Factory
     public function completed(): static
     {
         return $this->state(function (array $attributes) {
-            $startedAt = $attributes['started_at'] ?? $this->faker->dateTimeBetween('-1 month', 'now');
+            $startedAt = $attributes['started_at'] ?? $this->faker->dateTimeBetween('-1 month', '-1 hour');
             $finishedAt = $this->faker->dateTimeBetween($startedAt, '+3 hours');
             
             return [
@@ -54,7 +56,8 @@ final class WorkoutFactory extends Factory
     public function inProgress(): static
     {
         return $this->state(function (array $attributes) {
-            $startedAt = $attributes['started_at'] ?? $this->faker->dateTimeBetween('-1 month', 'now');
+            // Активные тренировки должны быть только недавно начатые (последние 2 часа)
+            $startedAt = $attributes['started_at'] ?? $this->faker->dateTimeBetween('-2 hours', 'now');
             
             return [
                 'started_at' => $startedAt,

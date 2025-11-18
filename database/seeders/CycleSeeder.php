@@ -20,36 +20,36 @@ final class CycleSeeder extends Seeder
         $userId = User::first()?->id ?? User::factory()->create()->id;
 
         $cycles = [
-            // Активные циклы (без даты завершения)
+            // Только один активный цикл (без даты завершения)
             [
                 'name' => 'Базовый цикл набора массы',
                 'start_date' => Carbon::now()->subWeeks(2),
                 'end_date' => null, // Активный цикл
                 'weeks' => 12,
             ],
+            // Завершенные циклы (с датой завершения и end_date)
             [
                 'name' => 'Цикл силовой подготовки',
-                'start_date' => Carbon::now()->subWeeks(1),
-                'end_date' => null, // Активный цикл
+                'start_date' => Carbon::now()->subWeeks(12),
+                'end_date' => Carbon::now()->subWeeks(3), // Завершенный цикл
                 'weeks' => 9,
             ],
-            // Завершенные циклы
             [
                 'name' => 'Цикл сушки и рельефа',
-                'start_date' => Carbon::now()->subWeeks(8),
-                'end_date' => Carbon::now()->subWeeks(2),
+                'start_date' => Carbon::now()->subWeeks(10),
+                'end_date' => Carbon::now()->subWeeks(4), // Завершенный цикл
                 'weeks' => 6,
             ],
             [
                 'name' => 'Поддерживающий цикл',
-                'start_date' => Carbon::now()->subWeeks(6),
-                'end_date' => Carbon::now()->subWeeks(2),
+                'start_date' => Carbon::now()->subWeeks(8),
+                'end_date' => Carbon::now()->subWeeks(4), // Завершенный цикл
                 'weeks' => 4,
             ],
             [
                 'name' => 'Цикл восстановления',
-                'start_date' => Carbon::now()->subWeeks(4),
-                'end_date' => Carbon::now()->subWeeks(2),
+                'start_date' => Carbon::now()->subWeeks(6),
+                'end_date' => Carbon::now()->subWeeks(4), // Завершенный цикл
                 'weeks' => 2,
             ],
         ];

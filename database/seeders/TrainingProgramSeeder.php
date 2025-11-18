@@ -43,11 +43,22 @@ final class TrainingProgramSeeder extends Seeder
                 continue;
             }
 
-            $className = "Database\\Seeders\\TrainingPrograms\\{$filename}";
+            // Пытаемся найти имя класса в файле, так как оно может не совпадать с именем файла
+            $className = $this->findClassNameInFile($file->getPathname());
             
-            if (!class_exists($className)) {
-                $this->command->warn("Класс {$className} не найден");
+            if (!$className) {
+                $this->command->warn("Не удалось найти класс в файле {$filename}");
                 continue;
+            }
+
+            if (!class_exists($className)) {
+                // Загружаем файл, если класс еще не загружен
+                require_once $file->getPathname();
+                
+                if (!class_exists($className)) {
+                    $this->command->warn("Класс {$className} не найден после загрузки файла");
+                    continue;
+                }
             }
 
             try {
@@ -134,6 +145,57 @@ final class TrainingProgramSeeder extends Seeder
                 }
             }
         }
+    }
+
+    /**
+     * Найти имя класса в PHP файле
+     * 
+     * Использует token_get_all для поиска определения класса в файле.
+     * 
+     * @param string $filepath Путь к файлу
+     * @return string|null Полное имя класса (с namespace) или null, если не найдено
+     */
+    private function findClassNameInFile(string $filepath): ?string
+    {
+        if (!file_exists($filepath)) {
+            return null;
+        }
+
+        $content = file_get_contents($filepath);
+        $tokens = token_get_all($content);
+        
+        $namespace = 'Database\\Seeders\\TrainingPrograms';
+        $className = null;
+        
+        foreach ($tokens as $index => $token) {
+            // Находим namespace
+            if (is_array($token) && $token[0] === T_NAMESPACE) {
+                $namespaceTokens = [];
+                $i = $index + 2; // Пропускаем T_NAMESPACE и пробел
+                while (isset($tokens[$i]) && is_array($tokens[$i]) && in_array($tokens[$i][0], [T_STRING, T_NS_SEPARATOR])) {
+                    $namespaceTokens[] = $tokens[$i][1];
+                    $i++;
+                }
+                if (!empty($namespaceTokens)) {
+                    $namespace = implode('', $namespaceTokens);
+                }
+            }
+            
+            // Находим class
+            if (is_array($token) && $token[0] === T_CLASS) {
+                // Следующий токен после T_CLASS - это имя класса
+                if (isset($tokens[$index + 2]) && is_array($tokens[$index + 2]) && $tokens[$index + 2][0] === T_STRING) {
+                    $className = $tokens[$index + 2][1];
+                    break;
+                }
+            }
+        }
+        
+        if ($className === null) {
+            return null;
+        }
+        
+        return $namespace . '\\' . $className;
     }
 
     /**

@@ -226,7 +226,6 @@ final class StatisticsController extends Controller
         ksort($weeklyWorkouts);
 
         $currentStreak = 0;
-        $maxStreak = 0;
         $previousWeekDate = null;
 
         foreach ($weeklyWorkouts as $weekKey => $weekWorkouts) {
@@ -256,7 +255,6 @@ final class StatisticsController extends Controller
 
             if ($allPlansCompleted) {
                 $currentStreak += $expectedPlansPerWeek;
-                $maxStreak = max($maxStreak, $currentStreak);
             } else {
                 // Пропуск - сбрасываем streak
                 $currentStreak = 0;
@@ -265,7 +263,7 @@ final class StatisticsController extends Controller
             $previousWeekDate = $currentWeekDate;
         }
 
-        return $maxStreak;
+        return $currentStreak;
     }
 
     /**

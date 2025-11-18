@@ -25,7 +25,7 @@ final class TrainingProgramFactory extends Factory
             'description' => $this->faker->optional()->sentence(),
             'author_id' => User::factory(),
             'duration_weeks' => $this->faker->numberBetween(4, 12),
-            'is_active' => $this->faker->boolean(80), // 80% шанс быть активной
+            'is_active' => true, // По умолчанию все программы активны
         ];
     }
 

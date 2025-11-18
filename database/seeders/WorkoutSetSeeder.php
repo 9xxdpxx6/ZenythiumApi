@@ -35,8 +35,14 @@ final class WorkoutSetSeeder extends Seeder
 
             // Create workout sets for ALL exercises in the plan (not random selection)
             foreach ($planExercisesForWorkout as $planExercise) {
-                // Create 5+ sets per exercise for better history data
-                $setCount = rand(5, 8); // 5-8 sets per exercise
+                // Реалистичное количество подходов: 3-4 для большинства упражнений, 4-5 для базовых
+                $exerciseName = mb_strtolower($planExercise->exercise->name ?? 'Unknown');
+                $isBasicExercise = str_contains($exerciseName, 'жим') && str_contains($exerciseName, 'штанги')
+                    || str_contains($exerciseName, 'приседания')
+                    || str_contains($exerciseName, 'тяга') && str_contains($exerciseName, 'штанги')
+                    || str_contains($exerciseName, 'становая');
+                
+                $setCount = $isBasicExercise ? rand(4, 5) : rand(3, 4); // 3-4 подхода обычно, 4-5 для базовых
                 
                 for ($set = 1; $set <= $setCount; $set++) {
                     // Progressive weight increase for each set (realistic training)
