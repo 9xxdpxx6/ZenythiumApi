@@ -31,7 +31,7 @@ final class StatisticsController extends Controller
      *                 @OA\Property(property="current_weight", type="number", format="float", example=75.5),
      *                 @OA\Property(property="active_cycles_count", type="integer", example=2),
      *                 @OA\Property(property="weight_change_30_days", type="number", example=2),
-     *                 @OA\Property(property="training_frequency_4_weeks", type="number", example=3),
+     *                 @OA\Property(property="training_frequency_4_weeks", type="number", example=5.4, description="Среднее количество тренировок в неделю за последние 35 дней (5 недель)"),
      *                 @OA\Property(property="training_streak_days", type="integer", example=12, description="Количество подряд выполненных тренировок без пропусков в циклах")
      *             ),
      *             @OA\Property(property="message", type="string", example="Статистика пользователя успешно получена")
@@ -86,7 +86,7 @@ final class StatisticsController extends Controller
         // Weight change over time (last 30 days)
         $weightChange = $this->getWeightChange($userId);
 
-        // Training frequency (workouts per week in last 4 weeks)
+        // Training frequency (workouts per week in last 35 days / 5 weeks)
         $trainingFrequency = $this->getTrainingFrequency($userId);
 
         // Training streak (consecutive days with workouts)
@@ -130,27 +130,23 @@ final class StatisticsController extends Controller
     }
 
     /**
-     * Get training frequency (workouts per week) over last 4 weeks.
+     * Get training frequency (workouts per week) over last 35 days (5 weeks).
      */
     private function getTrainingFrequency(int $userId): float
     {
-        $workouts = User::find($userId)
+        // Получаем тренировки за последние 35 дней (5 недель)
+        // Используем today() и subDays() для точного сравнения дат (как в SQL DATE_SUB(CURDATE(), INTERVAL 35 DAY))
+        $startDate = \Carbon\Carbon::today()->subDays(35)->startOfDay();
+        
+        $totalWorkouts = User::find($userId)
             ->workouts()
             ->whereNotNull('finished_at')
-            ->where('finished_at', '>=', now()->subWeeks(4))
-            ->get();
+            ->whereDate('finished_at', '>=', $startDate)
+            ->count();
 
-        // Group by week manually for SQLite compatibility
-        $weeks = [];
-        foreach ($workouts as $workout) {
-            $week = $workout->finished_at->format('Y-W');
-            $weeks[$week] = ($weeks[$week] ?? 0) + 1;
-        }
-
-        // Делим на 4 недели, а не на количество недель с тренировками
-        // Это дает правильное среднее количество тренировок в неделю за последние 4 недели
-        $totalWorkouts = array_sum($weeks);
-        $avgWorkoutsPerWeek = $totalWorkouts / 4;
+        // Делим на 5 недель, чтобы получить среднее количество тренировок в неделю
+        // Это дает правильное среднее количество тренировок в неделю за последние 35 дней (5 недель)
+        $avgWorkoutsPerWeek = $totalWorkouts / 5;
         return round($avgWorkoutsPerWeek, 1);
     }
 

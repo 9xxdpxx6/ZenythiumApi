@@ -4417,8 +4417,9 @@
                                                     "example": 2
                                                 },
                                                 "training_frequency_4_weeks": {
+                                                    "description": "Среднее количество тренировок в неделю за последние 35 дней (5 недель)",
                                                     "type": "number",
-                                                    "example": 3
+                                                    "example": 5.4
                                                 },
                                                 "training_streak_days": {
                                                     "description": "Количество подряд выполненных тренировок без пропусков в циклах",

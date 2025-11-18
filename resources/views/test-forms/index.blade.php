@@ -147,6 +147,20 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Statistics -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-chart-bar fa-3x mb-3" style="color: #20c997;"></i>
+                                <h5 class="card-title">Статистика</h5>
+                                <p class="card-text">Статистика тренировок и прогресса</p>
+                                <a href="/test-forms/statistics" class="btn" style="background-color: #20c997; border-color: #20c997; color: white;">
+                                    <i class="fas fa-chart-bar"></i> Открыть
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-5 text-center">
