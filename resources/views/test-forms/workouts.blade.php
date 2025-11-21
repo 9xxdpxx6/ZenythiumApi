@@ -415,10 +415,15 @@
         document.getElementById('createForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            // Преобразуем datetime-local в формат без зоны (YYYY-MM-DDTHH:mm)
+            // Бэкенд интерпретирует это как локальное время (МСК)
+            const startedAt = document.getElementById('createStartedAt').value;
+            const finishedAt = document.getElementById('createFinishedAt').value;
+            
             const formData = {
                 plan_id: parseInt(document.getElementById('createPlanId').value),
-                started_at: document.getElementById('createStartedAt').value,
-                finished_at: document.getElementById('createFinishedAt').value || null
+                started_at: startedAt || null,
+                finished_at: finishedAt || null
             };
 
             try {
@@ -496,10 +501,15 @@
             e.preventDefault();
             
             const id = document.getElementById('updateId').value;
+            // Преобразуем datetime-local в формат без зоны (YYYY-MM-DDTHH:mm)
+            // Бэкенд интерпретирует это как локальное время (МСК)
+            const startedAt = document.getElementById('updateStartedAt').value;
+            const finishedAt = document.getElementById('updateFinishedAt').value;
+            
             const formData = {
                 plan_id: parseInt(document.getElementById('updatePlanId').value),
-                started_at: document.getElementById('updateStartedAt').value,
-                finished_at: document.getElementById('updateFinishedAt').value || null
+                started_at: startedAt || null,
+                finished_at: finishedAt || null
             };
 
             try {

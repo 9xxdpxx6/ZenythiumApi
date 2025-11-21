@@ -88,6 +88,15 @@ final class WorkoutService
      */
     public function create(array $data): Workout
     {
+        // Нормализуем даты для правильной обработки временных зон
+        if (isset($data['started_at'])) {
+            $data['started_at'] = $this->normalizeDateTimeForStorage($data['started_at']);
+        }
+        
+        if (isset($data['finished_at'])) {
+            $data['finished_at'] = $this->normalizeDateTimeForStorage($data['finished_at']);
+        }
+        
         $workout = Workout::create($data);
         
         // Если тренировка создана сразу с finished_at, проверяем завершение цикла
@@ -131,6 +140,15 @@ final class WorkoutService
         // Запоминаем, была ли тренировка завершена до обновления
         $wasFinished = $workout->finished_at !== null;
         
+        // Нормализуем даты для правильной обработки временных зон
+        if (isset($data['started_at'])) {
+            $data['started_at'] = $this->normalizeDateTimeForStorage($data['started_at']);
+        }
+        
+        if (isset($data['finished_at'])) {
+            $data['finished_at'] = $this->normalizeDateTimeForStorage($data['finished_at']);
+        }
+        
         $workout->update($data);
         
         // Получаем обновленную тренировку со связями
@@ -143,6 +161,40 @@ final class WorkoutService
         }
         
         return $workout;
+    }
+
+    /**
+     * Нормализует дату/время для сохранения в БД, интерпретируя строки без зоны как локальное время.
+     * 
+     * @param string|\Carbon\Carbon $dateTime Строка с датой/временем или Carbon объект
+     * @return \Carbon\Carbon Carbon объект в локальной зоне (Laravel автоматически конвертирует в UTC при сохранении)
+     */
+    private function normalizeDateTimeForStorage(string|\Carbon\Carbon $dateTime): \Carbon\Carbon
+    {
+        // Если это уже Carbon объект, просто устанавливаем локальную зону
+        if ($dateTime instanceof \Carbon\Carbon) {
+            return $dateTime->setTimezone(config('app.timezone'));
+        }
+
+        // Если строка уже содержит информацию о зоне (Z, +03:00, etc.), парсим с учетом зоны
+        if (preg_match('/[Z+-]\d{2}:?\d{2}$/', $dateTime)) {
+            try {
+                $carbon = \Carbon\Carbon::parse($dateTime);
+                // Конвертируем в локальную зону
+                return $carbon->setTimezone(config('app.timezone'));
+            } catch (\Exception $e) {
+                // Если не удалось распарсить, пробуем создать в локальной зоне
+                return \Carbon\Carbon::parse($dateTime, config('app.timezone'));
+            }
+        }
+
+        // Если строка без зоны, создаем Carbon в локальной зоне
+        try {
+            return \Carbon\Carbon::parse($dateTime, config('app.timezone'));
+        } catch (\Exception $e) {
+            // Если не удалось распарсить, создаем текущее время в локальной зоне
+            return \Carbon\Carbon::now(config('app.timezone'));
+        }
     }
 
     /**
@@ -299,9 +351,13 @@ final class WorkoutService
             throw new \InvalidArgumentException('Тренировка уже завершена');
         }
 
-        $workout->update(['finished_at' => now()]);
+        // Используем now() для получения текущего времени в локальной зоне
+        // Laravel автоматически конвертирует его в UTC при сохранении через Eloquent
+        // Обновляем через модель, чтобы Laravel правильно обработал временную зону
+        $workout->finished_at = now();
+        $workout->save();
         
-        // Получаем обновленную тренировку со связями
+        // Перезагружаем модель из БД со связями, чтобы получить актуальные данные
         $workout = $workout->fresh(['plan.cycle', 'user']);
         
         // Если тренировка связана с циклом, проверяем и автоматически завершаем цикл при достижении 100%
