@@ -146,6 +146,167 @@ describe('Authentication', function () {
                     'message'
                 ]);
         });
+
+        it('allows user to update profile', function () {
+            $user = User::factory()->create([
+                'name' => 'Old Name',
+                'email' => 'test@example.com',
+            ]);
+            $token = $user->createToken('test-token')->plainTextToken;
+
+            $profileData = [
+                'name' => 'New Nickname',
+            ];
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->putJson('/api/v1/user', $profileData);
+
+            $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'data' => [
+                        'id',
+                        'name',
+                        'email',
+                        'created_at',
+                        'updated_at',
+                    ],
+                    'message'
+                ])
+                ->assertJson([
+                    'data' => [
+                        'id' => $user->id,
+                        'name' => 'New Nickname',
+                        'email' => 'test@example.com',
+                    ],
+                    'message' => 'Профиль успешно обновлен',
+                ]);
+
+            // Проверяем, что имя обновилось в базе данных
+            $this->assertDatabaseHas('users', [
+                'id' => $user->id,
+                'name' => 'New Nickname',
+                'email' => 'test@example.com',
+            ]);
+
+            // Проверяем, что email не изменился
+            expect($response->json('data.email'))->toBe('test@example.com');
+        });
+
+        it('validates name is required', function () {
+            $user = User::factory()->create();
+            $token = $user->createToken('test-token')->plainTextToken;
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->putJson('/api/v1/user', []);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['name'])
+                ->assertJson([
+                    'message' => 'Ошибка валидации',
+                ]);
+
+            // Проверяем точный формат ответа
+            $responseData = $response->json();
+            expect($responseData)->toHaveKey('errors');
+            expect($responseData['errors'])->toHaveKey('name');
+            expect($responseData['errors']['name'])->toBeArray();
+            expect($responseData['errors']['name'][0])->toBe('Имя пользователя обязательно.');
+        });
+
+        it('validates name is string', function () {
+            $user = User::factory()->create();
+            $token = $user->createToken('test-token')->plainTextToken;
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->putJson('/api/v1/user', [
+                'name' => 12345,
+            ]);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['name']);
+        });
+
+        it('validates name max length', function () {
+            $user = User::factory()->create();
+            $token = $user->createToken('test-token')->plainTextToken;
+
+            $longName = str_repeat('a', 256); // 256 символов - больше лимита
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->putJson('/api/v1/user', [
+                'name' => $longName,
+            ]);
+
+            $response->assertStatus(422)
+                ->assertJsonValidationErrors(['name'])
+                ->assertJson([
+                    'message' => 'Ошибка валидации',
+                ]);
+
+            // Проверяем сообщение об ошибке
+            $responseData = $response->json();
+            expect($responseData['errors']['name'][0])->toBe('Имя пользователя не может быть длиннее 255 символов.');
+        });
+
+        it('allows name with 255 characters', function () {
+            $user = User::factory()->create();
+            $token = $user->createToken('test-token')->plainTextToken;
+
+            $longName = str_repeat('a', 255); // Ровно 255 символов
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->putJson('/api/v1/user', [
+                'name' => $longName,
+            ]);
+
+            $response->assertStatus(200)
+                ->assertJson([
+                    'message' => 'Профиль успешно обновлен',
+                ]);
+
+            $this->assertDatabaseHas('users', [
+                'id' => $user->id,
+                'name' => $longName,
+            ]);
+        });
+
+        it('requires authentication to update profile', function () {
+            $response = $this->putJson('/api/v1/user', [
+                'name' => 'New Name',
+            ]);
+
+            $response->assertStatus(401);
+        });
+
+        it('preserves user email when updating name', function () {
+            $user = User::factory()->create([
+                'name' => 'Old Name',
+                'email' => 'preserve@example.com',
+            ]);
+            $token = $user->createToken('test-token')->plainTextToken;
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer ' . $token,
+            ])->putJson('/api/v1/user', [
+                'name' => 'Updated Name',
+            ]);
+
+            $response->assertStatus(200);
+
+            // Проверяем, что email не изменился
+            $this->assertDatabaseHas('users', [
+                'id' => $user->id,
+                'name' => 'Updated Name',
+                'email' => 'preserve@example.com',
+            ]);
+
+            expect($response->json('data.email'))->toBe('preserve@example.com');
+        });
     });
 
     describe('Password Management', function () {

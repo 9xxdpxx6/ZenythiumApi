@@ -59,7 +59,10 @@ describe('MuscleGroupService', function () {
         });
 
         it('returns paginated results when per_page is specified', function () {
-            MuscleGroup::factory()->count(25)->create();
+            // Создаем 25 уникальных muscle groups с явно указанными именами
+            for ($i = 1; $i <= 25; $i++) {
+                MuscleGroup::factory()->create(['name' => "Muscle Group {$i}"]);
+            }
 
             $result = $this->service->getAll(['per_page' => 10]);
 

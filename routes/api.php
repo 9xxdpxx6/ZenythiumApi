@@ -36,6 +36,7 @@ Route::prefix('v1')->group(function () {
 // Protected API v1 routes
 Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(function () {
     Route::get('/user', [AuthController::class, 'me']);
+    Route::put('/user', [AuthController::class, 'updateProfile']);
     Route::get('/user/statistics', [StatisticsController::class, 'statistics']);
     Route::get('/user/exercise-statistics', [StatisticsController::class, 'exerciseStatistics']);
     Route::get('/user/time-analytics', [StatisticsController::class, 'timeAnalytics']);

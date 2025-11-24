@@ -5,11 +5,13 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Http\Requests\RegisterRequest;
+use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
@@ -280,6 +282,76 @@ final class AuthController extends Controller
     }
 
     /**
+     * @OA\Put(
+     *     path="/api/v1/user",
+     *     summary="Обновление профиля пользователя",
+     *     description="Обновляет данные профиля текущего аутентифицированного пользователя (никнейм)",
+     *     tags={"Authentication"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"name"},
+     *             @OA\Property(property="name", type="string", example="Новый никнейм", description="Новый никнейм пользователя (до 255 символов)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Профиль успешно обновлен",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="name", type="string", example="Новый никнейм"),
+     *                 @OA\Property(property="email", type="string", example="ivan@example.com"),
+     *                 @OA\Property(property="created_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z"),
+     *                 @OA\Property(property="updated_at", type="string", format="date-time", example="2024-01-01T00:00:00.000000Z")
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Профиль успешно обновлен")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="name", type="array", @OA\Items(type="string"), example={"Имя пользователя обязательно."})
+     *             )
+     *         )
+     *     )
+     * )
+     */
+    public function updateProfile(UpdateProfileRequest $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        $user->update([
+            'name' => $request->name,
+        ]);
+
+        // Обновляем модель из базы данных для получения актуального updated_at
+        $user->refresh();
+
+        return response()->json([
+            'data' => [
+                'id' => $user->id,
+                'name' => $user->name,
+                'email' => $user->email,
+                'created_at' => $user->created_at?->toISOString(),
+                'updated_at' => $user->updated_at?->toISOString(),
+            ],
+            'message' => 'Профиль успешно обновлен'
+        ]);
+    }
+
+    /**
      * @OA\Post(
      *     path="/api/v1/forgot-password",
      *     summary="Отправка ссылки для сброса пароля",
@@ -324,6 +396,10 @@ final class AuthController extends Controller
     {
         $validator = Validator::make($request->all(), [
             'email' => 'required|email|exists:users,email',
+        ], [
+            'email.required' => 'Email обязателен для заполнения.',
+            'email.email' => 'Введите корректный email адрес.',
+            'email.exists' => 'Пользователь с таким email не найден в системе.',
         ]);
 
         if ($validator->fails()) {
@@ -333,19 +409,39 @@ final class AuthController extends Controller
             ], 422);
         }
 
-        $status = Password::sendResetLink($request->only('email'));
+        try {
+            $status = Password::sendResetLink($request->only('email'));
 
-        if ($status === Password::RESET_LINK_SENT) {
+            if ($status === Password::RESET_LINK_SENT) {
+                return response()->json([
+                    'data' => null,
+                    'message' => 'Ссылка для сброса пароля отправлена на вашу почту'
+                ]);
+            }
+
+            // Обработка других статусов
+            $message = match($status) {
+                Password::RESET_THROTTLED => 'Слишком много попыток. Пожалуйста, попробуйте позже.',
+                Password::INVALID_USER => 'Пользователь с таким email не найден.',
+                default => 'Не удалось отправить ссылку для сброса пароля. Статус: ' . $status,
+            };
+
             return response()->json([
                 'data' => null,
-                'message' => 'Ссылка для сброса пароля отправлена на вашу почту'
+                'message' => $message
+            ], $status === Password::RESET_THROTTLED ? 429 : 500);
+        } catch (\Exception $e) {
+            // Логируем ошибку для отладки
+            Log::error('Password reset error: ' . $e->getMessage(), [
+                'email' => $request->email,
+                'exception' => $e
             ]);
-        }
 
-        return response()->json([
-            'data' => null,
-            'message' => 'Не удалось отправить ссылку для сброса пароля'
-        ], 500);
+            return response()->json([
+                'data' => null,
+                'message' => 'Не удалось отправить ссылку для сброса пароля. Проверьте настройки почты.'
+            ], 500);
+        }
     }
 
     /**
