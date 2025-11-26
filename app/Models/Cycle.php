@@ -31,6 +31,7 @@ final class Cycle extends Model
     protected $appends = [
         'progress_percentage',
         'completed_workouts_count',
+        'current_week',
     ];
 
     /**
@@ -85,5 +86,44 @@ final class Cycle extends Model
     public function getCompletedWorkoutsCountAttribute(): int
     {
         return $this->workouts()->whereNotNull('finished_at')->count();
+    }
+
+    /**
+     * Get the current week of the cycle based on progress percentage.
+     * Synchronized with progress_percentage to reflect actual workout completion.
+     * Returns 0 if no progress, weeks if 100% complete, or calculated week based on progress.
+     */
+    public function getCurrentWeekAttribute(): int
+    {
+        // Если нет планов в цикле или не указано количество недель, текущая неделя = 0
+        $totalPlans = $this->plans()->count();
+        if ($totalPlans === 0 || $this->weeks <= 0) {
+            return 0;
+        }
+
+        // Получаем прогресс в процентах (используем ту же логику, что и в getProgressPercentageAttribute)
+        $completedWorkouts = $this->workouts()->whereNotNull('finished_at')->count();
+        $totalScheduledWorkouts = $this->weeks * $totalPlans;
+        
+        // Если нет завершенных тренировок, текущая неделя = 0
+        if ($completedWorkouts === 0 || $totalScheduledWorkouts === 0) {
+            return 0;
+        }
+
+        // Вычисляем прогресс в процентах
+        $progressPercentage = min(100, max(0, ($completedWorkouts / $totalScheduledWorkouts) * 100));
+        
+        // Если прогресс 100%, текущая неделя = общее количество недель
+        if ($progressPercentage >= 100) {
+            return $this->weeks;
+        }
+
+        // Вычисляем текущую неделю на основе прогресса
+        // Округляем вверх: если есть хотя бы минимальный прогресс, это уже неделя 1
+        // Например: 6 недель, 50% прогресса = 3 неделя
+        $calculatedWeek = (int) ceil(($progressPercentage / 100) * $this->weeks);
+        
+        // Минимум 1 (если есть прогресс), максимум weeks
+        return min($this->weeks, max(1, $calculatedWeek));
     }
 }

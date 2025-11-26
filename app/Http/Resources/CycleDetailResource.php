@@ -21,6 +21,7 @@ use Illuminate\Http\Resources\Json\JsonResource;
  *     @OA\Property(property="end_date", type="string", format="date", example="2024-12-31"),
  *     @OA\Property(property="weeks", type="integer", example=12),
  *     @OA\Property(property="progress_percentage", type="number", format="float", example=75.5),
+ *     @OA\Property(property="current_week", type="integer", example=3, description="Текущая неделя цикла, рассчитывается на основе прогресса выполнения тренировок (синхронизировано с progress_percentage). Значение от 0 до weeks."),
  *     @OA\Property(property="completed_workouts_count", type="integer", example=8),
  *     @OA\Property(property="plans_count", type="integer", example=3),
  *     @OA\Property(property="plans", type="array", items=@OA\Items(type="object",
@@ -54,6 +55,7 @@ final class CycleDetailResource extends JsonResource
             'end_date' => $this->end_date?->toDateString(),
             'weeks' => $this->weeks,
             'progress_percentage' => $this->progress_percentage,
+            'current_week' => $this->current_week,
             'completed_workouts_count' => $this->completed_workouts_count,
             'plans_count' => $this->whenLoaded('plans', function () {
                 return $this->plans->count();

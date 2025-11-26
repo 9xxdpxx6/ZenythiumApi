@@ -7586,6 +7586,11 @@
                         "format": "float",
                         "example": 75.5
                     },
+                    "current_week": {
+                        "description": "Текущая неделя цикла, рассчитывается на основе прогресса выполнения тренировок (синхронизировано с progress_percentage). Значение от 0 до weeks.",
+                        "type": "integer",
+                        "example": 3
+                    },
                     "completed_workouts_count": {
                         "type": "integer",
                         "example": 8
@@ -7686,6 +7691,11 @@
                         "type": "number",
                         "format": "float",
                         "example": 75.5
+                    },
+                    "current_week": {
+                        "description": "Текущая неделя цикла, рассчитывается на основе прогресса выполнения тренировок (синхронизировано с progress_percentage). Значение от 0 до weeks.",
+                        "type": "integer",
+                        "example": 3
                     },
                     "completed_workouts_count": {
                         "type": "integer",
