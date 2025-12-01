@@ -84,7 +84,8 @@ final class WorkoutResource extends JsonResource
                                 'name' => $planExercise->exercise->muscleGroup->name,
                             ],
                         ],
-                        'history' => $this->getExerciseHistory($planExercise->id),
+                        // История должна быть привязана к упражнению, а не к конкретному плану/циклу
+                        'history' => $this->getExerciseHistory($planExercise->exercise->id),
                     ];
                 });
             }),
@@ -100,7 +101,9 @@ final class WorkoutResource extends JsonResource
      * - Текущую тренировку (если есть подходы)
      * - Последние 3 завершенные тренировки (finished_at != null)
      * 
-     * @param int $planExerciseId ID упражнения в плане
+     * Использует предзагруженные данные из контроллера для оптимизации производительности.
+     * 
+     * @param int $exerciseId ID упражнения
      * 
      * @return array Массив с историей подходов. Каждый элемент содержит:
      * - workout_id: ID тренировки
@@ -112,29 +115,26 @@ final class WorkoutResource extends JsonResource
      * @note workout_date = дата означает завершенную тренировку (finished_at != null)
      * @note started_at не используется в истории, только finished_at для определения статуса
      */
-    private function getExerciseHistory(int $planExerciseId): array
+    private function getExerciseHistory(int $exerciseId): array
     {
-        if (!$this->relationLoaded('plan') || !$this->plan->relationLoaded('planExercises')) {
-            return [];
-        }
-
-        $planExercise = $this->plan->planExercises->firstWhere('id', $planExerciseId);
+        // Используем предзагруженные данные из контроллера (оптимизация N+1)
+        $allWorkoutSets = $this->resource->getAttribute('exerciseHistorySets');
         
-        if (!$planExercise || !$planExercise->relationLoaded('workoutSets')) {
+        if (!$allWorkoutSets || !$allWorkoutSets->has($exerciseId)) {
             return [];
         }
-
-        // Группируем подходы по тренировкам
-        $workoutSets = $planExercise->workoutSets->groupBy('workout.id');
+        
+        // Получаем подходы для конкретного упражнения и группируем по тренировкам
+        $workoutSets = $allWorkoutSets->get($exerciseId)->groupBy('workout_id');
         
         $history = [];
         
-        // Добавляем текущую тренировку (если есть подходы)
+        // Добавляем текущую тренировку (если есть подходы по этому упражнению)
         if ($workoutSets->has($this->id)) {
             $currentSets = $workoutSets->get($this->id);
             $history[] = [
                 'workout_id' => $this->id,
-                'workout_date' => $this->finished_at?->toISOString(), // Используем finished_at текущей тренировки
+                'workout_date' => $this->finished_at?->toISOString(),
                 'sets' => $currentSets->map(function ($set) {
                     return [
                         'id' => $set->id,
@@ -148,7 +148,7 @@ final class WorkoutResource extends JsonResource
         // Добавляем последние 3 завершенные тренировки (исключая текущую)
         $completedWorkouts = $workoutSets
             ->filter(function ($sets, $workoutId) {
-                return $workoutId != $this->id && $sets->first()->workout->finished_at !== null; // Исключаем текущую тренировку и незавершенные
+                return $workoutId != $this->id && $sets->first()->workout->finished_at !== null;
             })
             ->sortByDesc(function ($sets) {
                 return $sets->first()->workout->finished_at;

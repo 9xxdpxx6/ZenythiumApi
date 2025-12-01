@@ -303,19 +303,37 @@ final class WorkoutController extends Controller
             ], 404);
         }
         
-        // Загружаем дополнительные связи для отображения упражнений с историей
+        $userId = $request->user()?->id;
+        
+        // Загружаем план с упражнениями
         $workout->load([
             'plan.planExercises.exercise.muscleGroup',
-            'plan.planExercises.workoutSets' => function ($query) use ($request, $workout) {
-                $query->whereHas('workout', function ($q) use ($request, $workout) {
-                    $q->where('user_id', $request->user()?->id)
-                      ->where(function ($subQ) use ($workout) {
-                          $subQ->whereNotNull('finished_at')
-                               ->orWhere('id', $workout->id); // Включаем текущую тренировку
-                      });
-                })->with('workout:id,finished_at')->orderBy('created_at', 'desc');
-            }
         ]);
+        
+        // Получаем все exercise_id из плана
+        $exerciseIds = $workout->plan->planExercises->pluck('exercise.id')->unique()->toArray();
+        
+        // Загружаем ВСЕ подходы по этим упражнениям одним запросом (оптимизация N+1)
+        $allWorkoutSets = \App\Models\WorkoutSet::query()
+            ->with(['workout:id,user_id,finished_at', 'planExercise:id,exercise_id'])
+            ->whereHas('workout', function ($query) use ($userId, $id) {
+                $query->where('user_id', $userId)
+                    ->where(function ($subQuery) use ($id) {
+                        $subQuery->whereNotNull('finished_at')
+                            ->orWhere('id', $id); // включаем текущую тренировку (может быть незавершенной)
+                    });
+            })
+            ->whereHas('planExercise', function ($query) use ($exerciseIds) {
+                $query->whereIn('exercise_id', $exerciseIds);
+            })
+            ->orderBy('created_at', 'desc')
+            ->get()
+            ->groupBy(function ($set) {
+                return $set->planExercise->exercise_id;
+            });
+        
+        // Сохраняем загруженные данные в модель для использования в ресурсе
+        $workout->setAttribute('exerciseHistorySets', $allWorkoutSets);
         
         return response()->json([
             'data' => new WorkoutResource($workout),
