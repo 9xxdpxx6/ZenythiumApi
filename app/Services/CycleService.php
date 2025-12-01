@@ -20,9 +20,15 @@ final class CycleService
     public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new CycleFilter($filters);
-        $query = Cycle::query()->withCount('plans');
+        $query = Cycle::query()
+            ->with('user')
+            ->withCount([
+                'plans',
+                'workouts as completed_workouts_count' => function ($query) {
+                    $query->whereNotNull('finished_at');
+                }
+            ]);
         
-        // Если user_id не передан, возвращаем пустой результат для безопасности
         if (!isset($filters['user_id']) || $filters['user_id'] === null) {
             return new LengthAwarePaginator([], 0, 15, 1);
         }
@@ -37,9 +43,17 @@ final class CycleService
      */
     public function getById(int $id, ?int $userId = null): ?Cycle
     {
-        $query = Cycle::query()->with(['plans' => function ($query) {
-            $query->orderBy('order');
-        }]);
+        $query = Cycle::query()->with([
+            'user',
+            'plans' => function ($query) {
+                $query->orderBy('order');
+            }
+        ])->withCount([
+            'plans',
+            'workouts as completed_workouts_count' => function ($query) {
+                $query->whereNotNull('finished_at');
+            }
+        ]);
 
         if ($userId) {
             $query->where('user_id', $userId);
@@ -124,8 +138,15 @@ final class CycleService
      */
     private function attachPlansToCycle(Cycle $cycle, array $planIds): void
     {
+        if (empty($planIds)) {
+            return;
+        }
+
+        // Оптимизация: загружаем все планы одним запросом
+        $plans = \App\Models\Plan::whereIn('id', $planIds)->get()->keyBy('id');
+
         foreach ($planIds as $index => $planId) {
-            $plan = \App\Models\Plan::find($planId);
+            $plan = $plans->get($planId);
             
             if ($plan) {
                 $plan->update([
@@ -145,25 +166,21 @@ final class CycleService
         $existingPlans = \App\Models\Plan::where('cycle_id', $cycle->id)->get();
         $existingPlanIds = $existingPlans->pluck('id')->toArray();
         
-        // Планы, которые нужно отвязать (есть в цикле, но нет в новом списке)
         $plansToDetach = array_diff($existingPlanIds, $planIds);
         
-        // Планы, которые нужно привязать (есть в новом списке, но нет в цикле)
-        $plansToAttach = array_diff($planIds, $existingPlanIds);
-        
-        // Отвязываем планы, которых нет в новом списке
+        // Отвязываем планы, которых нет в новом списке (оптимизация: одним запросом)
         if (!empty($plansToDetach)) {
-            foreach ($plansToDetach as $planId) {
-                $plan = \App\Models\Plan::find($planId);
-                if ($plan) {
-                    $plan->update(['cycle_id' => null]);
-                }
-            }
+            \App\Models\Plan::whereIn('id', $plansToDetach)->update(['cycle_id' => null]);
         }
         
-        // Привязываем новые планы и обновляем порядок всех планов
+        if (empty($planIds)) {
+            return;
+        }
+
+        $plans = \App\Models\Plan::whereIn('id', $planIds)->get()->keyBy('id');
+        
         foreach ($planIds as $index => $planId) {
-            $plan = \App\Models\Plan::find($planId);
+            $plan = $plans->get($planId);
             
             if ($plan) {
                 $plan->update([

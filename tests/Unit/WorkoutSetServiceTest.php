@@ -128,7 +128,6 @@ describe('WorkoutSetService', function () {
             expect($result->relationLoaded('workout'))->toBeTrue();
             expect($result->relationLoaded('planExercise'))->toBeTrue();
             expect($result->workout->relationLoaded('plan'))->toBeTrue();
-            expect($result->workout->plan->relationLoaded('cycle'))->toBeTrue();
         });
 
         it('filters by user when user_id provided', function () {

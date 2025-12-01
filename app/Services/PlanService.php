@@ -41,7 +41,9 @@ final class PlanService
     public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new PlanFilter($filters);
-        $query = Plan::query()->with(['cycle', 'planExercises.exercise']);
+        $query = Plan::query()
+            ->with(['cycle', 'planExercises.exercise'])
+            ->withCount('planExercises');
         
         // Если user_id не передан, возвращаем пустой результат для безопасности
         if (!isset($filters['user_id']) || $filters['user_id'] === null) {
@@ -63,7 +65,9 @@ final class PlanService
      */
     public function getById(int $id, ?int $userId = null): ?Plan
     {
-        $query = Plan::query()->with(['cycle', 'planExercises.exercise.muscleGroup']);
+        $query = Plan::query()
+            ->with(['cycle', 'planExercises.exercise.muscleGroup'])
+            ->withCount('planExercises');
 
         if ($userId) {
             $query->where(function ($q) use ($userId): void {
@@ -257,30 +261,48 @@ final class PlanService
      */
     private function attachExercisesToPlan(Plan $plan, array $exerciseIds): void
     {
+        if (empty($exerciseIds)) {
+            return;
+        }
+
+        $exercises = \App\Models\Exercise::whereIn('id', $exerciseIds)
+            ->get()
+            ->keyBy('id');
+
+        $planUserId = null;
+        if ($plan->cycle_id !== null) {
+            $planUserId = $plan->user_id ?? $plan->cycle?->user_id;
+        }
+
+        $planExercisesToCreate = [];
         foreach ($exerciseIds as $index => $exerciseId) {
-            $exercise = \App\Models\Exercise::find($exerciseId);
+            $exercise = $exercises->get($exerciseId);
             
-            // Проверяем, что упражнение существует
             if ($exercise) {
-                // Для планов с циклом проверяем принадлежность пользователю
                 if ($plan->cycle_id !== null) {
-                    $planUserId = $plan->user_id ?? $plan->cycle?->user_id;
                     if ($exercise->user_id === $planUserId) {
-                        \App\Models\PlanExercise::create([
+                        $planExercisesToCreate[] = [
                             'plan_id' => $plan->id,
                             'exercise_id' => $exerciseId,
-                            'order' => $index + 1
-                        ]);
+                            'order' => $index + 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
                     }
                 } else {
-                    // Для standalone планов добавляем без проверки принадлежности
-                    \App\Models\PlanExercise::create([
+                    $planExercisesToCreate[] = [
                         'plan_id' => $plan->id,
                         'exercise_id' => $exerciseId,
-                        'order' => $index + 1
-                    ]);
+                        'order' => $index + 1,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
                 }
             }
+        }
+
+        if (!empty($planExercisesToCreate)) {
+            \App\Models\PlanExercise::insert($planExercisesToCreate);
         }
     }
     
@@ -300,31 +322,48 @@ final class PlanService
         // Удаляем все существующие упражнения плана
         \App\Models\PlanExercise::where('plan_id', $plan->id)->delete();
         
-        // Добавляем новые упражнения в порядке массива
+        if (empty($exerciseIds)) {
+            return;
+        }
+
+        $exercises = \App\Models\Exercise::whereIn('id', $exerciseIds)
+            ->get()
+            ->keyBy('id');
+
+        $planUserId = null;
+        if ($plan->cycle_id !== null) {
+            $planUserId = $plan->user_id ?? $plan->cycle?->user_id;
+        }
+
+        $planExercisesToCreate = [];
         foreach ($exerciseIds as $index => $exerciseId) {
-            $exercise = \App\Models\Exercise::find($exerciseId);
+            $exercise = $exercises->get($exerciseId);
             
-            // Проверяем, что упражнение существует
             if ($exercise) {
-                // Для планов с циклом проверяем принадлежность пользователю
                 if ($plan->cycle_id !== null) {
-                    $planUserId = $plan->user_id ?? $plan->cycle?->user_id;
                     if ($exercise->user_id === $planUserId) {
-                        \App\Models\PlanExercise::create([
+                        $planExercisesToCreate[] = [
                             'plan_id' => $plan->id,
                             'exercise_id' => $exerciseId,
-                            'order' => $index + 1
-                        ]);
+                            'order' => $index + 1,
+                            'created_at' => now(),
+                            'updated_at' => now(),
+                        ];
                     }
                 } else {
-                    // Для standalone планов добавляем без проверки принадлежности
-                    \App\Models\PlanExercise::create([
+                    $planExercisesToCreate[] = [
                         'plan_id' => $plan->id,
                         'exercise_id' => $exerciseId,
-                        'order' => $index + 1
-                    ]);
+                        'order' => $index + 1,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
                 }
             }
+        }
+
+        if (!empty($planExercisesToCreate)) {
+            \App\Models\PlanExercise::insert($planExercisesToCreate);
         }
     }
 }

@@ -22,9 +22,8 @@ final class WorkoutSetService
     public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new WorkoutSetFilter($filters);
-        $query = WorkoutSet::query()->with(['workout.plan.cycle', 'workout.user', 'planExercise.exercise']);
+        $query = WorkoutSet::query()->with(['workout.plan', 'workout.user', 'planExercise.exercise']);
         
-        // Если workout_id не передан, возвращаем пустой результат для безопасности
         if (!isset($filters['workout_id']) || $filters['workout_id'] === null) {
             return new LengthAwarePaginator([], 0, 15, 1);
         }
@@ -39,7 +38,7 @@ final class WorkoutSetService
      */
     public function getById(int $id, ?int $userId = null): ?WorkoutSet
     {
-        $query = WorkoutSet::query()->with(['workout.plan.cycle', 'workout.user', 'planExercise.exercise']);
+        $query = WorkoutSet::query()->with(['workout.plan', 'workout.user', 'planExercise.exercise']);
 
         if ($userId) {
             $query->whereHas('workout', function ($q) use ($userId) {
@@ -78,7 +77,7 @@ final class WorkoutSetService
         
         $workoutSet->update($data);
         
-        return $workoutSet->fresh(['workout.plan.cycle', 'workout.user', 'planExercise.exercise']);
+        return $workoutSet->fresh(['workout.plan', 'workout.user', 'planExercise.exercise']);
     }
 
     /**

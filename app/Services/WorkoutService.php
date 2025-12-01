@@ -37,9 +37,8 @@ final class WorkoutService
     public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new WorkoutFilter($filters);
-        $query = Workout::query()->with(['plan.cycle', 'user']);
+        $query = Workout::query()->with(['plan', 'user']);
         
-        // Если user_id не передан, возвращаем пустой результат для безопасности
         if (!isset($filters['user_id']) || $filters['user_id'] === null) {
             return new LengthAwarePaginator([], 0, 15, 1);
         }
@@ -265,40 +264,35 @@ final class WorkoutService
             return null;
         }
 
-        // Получаем только активные планы этого цикла в порядке их выполнения
         $plans = $activeCycle->plans()
             ->where('is_active', true)
             ->orderBy('order')
+            ->withCount([
+                'workouts as total_workouts' => function ($query) use ($userId) {
+                    $query->where('user_id', $userId);
+                },
+                'workouts as active_workouts_count' => function ($query) use ($userId) {
+                    $query->where('user_id', $userId)
+                        ->whereNotNull('started_at')
+                        ->whereNull('finished_at');
+                }
+            ])
             ->get();
 
         if ($plans->isEmpty()) {
             return null;
         }
 
-        // Анализируем каждый план: считаем все тренировки и проверяем активные
         $planProgress = [];
         foreach ($plans as $plan) {
-            // Считаем все тренировки для плана (не только завершенные)
-            $totalWorkouts = $plan->workouts()
-                ->where('user_id', $userId)
-                ->count();
-            
-            // Проверяем, есть ли активная тренировка (запущенная, но не завершенная)
-            $hasActiveWorkout = $plan->workouts()
-                ->where('user_id', $userId)
-                ->whereNotNull('started_at')
-                ->whereNull('finished_at')
-                ->exists();
-            
             $planProgress[$plan->id] = [
                 'plan' => $plan,
-                'total_workouts' => $totalWorkouts,
-                'has_active_workout' => $hasActiveWorkout,
+                'total_workouts' => $plan->total_workouts ?? 0,
+                'has_active_workout' => ($plan->active_workouts_count ?? 0) > 0,
                 'order' => $plan->order
             ];
         }
 
-        // Исключаем планы с активными тренировками
         $availablePlans = array_filter($planProgress, function ($progress) {
             return !$progress['has_active_workout'];
         });

@@ -75,6 +75,14 @@ final class Plan extends Model
      */
     public function getExerciseCountAttribute(): int
     {
+        if (isset($this->attributes['plan_exercises_count'])) {
+            return (int) $this->attributes['plan_exercises_count'];
+        }
+        
+        if ($this->relationLoaded('planExercises')) {
+            return $this->planExercises->count();
+        }
+        
         return $this->planExercises()->count();
     }
 }
