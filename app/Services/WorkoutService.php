@@ -252,8 +252,9 @@ final class WorkoutService
     public function determineNextPlan(int $userId): ?int
     {
         // Находим активный цикл пользователя (последний по дате создания)
-        // Активным считается цикл, у которого есть активные планы
+        // Активным считается цикл, у которого есть активные планы и который не завершен (end_date === null)
         $activeCycle = \App\Models\Cycle::where('user_id', $userId)
+            ->whereNull('end_date')
             ->whereHas('plans', function ($query) {
                 $query->where('is_active', true);
             })

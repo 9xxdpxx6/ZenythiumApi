@@ -310,12 +310,14 @@ final class WorkoutController extends Controller
             'plan.planExercises.exercise.muscleGroup',
         ]);
         
-        // Получаем все exercise_id из плана
+        // Получаем plan_exercise_id и exercise_id из плана для оптимизации
+        $planExerciseIds = $workout->plan->planExercises->pluck('id')->toArray();
         $exerciseIds = $workout->plan->planExercises->pluck('exercise.id')->unique()->toArray();
         
-        // Загружаем ВСЕ подходы по этим упражнениям одним запросом (оптимизация N+1)
-        $allWorkoutSets = \App\Models\WorkoutSet::query()
+        // Оптимизация: сначала загружаем подходы по plan_exercise_id из текущего плана (прямой запрос, без JOIN)
+        $workoutSetsByPlan = \App\Models\WorkoutSet::query()
             ->with(['workout:id,user_id,finished_at', 'planExercise:id,exercise_id'])
+            ->whereIn('plan_exercise_id', $planExerciseIds)
             ->whereHas('workout', function ($query) use ($userId, $id) {
                 $query->where('user_id', $userId)
                     ->where(function ($subQuery) use ($id) {
@@ -323,11 +325,40 @@ final class WorkoutController extends Controller
                             ->orWhere('id', $id); // включаем текущую тренировку (может быть незавершенной)
                     });
             })
-            ->whereHas('planExercise', function ($query) use ($exerciseIds) {
-                $query->whereIn('exercise_id', $exerciseIds);
-            })
             ->orderBy('created_at', 'desc')
-            ->get()
+            ->get();
+        
+        // Определяем, для каких exercise_id уже есть данные
+        $exerciseIdsWithData = $workoutSetsByPlan
+            ->pluck('planExercise.exercise_id')
+            ->filter()
+            ->unique()
+            ->toArray();
+        
+        // Для упражнений без данных загружаем подходы по exercise_id (fallback через JOIN)
+        $missingExerciseIds = array_diff($exerciseIds, $exerciseIdsWithData);
+        $workoutSetsByExercise = collect();
+        
+        if (!empty($missingExerciseIds)) {
+            $workoutSetsByExercise = \App\Models\WorkoutSet::query()
+                ->with(['workout:id,user_id,finished_at', 'planExercise:id,exercise_id'])
+                ->whereHas('workout', function ($query) use ($userId, $id) {
+                    $query->where('user_id', $userId)
+                        ->where(function ($subQuery) use ($id) {
+                            $subQuery->whereNotNull('finished_at')
+                                ->orWhere('id', $id);
+                        });
+                })
+                ->whereHas('planExercise', function ($query) use ($missingExerciseIds) {
+                    $query->whereIn('exercise_id', $missingExerciseIds);
+                })
+                ->orderBy('created_at', 'desc')
+                ->get();
+        }
+        
+        // Объединяем результаты и группируем по exercise_id
+        $allWorkoutSets = $workoutSetsByPlan
+            ->concat($workoutSetsByExercise)
             ->groupBy(function ($set) {
                 return $set->planExercise->exercise_id;
             });
@@ -547,17 +578,18 @@ final class WorkoutController extends Controller
                 ], 409);
             }
         } else {
-            // Если plan_id передан, проверяем что план принадлежит активному циклу пользователя
+            // Если plan_id передан, проверяем что план принадлежит активному незавершенному циклу пользователя
             $plan = \App\Models\Plan::where('id', $planId)
                 ->whereHas('cycle', function ($query) use ($userId) {
-                    $query->where('user_id', $userId);
+                    $query->where('user_id', $userId)
+                          ->whereNull('end_date');
                 })
                 ->where('is_active', true)
                 ->first();
                 
             if (!$plan) {
                 return response()->json([
-                    'message' => 'План не найден или неактивен'
+                    'message' => 'План не найден, неактивен или принадлежит завершенному циклу'
                 ], 404);
             }
         }
