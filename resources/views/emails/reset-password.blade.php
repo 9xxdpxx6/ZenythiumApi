@@ -8,7 +8,7 @@
     <meta name="format-detection" content="telephone=no,address=no,email=no,date=no,url=no">
     <meta name="color-scheme" content="light">
     <meta name="supported-color-schemes" content="light">
-    <title>Сброс пароля - Zenythium Fitness</title>
+    <title>Сброс пароля - Zenythium</title>
     <style>
         body {
             margin: 0;
@@ -104,7 +104,7 @@
 <body>
     <div class="email-container">
         <div class="email-header">
-            <h1>Zenythium Fitness</h1>
+            <h1>Zenythium</h1>
         </div>
         
         <div class="email-body">
@@ -145,10 +145,10 @@
         
         <div class="footer">
             <p style="margin-bottom: 10px;">
-                <strong style="color: #667eea;">Zenythium Fitness</strong>
+                <strong style="color: #667eea;">Zenythium</strong>
             </p>
             <p style="margin: 0;">
-                © {{ date('Y') }} Zenythium Fitness. Все права защищены.
+                © {{ date('Y') }} Zenythium. Все права защищены.
             </p>
         </div>
     </div>

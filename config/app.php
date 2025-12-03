@@ -56,6 +56,34 @@ return [
 
     /*
     |--------------------------------------------------------------------------
+    | Frontend URL
+    |--------------------------------------------------------------------------
+    |
+    | This URL is used for generating frontend links, such as password reset
+    | links in emails. If not set, APP_URL will be used as fallback.
+    |
+    */
+
+    'frontend_url' => env('FRONTEND_URL', env('APP_URL', 'http://localhost')),
+
+    /*
+    |--------------------------------------------------------------------------
+    | Mobile App Deep Link Scheme (Deprecated)
+    |--------------------------------------------------------------------------
+    |
+    | Custom URL scheme for mobile app deep linking (e.g., "zenythium://").
+    | Currently not used - password reset links always use HTTPS URLs for
+    | Universal Links / App Links support.
+    |
+    | Note: HTTPS URLs work better in email clients and automatically open
+    | the app if installed and configured, otherwise open web version.
+    |
+    */
+
+    'mobile_app_scheme' => env('MOBILE_APP_SCHEME', null),
+
+    /*
+    |--------------------------------------------------------------------------
     | Application Timezone
     |--------------------------------------------------------------------------
     |

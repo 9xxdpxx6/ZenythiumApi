@@ -29,7 +29,7 @@ final class ResetPasswordMail extends Mailable
     public function envelope(): Envelope
     {
         $envelope = new Envelope(
-            subject: 'Сброс пароля - Zenythium Fitness',
+            subject: 'Сброс пароля - Zenythium',
         );
 
         // КРИТИЧНО: устанавливаем адрес получателя обязательно

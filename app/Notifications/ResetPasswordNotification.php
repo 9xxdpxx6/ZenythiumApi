@@ -57,57 +57,50 @@ final class ResetPasswordNotification extends ResetPasswordNotificationBase
                 $headers->addIdHeader('Message-ID', $messageId);
             }
             
-            // Заголовки для транзакционных писем (не реклама/рассылка)
+            // КРИТИЧНО для избежания спама: минимальные стандартные заголовки
+            // Убираем все кастомные заголовки (X-Mailer, X-Priority, X-System и т.д.) - они могут вызывать подозрения спам-фильтров
+            
+            // Стандартный заголовок для транзакционных писем
             $headers->addTextHeader('Auto-Submitted', 'auto-generated');
-            $headers->addTextHeader('X-Auto-Response-Suppress', 'All');
             
-            // Заголовки для идентификации письма
-            $headers->addTextHeader('X-Mailer', 'Zenythium Fitness Mail System');
-            $headers->addTextHeader('X-Entity-Ref-ID', uniqid('zenythium.', true));
-            $headers->addTextHeader('X-Email-Type', 'password-reset');
-            $headers->addTextHeader('X-System', 'Zenythium Fitness');
-            
-            // List-Unsubscribe для соответствия стандартам (даже для транзакционных)
-            $unsubscribeUrl = config('app.url') . '/unsubscribe?email=' . urlencode($notifiable->getEmailForPasswordReset());
-            $headers->addTextHeader('List-Unsubscribe', '<' . $unsubscribeUrl . '>');
-            $headers->addTextHeader('List-Unsubscribe-Post', 'List-Unsubscribe=One-Click');
-            
-            // Приоритет письма (HIGH для важных транзакционных)
-            $message->priority(\Symfony\Component\Mime\Email::PRIORITY_HIGH);
-            
-            // Устанавливаем Reply-To для обратной связи
-            $fromAddress = config('mail.from.address', 'noreply@' . $domain);
-            $message->replyTo($fromAddress);
-            
-            // Заголовки для улучшения доставляемости
-            $headers->addTextHeader('X-Priority', '1');
-            
-            // Заголовок для идентификации транзакционного письма
-            $headers->addTextHeader('X-Transaction-Type', 'password-reset');
+            // Приоритет письма - нормальный (не HIGH, чтобы не выглядеть как спам)
+            $message->priority(\Symfony\Component\Mime\Email::PRIORITY_NORMAL);
         });
     }
 
     /**
      * Get the reset URL for the given notifiable.
      *
+     * Supports two types of deep linking:
+     * 1. Universal Links (iOS) / App Links (Android) - uses HTTPS URL
+     *    Automatically opens app if installed, falls back to web if not
+     * 2. Custom URL Scheme - uses custom scheme (e.g., zenythium://)
+     *    Opens app directly, but may show browser prompt if app not installed
+     *
      * @param  mixed  $notifiable
      * @return string
      */
     protected function resetUrl(mixed $notifiable): string
     {
-        // Используем FRONTEND_URL для мобильного приложения, если он задан
-        $frontendUrl = env('FRONTEND_URL', env('APP_URL', 'http://localhost'));
-
+        $token = $this->token;
+        $email = urlencode($notifiable->getEmailForPasswordReset());
+        
+        // Всегда используем HTTPS URL (Universal Links / App Links)
+        // Это работает везде: в почтовых клиентах, браузерах, и автоматически открывает приложение если настроено
+        // Если приложение не установлено, откроется веб-версия
+        $frontendUrl = config('app.frontend_url', config('app.url', 'http://localhost'));
+        
         // Убираем завершающий слэш если есть
         $frontendUrl = rtrim($frontendUrl, '/');
-
-        // Для мобильного приложения можно использовать deep link или обычную ссылку
-        // Формат: frontend_url/reset-password?token=xxx&email=xxx
+        
+        // Формат: https://domain.com/reset-password?token=xxx&email=xxx
+        // Эта ссылка будет работать как Universal Link / App Link при правильной настройке
+        // В почтовых клиентах кнопки будут работать нормально
         return sprintf(
             '%s/reset-password?token=%s&email=%s',
             $frontendUrl,
-            $this->token,
-            urlencode($notifiable->getEmailForPasswordReset())
+            $token,
+            $email
         );
     }
 }
