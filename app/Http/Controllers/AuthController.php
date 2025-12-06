@@ -7,6 +7,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
+use App\Models\UserDeviceToken;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -651,6 +652,135 @@ final class AuthController extends Controller
                 'token_type' => 'Bearer'
             ],
             'message' => 'Токен успешно обновлен'
+        ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/user/device-tokens",
+     *     summary="Регистрация токена устройства для push-уведомлений",
+     *     description="Регистрирует FCM токен устройства пользователя для отправки push-уведомлений",
+     *     tags={"Authentication"},
+     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"device_token", "platform"},
+     *             @OA\Property(property="device_token", type="string", example="fcm_token_here", description="FCM токен устройства"),
+     *             @OA\Property(property="platform", type="string", enum={"ios", "android"}, example="android", description="Платформа устройства"),
+     *             @OA\Property(property="device_id", type="string", nullable=true, example="device_unique_id", description="Уникальный ID устройства (опционально)")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Токен устройства успешно зарегистрирован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="device_token", type="string", example="fcm_token_here"),
+     *                 @OA\Property(property="platform", type="string", example="android")
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Токен устройства успешно зарегистрирован")
+     *         )
+     *     )
+     * )
+     */
+    public function registerDeviceToken(Request $request): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'device_token' => 'required|string',
+            'platform' => 'required|string|in:ios,android',
+            'device_id' => 'nullable|string',
+        ]);
+
+        if ($validator->fails()) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'errors' => $validator->errors(),
+            ], 422);
+        }
+
+        $user = $request->user();
+        
+        // Проверяем, существует ли уже такой токен
+        $existingToken = UserDeviceToken::where('device_token', $request->device_token)->first();
+        
+        if ($existingToken) {
+            // Если токен принадлежит другому пользователю, обновляем его
+            if ($existingToken->user_id !== $user->id) {
+                $existingToken->update([
+                    'user_id' => $user->id,
+                    'platform' => $request->platform,
+                    'device_id' => $request->device_id,
+                ]);
+                $deviceToken = $existingToken;
+            } else {
+                // Если токен уже принадлежит этому пользователю, просто обновляем данные
+                $existingToken->update([
+                    'platform' => $request->platform,
+                    'device_id' => $request->device_id,
+                ]);
+                $deviceToken = $existingToken;
+            }
+        } else {
+            // Создаем новый токен
+            $deviceToken = UserDeviceToken::create([
+                'user_id' => $user->id,
+                'device_token' => $request->device_token,
+                'platform' => $request->platform,
+                'device_id' => $request->device_id,
+            ]);
+        }
+
+        return response()->json([
+            'data' => [
+                'id' => $deviceToken->id,
+                'device_token' => substr($deviceToken->device_token, 0, 20) . '...',
+                'platform' => $deviceToken->platform,
+            ],
+            'message' => 'Токен устройства успешно зарегистрирован',
+        ]);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/user/device-tokens/{id}",
+     *     summary="Удаление токена устройства",
+     *     description="Удаляет токен устройства пользователя",
+     *     tags={"Authentication"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Токен устройства успешно удален",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Токен устройства успешно удален")
+     *         )
+     *     )
+     * )
+     */
+    public function removeDeviceToken(int $id, Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        $deviceToken = UserDeviceToken::where('user_id', $user->id)
+            ->find($id);
+
+        if (!$deviceToken) {
+            return response()->json([
+                'message' => 'Токен устройства не найден',
+            ], 404);
+        }
+
+        $deviceToken->delete();
+
+        return response()->json([
+            'message' => 'Токен устройства успешно удален',
         ]);
     }
 }

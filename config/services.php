@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'fcm' => [
+        'use_v1_api' => env('FCM_USE_V1_API', true),
+        'server_key' => env('FCM_SERVER_KEY'),
+        'sender_id' => env('FCM_SENDER_ID'),
+        'project_id' => env('FCM_PROJECT_ID'),
+        'service_account_path' => env('FCM_SERVICE_ACCOUNT_PATH', storage_path('app/private/firebase-service-account.json')),
+    ],
+
 ];

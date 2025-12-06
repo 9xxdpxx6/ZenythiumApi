@@ -9,6 +9,7 @@ use App\Notifications\ResetPasswordNotification;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
@@ -107,6 +108,30 @@ final class User extends Authenticatable
     public function workoutSets(): HasManyThrough
     {
         return $this->hasManyThrough(WorkoutSet::class, Workout::class);
+    }
+
+    /**
+     * Get the goals for the user.
+     */
+    public function goals(): HasMany
+    {
+        return $this->hasMany(Goal::class);
+    }
+
+    /**
+     * Get the notification preferences for the user.
+     */
+    public function notificationPreferences(): HasOne
+    {
+        return $this->hasOne(UserNotificationPreference::class);
+    }
+
+    /**
+     * Get the device tokens for the user.
+     */
+    public function deviceTokens(): HasMany
+    {
+        return $this->hasMany(UserDeviceToken::class);
     }
 
     /**

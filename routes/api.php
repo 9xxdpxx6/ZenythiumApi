@@ -13,6 +13,7 @@ use App\Http\Controllers\StatisticsController;
 use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\WorkoutSetController;
 use App\Http\Controllers\TrainingProgramController;
+use App\Http\Controllers\GoalController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -115,4 +116,18 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::get('/training-programs/{id}', [TrainingProgramController::class, 'show']);
     Route::post('/training-programs/{id}/install', [TrainingProgramController::class, 'install']);
     Route::delete('/training-programs/{id}/uninstall', [TrainingProgramController::class, 'uninstall']);
+    
+    // Goals routes
+    Route::get('/goals', [GoalController::class, 'index']);
+    Route::post('/goals', [GoalController::class, 'store']);
+    Route::get('/goals/statistics', [GoalController::class, 'statistics']);
+    Route::get('/goals/completed', [GoalController::class, 'completed']);
+    Route::get('/goals/failed', [GoalController::class, 'failed']);
+    Route::get('/goals/{id}', [GoalController::class, 'show']);
+    Route::put('/goals/{id}', [GoalController::class, 'update']);
+    Route::delete('/goals/{id}', [GoalController::class, 'destroy']);
+    
+    // Device tokens for push notifications
+    Route::post('/user/device-tokens', [AuthController::class, 'registerDeviceToken']);
+    Route::delete('/user/device-tokens/{id}', [AuthController::class, 'removeDeviceToken']);
 });
