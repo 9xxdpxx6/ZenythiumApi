@@ -7,6 +7,7 @@ namespace App\Services;
 use App\Models\Workout;
 use App\Filters\WorkoutFilter;
 use App\Services\CycleService;
+use App\Services\GoalService;
 use App\Traits\HasPagination;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -16,7 +17,8 @@ final class WorkoutService
     use HasPagination;
 
     public function __construct(
-        private readonly CycleService $cycleService
+        private readonly CycleService $cycleService,
+        private readonly GoalService $goalService
     ) {}
     
     /**
@@ -108,6 +110,11 @@ final class WorkoutService
             }
         }
         
+        // Обновляем прогресс целей пользователя
+        if (isset($data['user_id'])) {
+            $this->goalService->updateProgressForUser($data['user_id']);
+        }
+        
         return $workout;
     }
 
@@ -157,6 +164,11 @@ final class WorkoutService
         // проверяем и автоматически завершаем цикл при достижении 100%
         if (!$wasFinished && $workout->finished_at && $workout->plan && $workout->plan->cycle) {
             $this->cycleService->autoCompleteIfFinished($workout->plan->cycle);
+        }
+        
+        // Обновляем прогресс целей пользователя
+        if ($workout->user_id) {
+            $this->goalService->updateProgressForUser($workout->user_id);
         }
         
         return $workout;
@@ -358,6 +370,11 @@ final class WorkoutService
         // Если тренировка связана с циклом, проверяем и автоматически завершаем цикл при достижении 100%
         if ($workout->plan && $workout->plan->cycle) {
             $this->cycleService->autoCompleteIfFinished($workout->plan->cycle);
+        }
+        
+        // Обновляем прогресс целей пользователя
+        if ($workout->user_id) {
+            $this->goalService->updateProgressForUser($workout->user_id);
         }
         
         return $workout;

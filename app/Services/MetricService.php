@@ -6,6 +6,7 @@ namespace App\Services;
 
 use App\Models\Metric;
 use App\Filters\MetricFilter;
+use App\Services\GoalService;
 use App\Traits\HasPagination;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -13,6 +14,10 @@ use Illuminate\Pagination\LengthAwarePaginator;
 final class MetricService
 {
     use HasPagination;
+
+    public function __construct(
+        private readonly GoalService $goalService
+    ) {}
     
     /**
      * Get all metrics with optional filtering and pagination.
@@ -51,7 +56,14 @@ final class MetricService
      */
     public function create(array $data): Metric
     {
-        return Metric::create($data);
+        $metric = Metric::create($data);
+        
+        // Обновляем прогресс целей пользователя
+        if (isset($data['user_id'])) {
+            $this->goalService->updateProgressForUser($data['user_id']);
+        }
+        
+        return $metric;
     }
 
     /**
@@ -73,7 +85,14 @@ final class MetricService
         
         $metric->update($data);
         
-        return $metric->fresh(['user']);
+        $metric = $metric->fresh(['user']);
+        
+        // Обновляем прогресс целей пользователя
+        if ($metric->user_id) {
+            $this->goalService->updateProgressForUser($metric->user_id);
+        }
+        
+        return $metric;
     }
 
     /**
