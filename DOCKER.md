@@ -1,5 +1,16 @@
 # Docker Setup для Zenythium API
 
+## 🚀 Быстрый старт
+
+### Запуск
+
+```bash
+docker-compose build
+docker-compose up -d
+```
+
+📖 **Подробная инструкция по деплою на VPS:** см. [DEPLOY.md](DEPLOY.md)
+
 ## Предварительные требования
 
 - Docker Desktop (или Docker + Docker Compose)
