@@ -134,13 +134,12 @@ docker-compose down -v
 ## Доступ к сервисам
 
 - **API**: http://localhost:8000
-- **MySQL**: localhost:3307 (порт изменен на 3307, чтобы не конфликтовать с локальным MySQL)
+- **MySQL**
   - Database: `zenythium` (или значение из `DB_DATABASE`)
   - Username: `zenythium` (или значение из `DB_USERNAME`)
   - Password: `password` (или значение из `DB_PASSWORD`)
 - **Redis**: localhost:6379
 
-**Примечание:** Если порт 3307 тоже занят, измените его в `docker-compose.yml` в секции `mysql.ports`.
 
 ## Полезные команды
 
