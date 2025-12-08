@@ -1,180 +1,123 @@
+version: "3.9"
+
 services:
   app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
-    image: zenythium-app:latest
+    image: 9xxdpxx6/zenythium-api:latest
     container_name: zenythium_app
     restart: always
     working_dir: /var/www/html
+    command: php artisan serve --host=0.0.0.0 --port=8080
     volumes:
-      # Только storage и cache директории для персистентности
       - ./storage:/var/www/html/storage:rw
       - ./bootstrap/cache:/var/www/html/bootstrap/cache:rw
-      - ./storage/app/private:/var/www/html/storage/app/private:ro
     networks:
-      - zenythium_network
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_started
+      - dokploy-network
     environment:
-      - PHP_OPCACHE_ENABLE=1
-      - PHP_FPM_PM_CONTROL=static
-      - PHP_FPM_PM_MAX_CHILDREN=50
-      - PHP_MEMORY_LIMIT=256M
-    deploy:
-      resources:
-        limits:
-          memory: 512M
-        reservations:
-          memory: 256M
-
-  nginx:
-    image: nginx:alpine
-    container_name: zenythium_nginx
-    restart: always
-    ports:
-      - "80:80"
-      - "443:443"
-    volumes:
-      - ./public:/var/www/html/public:ro
-      - ./storage:/var/www/html/storage:ro
-      - ./docker/nginx/default.conf:/etc/nginx/conf.d/default.conf:ro
-      - ./docker/nginx/ssl:/etc/nginx/ssl:ro
-    networks:
-      - zenythium_network
-    depends_on:
-      - app
-    deploy:
-      resources:
-        limits:
-          memory: 128M
+      APP_ENV: production
+      APP_DEBUG: false
+      APP_URL: https://api.zenythium.ru
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: zenythium
+      DB_USERNAME: zenythium
+      DB_PASSWORD: secret
+      CACHE_DRIVER: redis
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.zenythium-app.rule=Host(`api.zenythium.ru`)
+      - traefik.http.routers.zenythium-app.entrypoints=web
+      - traefik.http.routers.zenythium-app.middlewares=redirect-to-https@file
+      - traefik.http.routers.zenythium-app-secure.rule=Host(`api.zenythium.ru`)
+      - traefik.http.routers.zenythium-app-secure.entrypoints=websecure
+      - traefik.http.routers.zenythium-app-secure.tls.certresolver=letsencrypt
+      - traefik.http.services.zenythium-app.loadbalancer.server.port=8080
 
   mysql:
     image: mysql:8.0
     container_name: zenythium_mysql
     restart: always
-    expose:
-      - "3306"
     environment:
-      MYSQL_DATABASE: ${DB_DATABASE:-zenythium}
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD:-password}
-      MYSQL_USER: ${DB_USERNAME:-zenythium}
-      MYSQL_PASSWORD: ${DB_PASSWORD:-password}
+      MYSQL_DATABASE: zenythium
+      MYSQL_USER: zenythium
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: rootsecret
     volumes:
       - mysql_data:/var/lib/mysql
     networks:
-      - zenythium_network
+      - dokploy-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p$$MYSQL_ROOT_PASSWORD"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-prootsecret"]
       interval: 10s
       timeout: 5s
       retries: 10
       start_period: 30s
-    deploy:
-      resources:
-        limits:
-          memory: 1G
-        reservations:
-          memory: 512M
-    command: >
-      --default-authentication-plugin=mysql_native_password
-      --max_connections=200
-      --innodb_buffer_pool_size=512M
-      --innodb_log_file_size=128M
 
   redis:
     image: redis:7-alpine
     container_name: zenythium_redis
     restart: always
-    expose:
-      - "6379"
     volumes:
       - redis_data:/data
     networks:
-      - zenythium_network
-    command: >
-      redis-server
-      --appendonly yes
-      --maxmemory 256mb
-      --maxmemory-policy allkeys-lru
-      --save 60 1000
+      - dokploy-network
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru --save 60 1000
     healthcheck:
       test: ["CMD", "redis-cli", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
-    deploy:
-      resources:
-        limits:
-          memory: 512M
 
   queue:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
-    image: zenythium-app:latest
+    image: 9xxdpxx6/zenythium-api:latest
     container_name: zenythium_queue
     restart: always
     working_dir: /var/www/html
+    command: php artisan queue:work --tries=3 --timeout=90 --sleep=3
     volumes:
       - ./storage:/var/www/html/storage:rw
       - ./bootstrap/cache:/var/www/html/bootstrap/cache:rw
     networks:
-      - zenythium_network
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    entrypoint: /usr/local/bin/entrypoint.sh
-    command: php artisan queue:work --tries=3 --timeout=90 --sleep=3
+      - dokploy-network
     environment:
-      - PHP_OPCACHE_ENABLE=0
-      - PHP_MEMORY_LIMIT=256M
-    deploy:
-      resources:
-        limits:
-          memory: 512M
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: zenythium
+      DB_USERNAME: zenythium
+      DB_PASSWORD: secret
+      CACHE_DRIVER: redis
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
 
   scheduler:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: production
-    image: zenythium-app:latest
+    image: 9xxdpxx6/zenythium-api:latest
     container_name: zenythium_scheduler
     restart: always
     working_dir: /var/www/html
+    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
     volumes:
       - ./storage:/var/www/html/storage:rw
       - ./bootstrap/cache:/var/www/html/bootstrap/cache:rw
     networks:
-      - zenythium_network
-    depends_on:
-      mysql:
-        condition: service_healthy
-      redis:
-        condition: service_started
-    entrypoint: /usr/local/bin/entrypoint.sh
-    command: sh -c "while true; do php artisan schedule:run --verbose --no-interaction; sleep 60; done"
+      - dokploy-network
     environment:
-      - PHP_OPCACHE_ENABLE=0
-    deploy:
-      resources:
-        limits:
-          memory: 256M
-
-networks:
-  zenythium_network:
-    driver: bridge
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: zenythium
+      DB_USERNAME: zenythium
+      DB_PASSWORD: secret
+      CACHE_DRIVER: redis
+      REDIS_HOST: redis
+      QUEUE_CONNECTION: redis
 
 volumes:
   mysql_data:
-    driver: local
   redis_data:
-    driver: local
+
+networks:
+  dokploy-network:
+    external: true
