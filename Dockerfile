@@ -20,8 +20,8 @@ WORKDIR /var/www/html
 # Копирование composer файлов
 COPY composer.json composer.lock ./
 
-# Установка production зависимостей (без dev)
-RUN composer install --no-dev --optimize-autoloader --no-interaction
+# Установка production зависимостей (без dev и без скриптов, т.к. artisan еще не скопирован)
+RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
 
 # Stage 2: Production - финальный образ
 FROM php:8.3-fpm AS production
@@ -61,8 +61,14 @@ WORKDIR /var/www/html
 # Копирование зависимостей из builder stage
 COPY --from=builder --chown=www-data:www-data /var/www/html/vendor /var/www/html/vendor
 
+# Копирование composer из builder stage (для выполнения package discovery)
+COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
+
 # Копирование кода приложения
 COPY --chown=www-data:www-data . .
+
+# Запуск post-autoload-dump скриптов (package discovery) после копирования кода
+RUN composer dump-autoload --optimize --no-interaction || true
 
 # Копирование entrypoint скрипта
 COPY docker/entrypoint.sh /usr/local/bin/entrypoint.sh
