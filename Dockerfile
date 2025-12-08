@@ -3,33 +3,13 @@
 # Stage 1: Builder - установка зависимостей
 FROM php:8.3-fpm AS builder
 
-# Установка системных зависимостей
+# Установка системных зависимостей (только для composer)
 RUN apt-get update && apt-get install -y \
     git \
     curl \
-    libpng-dev \
-    libonig-dev \
-    libxml2-dev \
-    libzip-dev \
     zip \
     unzip \
-    libicu-dev \
     && rm -rf /var/lib/apt/lists/*
-
-# Установка PHP расширений
-RUN docker-php-ext-install \
-    pdo_mysql \
-    mbstring \
-    exif \
-    pcntl \
-    bcmath \
-    gd \
-    zip \
-    intl \
-    opcache
-
-# Установка Redis расширения
-RUN pecl install redis && docker-php-ext-enable redis
 
 # Установка Composer
 COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
@@ -41,7 +21,7 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Установка production зависимостей (без dev)
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Stage 2: Production - финальный образ
 FROM php:8.3-fpm AS production
@@ -94,9 +74,6 @@ RUN mkdir -p storage/framework/{sessions,views,cache} \
     bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache \
     && chmod -R 775 storage bootstrap/cache
-
-# Запуск post-install скриптов
-RUN composer dump-autoload --optimize --no-interaction || true
 
 # Expose port 9000
 EXPOSE 9000
