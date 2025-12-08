@@ -27,8 +27,8 @@ while ! nc -z redis 6379; do
 done
 echo "Redis is ready!"
 
-# Только для app контейнера выполняем миграции и кэширование
-if [ "$1" = "php-fpm" ]; then
+# Для app контейнера (artisan serve или php-fpm) выполняем оптимизацию
+if [ "$1" = "php-fpm" ] || [ "$1" = "php" ] || echo "$@" | grep -q "artisan serve"; then
     echo "Optimizing Laravel for production..."
     
     # Кэширование конфигурации (критично для production)

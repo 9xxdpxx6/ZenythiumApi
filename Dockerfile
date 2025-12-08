@@ -71,10 +71,6 @@ RUN docker-php-ext-install \
 # Установка Redis расширения
 RUN pecl install redis && docker-php-ext-enable redis
 
-# Настройка OPcache для production
-RUN docker-php-ext-configure opcache --enable-opcache && \
-    docker-php-ext-install opcache
-
 # Копирование PHP конфигурации
 COPY docker/php/php.ini /usr/local/etc/php/conf.d/custom.ini
 COPY docker/php/php-fpm-prod.ini /usr/local/etc/php/conf.d/opcache.ini

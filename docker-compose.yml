@@ -1,40 +1,23 @@
 version: "3.9"
 
-services:
-  app:
-    image: 9xxdpxx6/zenythium-api:latest
-    container_name: zenythium_app
-    restart: always
-    working_dir: /var/www/html
-    command: php artisan serve --host=0.0.0.0 --port=8080
-    volumes:
-      - ./storage:/var/www/html/storage:rw
-      - ./bootstrap/cache:/var/www/html/bootstrap/cache:rw
-    networks:
-      - dokploy-network
-    environment:
-      APP_ENV: production
-      APP_DEBUG: false
-      APP_URL: https://api.zenythium.ru
-      DB_CONNECTION: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: zenythium
-      DB_USERNAME: zenythium
-      DB_PASSWORD: secret
-      CACHE_DRIVER: redis
-      REDIS_HOST: redis
-      QUEUE_CONNECTION: redis
-    labels:
-      - traefik.enable=true
-      - traefik.http.routers.zenythium-app.rule=Host(`api.zenythium.ru`)
-      - traefik.http.routers.zenythium-app.entrypoints=web
-      - traefik.http.routers.zenythium-app.middlewares=redirect-to-https@file
-      - traefik.http.routers.zenythium-app-secure.rule=Host(`api.zenythium.ru`)
-      - traefik.http.routers.zenythium-app-secure.entrypoints=websecure
-      - traefik.http.routers.zenythium-app-secure.tls.certresolver=letsencrypt
-      - traefik.http.services.zenythium-app.loadbalancer.server.port=8080
+x-common-env: &common-env
+  APP_ENV: production
+  APP_DEBUG: false
+  APP_URL: https://api.zenythium.ru
+  DB_CONNECTION: mysql
+  DB_HOST: mysql
+  DB_PORT: 3306
+  DB_DATABASE: zenythium
+  DB_USERNAME: zenythium
+  DB_PASSWORD: secret
+  CACHE_STORE: redis
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  REDIS_DB: 0
+  REDIS_CACHE_DB: 1
+  QUEUE_CONNECTION: redis
 
+services:
   mysql:
     image: mysql:8.0
     container_name: zenythium_mysql
@@ -70,6 +53,40 @@ services:
       timeout: 3s
       retries: 3
 
+  app:
+    image: 9xxdpxx6/zenythium-api:latest
+    container_name: zenythium_app
+    restart: always
+    working_dir: /var/www/html
+    command: php artisan serve --host=0.0.0.0 --port=8080
+    volumes:
+      - ./storage:/var/www/html/storage:rw
+      - ./bootstrap/cache:/var/www/html/bootstrap/cache:rw
+    networks:
+      - dokploy-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    environment:
+      <<: *common-env
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(@fsockopen('127.0.0.1', 8080) ? 0 : 1);"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    labels:
+      - traefik.enable=true
+      - traefik.http.routers.zenythium-app.rule=Host(`api.zenythium.ru`)
+      - traefik.http.routers.zenythium-app.entrypoints=web
+      - traefik.http.routers.zenythium-app.middlewares=redirect-to-https@file
+      - traefik.http.routers.zenythium-app-secure.rule=Host(`api.zenythium.ru`)
+      - traefik.http.routers.zenythium-app-secure.entrypoints=websecure
+      - traefik.http.routers.zenythium-app-secure.tls.certresolver=letsencrypt
+      - traefik.http.services.zenythium-app.loadbalancer.server.port=8080
+
   queue:
     image: 9xxdpxx6/zenythium-api:latest
     container_name: zenythium_queue
@@ -81,16 +98,18 @@ services:
       - ./bootstrap/cache:/var/www/html/bootstrap/cache:rw
     networks:
       - dokploy-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      DB_CONNECTION: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: zenythium
-      DB_USERNAME: zenythium
-      DB_PASSWORD: secret
-      CACHE_DRIVER: redis
-      REDIS_HOST: redis
-      QUEUE_CONNECTION: redis
+      <<: *common-env
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(0);"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
 
   scheduler:
     image: 9xxdpxx6/zenythium-api:latest
@@ -103,16 +122,18 @@ services:
       - ./bootstrap/cache:/var/www/html/bootstrap/cache:rw
     networks:
       - dokploy-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
     environment:
-      DB_CONNECTION: mysql
-      DB_HOST: mysql
-      DB_PORT: 3306
-      DB_DATABASE: zenythium
-      DB_USERNAME: zenythium
-      DB_PASSWORD: secret
-      CACHE_DRIVER: redis
-      REDIS_HOST: redis
-      QUEUE_CONNECTION: redis
+      <<: *common-env
+    healthcheck:
+      test: ["CMD", "php", "-r", "exit(0);"]
+      interval: 60s
+      timeout: 10s
+      retries: 3
 
 volumes:
   mysql_data:
