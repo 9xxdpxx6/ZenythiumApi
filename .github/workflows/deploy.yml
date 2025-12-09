@@ -22,15 +22,15 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      # ШАГ 2: Сборка и пуш образа (ИСПРАВЛЕННЫЙ ТЕГ)
+      # ШАГ 2: Сборка и пуш образа (ИСПРАВЛЕННАЯ ВЕРСИЯ)
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/9xxdpxx6/zenythiumapi:latest
-            ghcr.io/9xxdpxx6/zenythiumapi:${{ github.sha }}
+            ghcr.io/${{ github.actor }}/zenythiumapi:latest
+            ghcr.io/${{ github.actor }}/zenythiumapi:${{ github.sha }}
 
       # ШАГ 3: Деплой на VPS
       - name: Deploy to VPS
