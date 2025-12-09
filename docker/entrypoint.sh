@@ -38,9 +38,20 @@ echo "Redis is ready!"
 if [ "$1" = "php-fpm" ] || [ "$1" = "php" ] || echo "$@" | grep -q "artisan serve"; then
     echo "Optimizing Laravel for production..."
     
+    # Ensure resources/views directory exists
+    mkdir -p /var/www/html/resources/views
+    chown -R www-data:www-data /var/www/html/resources/views || true
+    
     php artisan config:cache || true
     php artisan route:cache || true
-    php artisan view:cache || true
+    
+    # Only cache views if the views directory exists and has content
+    if [ -d "/var/www/html/resources/views" ] && [ "$(ls -A /var/www/html/resources/views 2>/dev/null)" ]; then
+        php artisan view:cache || true
+    else
+        echo "Skipping view:cache - views directory not found or empty"
+    fi
+    
     php artisan event:cache || true
 
     if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then

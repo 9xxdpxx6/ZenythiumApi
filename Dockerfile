@@ -82,8 +82,9 @@ RUN composer dump-autoload --optimize --no-interaction || true
 RUN mkdir -p storage/framework/{sessions,views,cache} \
     storage/logs \
     bootstrap/cache \
-    && chown -R www-data:www-data storage bootstrap/cache \
-    && chmod -R 775 storage bootstrap/cache
+    resources/views \
+    && chown -R www-data:www-data storage bootstrap/cache resources \
+    && chmod -R 775 storage bootstrap/cache resources
 
 # Expose port 9000
 EXPOSE 9000
