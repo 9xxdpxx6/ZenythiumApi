@@ -10,6 +10,7 @@ yarn-error.log
 /vendor
 /.idea
 /.vscode
+/ssl
 /storage/*.key
 /storage/logs/*
 !/storage/logs/.gitkeep
