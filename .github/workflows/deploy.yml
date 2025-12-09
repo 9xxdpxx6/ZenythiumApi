@@ -46,7 +46,7 @@ jobs:
           envs: GHCR_TOKEN,GHCR_USER
           script: |
             cd ~/apps/zenythium-api
-            # Авторизация в GitHub Container Registry
             echo "$GHCR_TOKEN" | docker login ghcr.io -u "$GHCR_USER" --password-stdin
+            docker compose down || true
             docker compose pull
             docker compose up -d
