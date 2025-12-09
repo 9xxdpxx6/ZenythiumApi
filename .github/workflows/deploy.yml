@@ -20,20 +20,20 @@ jobs:
         uses: docker/login-action@v2
         with:
           registry: ghcr.io
-          username: ${{ github.actor }} 
-          password: ${{ secrets.GITHUB_TOKEN }} 
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-      # ШАГ 2: Сборка и пуш образа в GitHub Container Registry
+      # ШАГ 2: Сборка и пуш образа (ИСПРАВЛЕННЫЙ ТЕГ)
       - name: Build and push Docker image
         uses: docker/build-push-action@v4
         with:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}:latest
-            ghcr.io/${{ github.repository }}:${{ github.sha }}
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
+            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ github.sha }}
 
-      # ШАГ 3: Деплой на VPS (этот у тебя уже есть, он правильный)
+      # ШАГ 3: Деплой на VPS
       - name: Deploy to VPS
         uses: appleboy/ssh-action@v0.1.5
         with:
