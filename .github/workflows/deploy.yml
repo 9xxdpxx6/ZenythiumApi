@@ -15,7 +15,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # ШАГ 1: Логин в GitHub Container Registry
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@v2
         with:
@@ -30,8 +29,8 @@ jobs:
           context: .
           push: true
           tags: |
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:latest
-            ghcr.io/${{ github.repository_owner }}/${{ github.event.repository.name }}:${{ github.sha }}
+            ghcr.io/9xxdpxx6/zenythiumapi:latest
+            ghcr.io/9xxdpxx6/zenythiumapi:${{ github.sha }}
 
       # ШАГ 3: Деплой на VPS
       - name: Deploy to VPS
@@ -42,5 +41,5 @@ jobs:
           key: ${{ secrets.VPS_SSH_KEY }}
           script: |
             cd ~/apps/zenythium-api
-            docker-compose pull
-            docker-compose up -d
+            docker compose pull
+            docker compose up -d
