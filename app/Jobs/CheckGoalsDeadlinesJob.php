@@ -30,14 +30,6 @@ final class CheckGoalsDeadlinesJob implements ShouldQueue
      */
     public function handle(GoalService $goalService): void
     {
-        // Проверяем существование таблицы goals
-        if (!Schema::hasTable('goals')) {
-            Log::warning('CheckGoalsDeadlinesJob: таблица goals не существует. Пропускаем выполнение задачи.');
-            return;
-        }
-
-        $now = now();
-        
         try {
             // Получаем активные цели с дедлайном
             $activeGoals = Goal::where('status', GoalStatus::ACTIVE)
@@ -45,12 +37,29 @@ final class CheckGoalsDeadlinesJob implements ShouldQueue
                 ->get();
         } catch (QueryException $e) {
             // Обрабатываем случай, когда таблица не существует
-            if ($e->getCode() === '42S02' || str_contains($e->getMessage(), "doesn't exist")) {
+            $errorCode = $e->getCode();
+            $errorMessage = $e->getMessage();
+            
+            // MySQL error code 42S02 = Base table or view not found
+            // Также проверяем текст ошибки для надежности
+            if ($errorCode === '42S02' || 
+                str_contains($errorMessage, "doesn't exist") || 
+                str_contains($errorMessage, "Table") && str_contains($errorMessage, "not found")) {
                 Log::warning('CheckGoalsDeadlinesJob: таблица goals не существует. Пропускаем выполнение задачи.', [
-                    'error' => $e->getMessage(),
+                    'error_code' => $errorCode,
+                    'error_message' => $errorMessage,
+                    'sql' => $e->getSql() ?? null,
                 ]);
                 return;
             }
+            
+            // Если это другая ошибка БД - логируем и пробрасываем дальше
+            Log::error('CheckGoalsDeadlinesJob: ошибка при запросе к таблице goals', [
+                'error_code' => $errorCode,
+                'error_message' => $errorMessage,
+                'sql' => $e->getSql() ?? null,
+                'bindings' => $e->getBindings() ?? null,
+            ]);
             throw $e;
         }
 
