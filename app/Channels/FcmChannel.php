@@ -231,19 +231,27 @@ final class FcmChannel
             'iat' => $now,
         ];
 
-        $headerEncoded = $this->base64UrlEncode(json_encode($header));
-        $payloadEncoded = $this->base64UrlEncode(json_encode($payload));
+        $headerJson = json_encode($header, JSON_UNESCAPED_SLASHES);
+        $payloadJson = json_encode($payload, JSON_UNESCAPED_SLASHES);
+        
+        if ($headerJson === false || $payloadJson === false) {
+            throw new \RuntimeException('Failed to encode JWT header or payload');
+        }
+        
+        $headerEncoded = $this->base64UrlEncode($headerJson);
+        $payloadEncoded = $this->base64UrlEncode($payloadJson);
 
         $signatureInput = $headerEncoded . '.' . $payloadEncoded;
         $signature = '';
         
         $privateKey = openssl_pkey_get_private($serviceAccount['private_key']);
-        if (!$privateKey) {
+        if ($privateKey === false) {
             throw new \RuntimeException('Invalid private key in service account');
         }
 
-        openssl_sign($signatureInput, $signature, $privateKey, OPENSSL_ALGO_SHA256);
-        openssl_free_key($privateKey);
+        if (!openssl_sign($signatureInput, $signature, $privateKey, OPENSSL_ALGO_SHA256)) {
+            throw new \RuntimeException('Failed to sign JWT');
+        }
 
         $signatureEncoded = $this->base64UrlEncode($signature);
 

@@ -15,6 +15,8 @@ use Illuminate\Foundation\Bus\Dispatchable;
 use Illuminate\Queue\InteractsWithQueue;
 use Illuminate\Queue\SerializesModels;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
+use Illuminate\Database\QueryException;
 
 /**
  * Job для проверки дедлайнов целей и отправки напоминаний
@@ -28,12 +30,29 @@ final class CheckGoalsDeadlinesJob implements ShouldQueue
      */
     public function handle(GoalService $goalService): void
     {
+        // Проверяем существование таблицы goals
+        if (!Schema::hasTable('goals')) {
+            Log::warning('CheckGoalsDeadlinesJob: таблица goals не существует. Пропускаем выполнение задачи.');
+            return;
+        }
+
         $now = now();
         
-        // Получаем активные цели с дедлайном
-        $activeGoals = Goal::where('status', GoalStatus::ACTIVE)
-            ->whereNotNull('end_date')
-            ->get();
+        try {
+            // Получаем активные цели с дедлайном
+            $activeGoals = Goal::where('status', GoalStatus::ACTIVE)
+                ->whereNotNull('end_date')
+                ->get();
+        } catch (QueryException $e) {
+            // Обрабатываем случай, когда таблица не существует
+            if ($e->getCode() === '42S02' || str_contains($e->getMessage(), "doesn't exist")) {
+                Log::warning('CheckGoalsDeadlinesJob: таблица goals не существует. Пропускаем выполнение задачи.', [
+                    'error' => $e->getMessage(),
+                ]);
+                return;
+            }
+            throw $e;
+        }
 
         foreach ($activeGoals as $goal) {
             try {

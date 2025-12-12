@@ -8,6 +8,30 @@ use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
 /**
+ * @OA\Schema(
+ *     schema="GoalResource",
+ *     type="object",
+ *     @OA\Property(property="id", type="integer", example=1),
+ *     @OA\Property(property="type", type="string", example="total_workouts"),
+ *     @OA\Property(property="title", type="string", example="50 тренировок за 3 месяца"),
+ *     @OA\Property(property="description", type="string", nullable=true, example="Описание цели"),
+ *     @OA\Property(property="target_value", type="number", format="float", example=50.0),
+ *     @OA\Property(property="current_value", type="number", format="float", nullable=true, example=25.0),
+ *     @OA\Property(property="progress_percentage", type="number", format="float", nullable=true, example=50.0),
+ *     @OA\Property(property="start_date", type="string", format="date", example="2024-01-01"),
+ *     @OA\Property(property="end_date", type="string", format="date", nullable=true, example="2024-03-31"),
+ *     @OA\Property(property="exercise", type="object", nullable=true,
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="name", type="string", example="Жим лежа")
+ *     ),
+ *     @OA\Property(property="status", type="string", example="active"),
+ *     @OA\Property(property="completed_at", type="string", format="date-time", nullable=true, example="2024-03-31T23:59:59.000000Z"),
+ *     @OA\Property(property="achieved_value", type="number", format="float", nullable=true, example=50.0),
+ *     @OA\Property(property="days_to_complete", type="integer", nullable=true, example=15),
+ *     @OA\Property(property="created_at", type="string", format="date-time", nullable=true, example="2024-01-01T00:00:00.000000Z"),
+ *     @OA\Property(property="updated_at", type="string", format="date-time", nullable=true, example="2024-01-01T00:00:00.000000Z")
+ * )
+ *
  * API ресурс для целей
  *
  * Преобразует модель цели в массив для JSON ответа API.
