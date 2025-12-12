@@ -6,10 +6,13 @@ namespace App\Http\Controllers;
 
 use App\Models\Cycle;
 use App\Models\User;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Database\QueryException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Throwable;
 
 final class StatisticsController extends Controller
 {
@@ -54,59 +57,96 @@ final class StatisticsController extends Controller
             return response()->json(['message' => 'Пользователь не аутентифицирован'], 401);
         }
 
-        $user = User::findOrFail($userId);
+        try {
+            $user = User::findOrFail($userId);
 
-        // Basic workout statistics
-        $totalWorkouts = $user->workouts()->count();
-        $completedWorkouts = $user->workouts()->whereNotNull('finished_at')->count();
-        
-        // Total training time in minutes
-        $totalTrainingTime = $user->workouts()
-            ->whereNotNull('started_at')
-            ->whereNotNull('finished_at')
-            ->get()
-            ->sum('duration_minutes');
+            // Basic workout statistics
+            $totalWorkouts = $user->workouts()->count();
+            $completedWorkouts = $user->workouts()->whereNotNull('finished_at')->count();
+            
+            // Total training time in minutes
+            $totalTrainingTime = $user->workouts()
+                ->whereNotNull('started_at')
+                ->whereNotNull('finished_at')
+                ->get()
+                ->sum('duration_minutes');
 
-        // Total volume (weight × reps)
-        $totalVolume = $user->workoutSets()
-            ->whereNotNull('weight')
-            ->whereNotNull('reps')
-            ->sum(DB::raw('weight * reps'));
+            // Total volume (weight × reps)
+            $totalVolume = $user->workoutSets()
+                ->whereNotNull('weight')
+                ->whereNotNull('reps')
+                ->sum(DB::raw('weight * reps'));
 
-        // Current weight from latest metric
-        $currentWeight = $user->current_weight;
+            // Current weight from latest metric
+            $currentWeight = $user->current_weight;
 
-        // Active cycles count
-        $activeCyclesCount = $user->cycles()
-            ->where(function ($query) {
-                $query->whereNull('end_date')
-                    ->orWhere('end_date', '>=', now());
-            })
-            ->count();
+            // Active cycles count
+            $activeCyclesCount = $user->cycles()
+                ->where(function ($query) {
+                    $query->whereNull('end_date')
+                        ->orWhere('end_date', '>=', now());
+                })
+                ->count();
 
-        // Weight change over time (last 30 days)
-        $weightChange = $this->getWeightChange($userId);
+            // Weight change over time (last 30 days)
+            $weightChange = $this->getWeightChange($userId);
 
-        // Training frequency (workouts per week in last 35 days / 5 weeks)
-        $trainingFrequency = $this->getTrainingFrequency($userId);
+            // Training frequency (workouts per week in last 35 days / 5 weeks)
+            $trainingFrequency = $this->getTrainingFrequency($userId);
 
-        // Training streak (consecutive days with workouts)
-        $trainingStreak = $this->getTrainingStreak($userId);
+            // Training streak (consecutive days with workouts)
+            $trainingStreak = $this->getTrainingStreak($userId);
 
-        return response()->json([
-            'data' => [
-                'total_workouts' => $totalWorkouts,
-                'completed_workouts' => $completedWorkouts,
-                'total_training_time' => $totalTrainingTime,
-                'total_volume' => $totalVolume,
-                'current_weight' => $currentWeight,
-                'active_cycles_count' => $activeCyclesCount,
-                'weight_change_30_days' => $weightChange,
-                'training_frequency_4_weeks' => $trainingFrequency,
-                'training_streak_days' => $trainingStreak,
-            ],
-            'message' => 'Статистика пользователя успешно получена'
-        ]);
+            return response()->json([
+                'data' => [
+                    'total_workouts' => $totalWorkouts,
+                    'completed_workouts' => $completedWorkouts,
+                    'total_training_time' => $totalTrainingTime,
+                    'total_volume' => $totalVolume,
+                    'current_weight' => $currentWeight,
+                    'active_cycles_count' => $activeCyclesCount,
+                    'weight_change_30_days' => $weightChange,
+                    'training_frequency_4_weeks' => $trainingFrequency,
+                    'training_streak_days' => $trainingStreak,
+                ],
+                'message' => 'Статистика пользователя успешно получена'
+            ]);
+        } catch (ModelNotFoundException $e) {
+            Log::error('StatisticsController::statistics - User not found', [
+                'user_id' => $userId,
+                'exception' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Пользователь не найден'
+            ], 404);
+        } catch (QueryException $e) {
+            Log::error('StatisticsController::statistics - Database query error', [
+                'user_id' => $userId,
+                'exception' => $e->getMessage(),
+                'sql' => $e->getSql() ?? null,
+                'bindings' => $e->getBindings() ?? null,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Ошибка при получении статистики. Попробуйте позже.'
+            ], 500);
+        } catch (Throwable $e) {
+            Log::error('StatisticsController::statistics - Unexpected error', [
+                'user_id' => $userId,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Произошла ошибка при получении статистики. Попробуйте позже.'
+            ], 500);
+        }
     }
 
     /**
@@ -114,20 +154,37 @@ final class StatisticsController extends Controller
      */
     private function getWeightChange(int $userId): ?float
     {
-        $metrics = User::find($userId)
-            ->metrics()
-            ->where('date', '>=', now()->subDays(30))
-            ->orderBy('date')
-            ->get();
+        try {
+            $user = User::find($userId);
+            if (!$user) {
+                Log::warning('StatisticsController::getWeightChange - User not found', [
+                    'user_id' => $userId,
+                ]);
+                return null;
+            }
 
-        if ($metrics->count() < 2) {
+            $metrics = $user->metrics()
+                ->where('date', '>=', now()->subDays(30))
+                ->orderBy('date')
+                ->get();
+
+            if ($metrics->count() < 2) {
+                return null;
+            }
+
+            $firstWeight = $metrics->first()->weight;
+            $lastWeight = $metrics->last()->weight;
+
+            return $lastWeight - $firstWeight;
+        } catch (Throwable $e) {
+            Log::error('StatisticsController::getWeightChange - Error', [
+                'user_id' => $userId,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return null;
         }
-
-        $firstWeight = $metrics->first()->weight;
-        $lastWeight = $metrics->last()->weight;
-
-        return $lastWeight - $firstWeight;
     }
 
     /**
@@ -135,20 +192,37 @@ final class StatisticsController extends Controller
      */
     private function getTrainingFrequency(int $userId): float
     {
-        // Получаем тренировки за последние 35 дней (5 недель)
-        // Используем today() и subDays() для точного сравнения дат (как в SQL DATE_SUB(CURDATE(), INTERVAL 35 DAY))
-        $startDate = \Carbon\Carbon::today()->subDays(35)->startOfDay();
-        
-        $totalWorkouts = User::find($userId)
-            ->workouts()
-            ->whereNotNull('finished_at')
-            ->whereDate('finished_at', '>=', $startDate)
-            ->count();
+        try {
+            // Получаем тренировки за последние 35 дней (5 недель)
+            // Используем today() и subDays() для точного сравнения дат (как в SQL DATE_SUB(CURDATE(), INTERVAL 35 DAY))
+            $startDate = \Carbon\Carbon::today()->subDays(35)->startOfDay();
+            
+            $user = User::find($userId);
+            if (!$user) {
+                Log::warning('StatisticsController::getTrainingFrequency - User not found', [
+                    'user_id' => $userId,
+                ]);
+                return 0.0;
+            }
 
-        // Делим на 5 недель, чтобы получить среднее количество тренировок в неделю
-        // Это дает правильное среднее количество тренировок в неделю за последние 35 дней (5 недель)
-        $avgWorkoutsPerWeek = $totalWorkouts / 5;
-        return round($avgWorkoutsPerWeek, 1);
+            $totalWorkouts = $user->workouts()
+                ->whereNotNull('finished_at')
+                ->whereDate('finished_at', '>=', $startDate)
+                ->count();
+
+            // Делим на 5 недель, чтобы получить среднее количество тренировок в неделю
+            // Это дает правильное среднее количество тренировок в неделю за последние 35 дней (5 недель)
+            $avgWorkoutsPerWeek = $totalWorkouts / 5;
+            return round($avgWorkoutsPerWeek, 1);
+        } catch (Throwable $e) {
+            Log::error('StatisticsController::getTrainingFrequency - Error', [
+                'user_id' => $userId,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return 0.0;
+        }
     }
 
     /**
@@ -161,46 +235,63 @@ final class StatisticsController extends Controller
      */
     private function getTrainingStreak(int $userId): int
     {
-        // Получаем все циклы пользователя (включая завершенные)
-        // чтобы правильно посчитать серию с учетом всей истории
-        $cycles = User::find($userId)
-            ->cycles()
-            ->with(['plans' => function($query) {
-                $query->where('is_active', true)->orderBy('order');
-            }])
-            ->get();
+        try {
+            $user = User::find($userId);
+            if (!$user) {
+                Log::warning('StatisticsController::getTrainingStreak - User not found', [
+                    'user_id' => $userId,
+                ]);
+                return 0;
+            }
 
-        if ($cycles->isEmpty()) {
+            // Получаем все циклы пользователя (включая завершенные)
+            // чтобы правильно посчитать серию с учетом всей истории
+            $cycles = $user->cycles()
+                ->with(['plans' => function($query) {
+                    $query->where('is_active', true)->orderBy('order');
+                }])
+                ->get();
+
+            if ($cycles->isEmpty()) {
+                return 0;
+            }
+
+            // Возвращаем максимальную текущую активную серию из всех циклов
+            // (не историческую максимальную, а текущую активную)
+            $maxCurrentStreak = 0;
+            
+            Log::info('Training streak calculation - cycles check', [
+                'user_id' => $userId,
+                'cycles_count' => $cycles->count(),
+                'cycle_ids' => $cycles->pluck('id')->toArray(),
+            ]);
+            
+            foreach ($cycles as $cycle) {
+                $cycleStreak = $this->calculateCycleStreak($cycle);
+                $maxCurrentStreak = max($maxCurrentStreak, $cycleStreak);
+                
+                Log::info('Training streak calculation - cycle result', [
+                    'cycle_id' => $cycle->id,
+                    'cycle_streak' => $cycleStreak,
+                    'max_streak' => $maxCurrentStreak,
+                ]);
+            }
+
+            Log::info('Training streak calculation - final result', [
+                'user_id' => $userId,
+                'final_streak' => $maxCurrentStreak,
+            ]);
+
+            return $maxCurrentStreak;
+        } catch (Throwable $e) {
+            Log::error('StatisticsController::getTrainingStreak - Error', [
+                'user_id' => $userId,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
             return 0;
         }
-
-        // Возвращаем максимальную текущую активную серию из всех циклов
-        // (не историческую максимальную, а текущую активную)
-        $maxCurrentStreak = 0;
-        
-        Log::info('Training streak calculation - cycles check', [
-            'user_id' => $userId,
-            'cycles_count' => $cycles->count(),
-            'cycle_ids' => $cycles->pluck('id')->toArray(),
-        ]);
-        
-        foreach ($cycles as $cycle) {
-            $cycleStreak = $this->calculateCycleStreak($cycle);
-            $maxCurrentStreak = max($maxCurrentStreak, $cycleStreak);
-            
-            Log::info('Training streak calculation - cycle result', [
-                'cycle_id' => $cycle->id,
-                'cycle_streak' => $cycleStreak,
-                'max_streak' => $maxCurrentStreak,
-            ]);
-        }
-
-        Log::info('Training streak calculation - final result', [
-            'user_id' => $userId,
-            'final_streak' => $maxCurrentStreak,
-        ]);
-
-        return $maxCurrentStreak;
     }
 
     /**
@@ -214,38 +305,39 @@ final class StatisticsController extends Controller
      */
     private function calculateCycleStreak(Cycle $cycle): int
     {
-        // Получаем активные планы цикла
-        // Если планы уже загружены через with, используем их, иначе загружаем заново
-        if ($cycle->relationLoaded('plans')) {
-            $plans = $cycle->plans->where('is_active', true);
-        } else {
-            $plans = $cycle->plans()->where('is_active', true)->get();
-        }
-        
-        if ($plans->isEmpty()) {
-            return 0;
-        }
+        try {
+            // Получаем активные планы цикла
+            // Если планы уже загружены через with, используем их, иначе загружаем заново
+            if ($cycle->relationLoaded('plans')) {
+                $plans = $cycle->plans->where('is_active', true);
+            } else {
+                $plans = $cycle->plans()->where('is_active', true)->get();
+            }
+            
+            if ($plans->isEmpty()) {
+                return 0;
+            }
 
-        $planIds = $plans->pluck('id')->toArray();
-        $expectedPlansPerWeek = count($planIds);
+            $planIds = $plans->pluck('id')->toArray();
+            $expectedPlansPerWeek = count($planIds);
 
-        // Временное логирование для отладки
-        Log::info('Training streak calculation - start', [
-            'cycle_id' => $cycle->id,
-            'user_id' => $cycle->user_id,
-            'plans_count' => $plans->count(),
-            'plan_ids' => $planIds,
-            'expected_plans_per_week' => $expectedPlansPerWeek,
-        ]);
+            // Временное логирование для отладки
+            Log::info('Training streak calculation - start', [
+                'cycle_id' => $cycle->id,
+                'user_id' => $cycle->user_id,
+                'plans_count' => $plans->count(),
+                'plan_ids' => $planIds,
+                'expected_plans_per_week' => $expectedPlansPerWeek,
+            ]);
 
-        // Получаем все завершенные тренировки этого цикла, отсортированные по дате
-        // Важно: фильтруем по user_id цикла, чтобы получить только тренировки этого пользователя
-        $workouts = $cycle->workouts()
-            ->where('workouts.user_id', $cycle->user_id)
-            ->whereNotNull('finished_at')
-            ->whereIn('plan_id', $planIds)
-            ->orderBy('finished_at')
-            ->get();
+            // Получаем все завершенные тренировки этого цикла, отсортированные по дате
+            // Важно: фильтруем по user_id цикла, чтобы получить только тренировки этого пользователя
+            $workouts = $cycle->workouts()
+                ->where('workouts.user_id', $cycle->user_id)
+                ->whereNotNull('finished_at')
+                ->whereIn('plan_id', $planIds)
+                ->orderBy('finished_at')
+                ->get();
 
         Log::info('Training streak calculation - workouts', [
             'cycle_id' => $cycle->id,
@@ -350,7 +442,19 @@ final class StatisticsController extends Controller
             ]);
         }
 
-        return $currentStreak;
+            return $currentStreak;
+        } catch (Throwable $e) {
+            Log::error('StatisticsController::calculateCycleStreak - Error', [
+                'cycle_id' => $cycle->id,
+                'user_id' => $cycle->user_id ?? null,
+                'exception' => get_class($e),
+                'message' => $e->getMessage(),
+                'file' => $e->getFile(),
+                'line' => $e->getLine(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+            return 0;
+        }
     }
 
     /**
