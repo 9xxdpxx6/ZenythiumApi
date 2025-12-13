@@ -53,64 +53,127 @@ final class StatisticsController extends Controller
     public function statistics(Request $request): JsonResponse
     {
         $userId = $request->user()?->id;
+        
+        // Логируем начало запроса для отладки
+        Log::info('StatisticsController::statistics - Request started', [
+            'user_id' => $userId,
+            'ip' => $request->ip(),
+            'user_agent' => $request->userAgent(),
+        ]);
+        
         if (!$userId) {
+            Log::warning('StatisticsController::statistics - User not authenticated');
             return response()->json(['message' => 'Пользователь не аутентифицирован'], 401);
         }
 
         try {
+            Log::debug('StatisticsController::statistics - Fetching user', ['user_id' => $userId]);
             $user = User::findOrFail($userId);
 
             // Basic workout statistics
+            Log::debug('StatisticsController::statistics - Calculating basic workout stats');
             $totalWorkouts = $user->workouts()->count();
             $completedWorkouts = $user->workouts()->whereNotNull('finished_at')->count();
             
             // Total training time in minutes
-            $totalTrainingTime = $user->workouts()
-                ->whereNotNull('started_at')
-                ->whereNotNull('finished_at')
-                ->get()
-                ->sum('duration_minutes');
+            Log::debug('StatisticsController::statistics - Calculating total training time');
+            try {
+                $totalTrainingTime = $user->workouts()
+                    ->whereNotNull('started_at')
+                    ->whereNotNull('finished_at')
+                    ->get()
+                    ->sum(function ($workout) {
+                        return $workout->duration_minutes ?? 0;
+                    });
+            } catch (Throwable $e) {
+                Log::error('StatisticsController::statistics - Error calculating total training time', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+                $totalTrainingTime = 0;
+            }
 
             // Total volume (weight × reps)
-            $totalVolume = $user->workoutSets()
-                ->whereNotNull('weight')
-                ->whereNotNull('reps')
-                ->sum(DB::raw('weight * reps'));
+            Log::debug('StatisticsController::statistics - Calculating total volume');
+            try {
+                $totalVolume = $user->workoutSets()
+                    ->whereNotNull('weight')
+                    ->whereNotNull('reps')
+                    ->sum(DB::raw('weight * reps'));
+            } catch (Throwable $e) {
+                Log::error('StatisticsController::statistics - Error calculating total volume', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+                $totalVolume = 0;
+            }
 
             // Current weight from latest metric
-            $currentWeight = $user->current_weight;
+            Log::debug('StatisticsController::statistics - Getting current weight');
+            try {
+                $currentWeight = $user->current_weight;
+            } catch (Throwable $e) {
+                Log::error('StatisticsController::statistics - Error getting current weight', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+                $currentWeight = null;
+            }
 
             // Active cycles count
-            $activeCyclesCount = $user->cycles()
-                ->where(function ($query) {
-                    $query->whereNull('end_date')
-                        ->orWhere('end_date', '>=', now());
-                })
-                ->count();
+            Log::debug('StatisticsController::statistics - Calculating active cycles');
+            try {
+                $activeCyclesCount = $user->cycles()
+                    ->where(function ($query) {
+                        $query->whereNull('end_date')
+                            ->orWhere('end_date', '>=', now());
+                    })
+                    ->count();
+            } catch (Throwable $e) {
+                Log::error('StatisticsController::statistics - Error calculating active cycles', [
+                    'user_id' => $userId,
+                    'error' => $e->getMessage(),
+                ]);
+                $activeCyclesCount = 0;
+            }
 
             // Weight change over time (last 30 days)
+            Log::debug('StatisticsController::statistics - Getting weight change');
             $weightChange = $this->getWeightChange($userId);
 
             // Training frequency (workouts per week in last 35 days / 5 weeks)
+            Log::debug('StatisticsController::statistics - Getting training frequency');
             $trainingFrequency = $this->getTrainingFrequency($userId);
 
             // Training streak (consecutive days with workouts)
+            Log::debug('StatisticsController::statistics - Getting training streak');
             $trainingStreak = $this->getTrainingStreak($userId);
+            
+            Log::debug('StatisticsController::statistics - All calculations completed', [
+                'user_id' => $userId,
+            ]);
 
-            return response()->json([
+            // Формируем ответ с безопасными значениями
+            $responseData = [
                 'data' => [
-                    'total_workouts' => $totalWorkouts,
-                    'completed_workouts' => $completedWorkouts,
-                    'total_training_time' => $totalTrainingTime,
-                    'total_volume' => $totalVolume,
-                    'current_weight' => $currentWeight,
-                    'active_cycles_count' => $activeCyclesCount,
-                    'weight_change_30_days' => $weightChange,
-                    'training_frequency_4_weeks' => $trainingFrequency,
-                    'training_streak_days' => $trainingStreak,
+                    'total_workouts' => (int) $totalWorkouts,
+                    'completed_workouts' => (int) $completedWorkouts,
+                    'total_training_time' => (int) ($totalTrainingTime ?? 0),
+                    'total_volume' => (float) ($totalVolume ?? 0),
+                    'current_weight' => $currentWeight !== null ? (float) $currentWeight : null,
+                    'active_cycles_count' => (int) $activeCyclesCount,
+                    'weight_change_30_days' => $weightChange !== null ? (float) $weightChange : null,
+                    'training_frequency_4_weeks' => (float) ($trainingFrequency ?? 0),
+                    'training_streak_days' => (int) ($trainingStreak ?? 0),
                 ],
                 'message' => 'Статистика пользователя успешно получена'
+            ];
+
+            Log::info('StatisticsController::statistics - Success', [
+                'user_id' => $userId,
             ]);
+
+            return response()->json($responseData);
         } catch (ModelNotFoundException $e) {
             Log::error('StatisticsController::statistics - User not found', [
                 'user_id' => $userId,
