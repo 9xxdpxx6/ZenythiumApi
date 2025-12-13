@@ -53,30 +53,18 @@ final class StatisticsController extends Controller
     public function statistics(Request $request): JsonResponse
     {
         $userId = $request->user()?->id;
-        
-        // Логируем начало запроса для отладки
-        Log::info('StatisticsController::statistics - Request started', [
-            'user_id' => $userId,
-            'ip' => $request->ip(),
-            'user_agent' => $request->userAgent(),
-        ]);
-        
         if (!$userId) {
-            Log::warning('StatisticsController::statistics - User not authenticated');
             return response()->json(['message' => 'Пользователь не аутентифицирован'], 401);
         }
 
         try {
-            Log::debug('StatisticsController::statistics - Fetching user', ['user_id' => $userId]);
             $user = User::findOrFail($userId);
 
             // Basic workout statistics
-            Log::debug('StatisticsController::statistics - Calculating basic workout stats');
             $totalWorkouts = $user->workouts()->count();
             $completedWorkouts = $user->workouts()->whereNotNull('finished_at')->count();
             
             // Total training time in minutes
-            Log::debug('StatisticsController::statistics - Calculating total training time');
             try {
                 $totalTrainingTime = $user->workouts()
                     ->whereNotNull('started_at')
@@ -94,7 +82,6 @@ final class StatisticsController extends Controller
             }
 
             // Total volume (weight × reps)
-            Log::debug('StatisticsController::statistics - Calculating total volume');
             try {
                 $totalVolume = $user->workoutSets()
                     ->whereNotNull('weight')
@@ -109,7 +96,6 @@ final class StatisticsController extends Controller
             }
 
             // Current weight from latest metric
-            Log::debug('StatisticsController::statistics - Getting current weight');
             try {
                 $currentWeight = $user->current_weight;
             } catch (Throwable $e) {
@@ -121,7 +107,6 @@ final class StatisticsController extends Controller
             }
 
             // Active cycles count
-            Log::debug('StatisticsController::statistics - Calculating active cycles');
             try {
                 $activeCyclesCount = $user->cycles()
                     ->where(function ($query) {
@@ -138,23 +123,15 @@ final class StatisticsController extends Controller
             }
 
             // Weight change over time (last 30 days)
-            Log::debug('StatisticsController::statistics - Getting weight change');
             $weightChange = $this->getWeightChange($userId);
 
             // Training frequency (workouts per week in last 35 days / 5 weeks)
-            Log::debug('StatisticsController::statistics - Getting training frequency');
             $trainingFrequency = $this->getTrainingFrequency($userId);
 
             // Training streak (consecutive days with workouts)
-            Log::debug('StatisticsController::statistics - Getting training streak');
             $trainingStreak = $this->getTrainingStreak($userId);
-            
-            Log::debug('StatisticsController::statistics - All calculations completed', [
-                'user_id' => $userId,
-            ]);
 
-            // Формируем ответ с безопасными значениями
-            $responseData = [
+            return response()->json([
                 'data' => [
                     'total_workouts' => (int) $totalWorkouts,
                     'completed_workouts' => (int) $completedWorkouts,
@@ -167,13 +144,7 @@ final class StatisticsController extends Controller
                     'training_streak_days' => (int) ($trainingStreak ?? 0),
                 ],
                 'message' => 'Статистика пользователя успешно получена'
-            ];
-
-            Log::info('StatisticsController::statistics - Success', [
-                'user_id' => $userId,
             ]);
-
-            return response()->json($responseData);
         } catch (ModelNotFoundException $e) {
             Log::error('StatisticsController::statistics - User not found', [
                 'user_id' => $userId,
@@ -323,27 +294,10 @@ final class StatisticsController extends Controller
             // (не историческую максимальную, а текущую активную)
             $maxCurrentStreak = 0;
             
-            Log::info('Training streak calculation - cycles check', [
-                'user_id' => $userId,
-                'cycles_count' => $cycles->count(),
-                'cycle_ids' => $cycles->pluck('id')->toArray(),
-            ]);
-            
             foreach ($cycles as $cycle) {
                 $cycleStreak = $this->calculateCycleStreak($cycle);
                 $maxCurrentStreak = max($maxCurrentStreak, $cycleStreak);
-                
-                Log::info('Training streak calculation - cycle result', [
-                    'cycle_id' => $cycle->id,
-                    'cycle_streak' => $cycleStreak,
-                    'max_streak' => $maxCurrentStreak,
-                ]);
             }
-
-            Log::info('Training streak calculation - final result', [
-                'user_id' => $userId,
-                'final_streak' => $maxCurrentStreak,
-            ]);
 
             return $maxCurrentStreak;
         } catch (Throwable $e) {
@@ -384,15 +338,6 @@ final class StatisticsController extends Controller
             $planIds = $plans->pluck('id')->toArray();
             $expectedPlansPerWeek = count($planIds);
 
-            // Временное логирование для отладки
-            Log::info('Training streak calculation - start', [
-                'cycle_id' => $cycle->id,
-                'user_id' => $cycle->user_id,
-                'plans_count' => $plans->count(),
-                'plan_ids' => $planIds,
-                'expected_plans_per_week' => $expectedPlansPerWeek,
-            ]);
-
             // Получаем все завершенные тренировки этого цикла, отсортированные по дате
             // Важно: фильтруем по user_id цикла, чтобы получить только тренировки этого пользователя
             $workouts = $cycle->workouts()
@@ -401,13 +346,6 @@ final class StatisticsController extends Controller
                 ->whereIn('plan_id', $planIds)
                 ->orderBy('finished_at')
                 ->get();
-
-        Log::info('Training streak calculation - workouts', [
-            'cycle_id' => $cycle->id,
-            'workouts_count' => $workouts->count(),
-            'workout_plan_ids' => $workouts->pluck('plan_id')->unique()->toArray(),
-            'workout_dates' => $workouts->pluck('finished_at')->map(fn($d) => $d?->format('Y-m-d'))->toArray(),
-        ]);
 
         if ($workouts->isEmpty()) {
             return 0;
@@ -436,19 +374,6 @@ final class StatisticsController extends Controller
                     $allPlansCompleted = count($completedPlans) >= $expectedPlansPerWeek 
                         && empty(array_diff($planIds, $completedPlans));
                     
-                    // Временное логирование для отладки
-                    Log::info('Training streak calculation - week check', [
-                        'cycle_id' => $cycle->id,
-                        'week_start' => $currentWeekStart->format('Y-m-d'),
-                        'expected_plans' => $expectedPlansPerWeek,
-                        'completed_plans_count' => count($completedPlans),
-                        'completed_plans' => $completedPlans,
-                        'required_plans' => $planIds,
-                        'all_plans_completed' => $allPlansCompleted,
-                        'workouts_in_week' => count($currentWeekWorkouts),
-                        'streak_before' => $currentStreak,
-                    ]);
-                    
                     if ($allPlansCompleted) {
                         // Неделя полная - увеличиваем серию на количество тренировок в неделе
                         $currentStreak += count($currentWeekWorkouts);
@@ -456,11 +381,6 @@ final class StatisticsController extends Controller
                         // Неделя неполная - сбрасываем streak
                         $currentStreak = 0;
                     }
-                    
-                    Log::info('Training streak calculation - week result', [
-                        'cycle_id' => $cycle->id,
-                        'streak_after' => $currentStreak,
-                    ]);
                     
                     // Начинаем новую неделю с текущей тренировки
                     $currentWeekStart = $workoutDate->copy();
@@ -478,19 +398,6 @@ final class StatisticsController extends Controller
             $allPlansCompleted = count($completedPlans) >= $expectedPlansPerWeek 
                 && empty(array_diff($planIds, $completedPlans));
             
-            // Временное логирование для отладки
-            Log::info('Training streak calculation - last week', [
-                'cycle_id' => $cycle->id,
-                'user_id' => $cycle->user_id,
-                'expected_plans' => $expectedPlansPerWeek,
-                'completed_plans_count' => count($completedPlans),
-                'completed_plans' => $completedPlans,
-                'required_plans' => $planIds,
-                'all_plans_completed' => $allPlansCompleted,
-                'workouts_in_week' => count($currentWeekWorkouts),
-                'current_streak_before' => $currentStreak,
-            ]);
-            
             if ($allPlansCompleted) {
                 // Неделя полная - увеличиваем серию на количество тренировок в неделе
                 $currentStreak += count($currentWeekWorkouts);
@@ -498,11 +405,6 @@ final class StatisticsController extends Controller
                 // Неделя неполная - сбрасываем серию
                 $currentStreak = 0;
             }
-            
-            Log::info('Training streak calculation - result', [
-                'cycle_id' => $cycle->id,
-                'final_streak' => $currentStreak,
-            ]);
         }
 
             return $currentStreak;
