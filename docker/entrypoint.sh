@@ -35,31 +35,14 @@ echo "Redis is ready!"
 
 
 # Laravel оптимизация
-if [ "$1" = "php-fpm" ] || [ "$1" = "php" ] || echo "$@" | grep -q "artisan serve"; then
-    echo "Optimizing Laravel for production..."
+if [ "$APP_ENV" = "production" ] && [ "$CONTAINER_ROLE" = "app" ]; then
+    echo "Optimizing Laravel (production, app container)..."
     
-    # Clear any existing caches first to ensure fresh start
-    php artisan config:clear || true
+    php artisan optimize:clear
     
-    # Manually clear compiled views directory (safer than view:clear which may fail)
-    rm -rf /var/www/html/storage/framework/views/* 2>/dev/null || true
-    
-    # Ensure resources/views directory exists with proper permissions
-    mkdir -p /var/www/html/resources/views
-    mkdir -p /var/www/html/storage/framework/views
-    chown -R www-data:www-data /var/www/html/resources/views /var/www/html/storage/framework/views || true
-    chmod -R 775 /var/www/html/resources/views /var/www/html/storage/framework/views || true
-    
-    # Cache configuration first
-    php artisan config:cache || true
-    php artisan route:cache || true
-    
-    # Skip view:cache - it's causing "View path not found" errors
-    # This is not critical for API applications as views compile on-demand when needed
-    # (emails, test forms, etc. will compile automatically on first use)
-    echo "Skipping view:cache (views will compile on-demand when needed)"
-    
-    php artisan event:cache || true
+    php artisan config:cache
+    php artisan route:cache
+    php artisan event:cache
 
     if [ "${RUN_MIGRATIONS:-false}" = "true" ]; then
         echo "Running migrations..."
