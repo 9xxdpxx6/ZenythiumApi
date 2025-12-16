@@ -161,6 +161,20 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Goals -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-bullseye fa-3x mb-3" style="color: #fd7e14;"></i>
+                                <h5 class="card-title">Цели</h5>
+                                <p class="card-text">CRUD операции для целей и достижений</p>
+                                <a href="/test-forms/goals" class="btn" style="background-color: #fd7e14; border-color: #fd7e14; color: white;">
+                                    <i class="fas fa-bullseye"></i> Открыть
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-5 text-center">

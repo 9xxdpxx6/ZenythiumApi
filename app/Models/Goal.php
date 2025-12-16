@@ -111,7 +111,7 @@ final class Goal extends Model
             return null;
         }
 
-        return $this->start_date->diffInDays($this->completed_at);
+        return (int) $this->start_date->diffInDays($this->completed_at);
     }
 
     /**

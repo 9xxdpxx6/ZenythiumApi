@@ -14,7 +14,7 @@ Route::get('/test-forms', function () {
 Route::get('/test-forms/{form}', function ($form) {
     $allowedForms = [
         'auth', 'muscle-groups', 'exercises', 'cycles', 
-        'plans', 'workouts', 'workout-sets', 'metrics', 'training-programs', 'statistics'
+        'plans', 'workouts', 'workout-sets', 'metrics', 'training-programs', 'statistics', 'goals'
     ];
     
     if (in_array($form, $allowedForms)) {

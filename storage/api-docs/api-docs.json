@@ -997,6 +997,135 @@
                 ]
             }
         },
+        "/api/v1/user/device-tokens": {
+            "post": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Регистрация токена устройства для push-уведомлений",
+                "description": "Регистрирует FCM токен устройства пользователя для отправки push-уведомлений",
+                "operationId": "e1b5b01d5fcee51226c63fdc7f62593a",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "device_token",
+                                    "platform"
+                                ],
+                                "properties": {
+                                    "device_token": {
+                                        "description": "FCM токен устройства",
+                                        "type": "string",
+                                        "example": "fcm_token_here"
+                                    },
+                                    "platform": {
+                                        "description": "Платформа устройства",
+                                        "type": "string",
+                                        "enum": [
+                                            "ios",
+                                            "android"
+                                        ],
+                                        "example": "android"
+                                    },
+                                    "device_id": {
+                                        "description": "Уникальный ID устройства (опционально)",
+                                        "type": "string",
+                                        "example": "device_unique_id",
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Токен устройства успешно зарегистрирован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "device_token": {
+                                                    "type": "string",
+                                                    "example": "fcm_token_here"
+                                                },
+                                                "platform": {
+                                                    "type": "string",
+                                                    "example": "android"
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Токен устройства успешно зарегистрирован"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/user/device-tokens/{id}": {
+            "delete": {
+                "tags": [
+                    "Authentication"
+                ],
+                "summary": "Удаление токена устройства",
+                "description": "Удаляет токен устройства пользователя",
+                "operationId": "8e821d69e67ed3b12109df0413bfa5e7",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Токен устройства успешно удален",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Токен устройства успешно удален"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/cycles": {
             "get": {
                 "tags": [
@@ -2218,6 +2347,434 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Упражнение не найдено"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/goals/types": {
+            "get": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Получение списка типов целей",
+                "description": "Возвращает список всех доступных типов целей с информацией о том, требует ли тип упражнение",
+                "operationId": "113c6b981b3bf8f2f127b5f84af5e4e6",
+                "responses": {
+                    "200": {
+                        "description": "Список типов целей успешно получен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "value": {
+                                                        "type": "string",
+                                                        "example": "total_workouts"
+                                                    },
+                                                    "requires_exercise": {
+                                                        "type": "boolean",
+                                                        "example": false
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Список типов целей успешно получен"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/goals": {
+            "get": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Получение списка целей",
+                "description": "Возвращает список целей текущего пользователя с возможностью фильтрации по статусу",
+                "operationId": "d9cb79f325f8eae93bddc30c289e2f76",
+                "parameters": [
+                    {
+                        "name": "status",
+                        "in": "query",
+                        "description": "Фильтр по статусу цели",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "active",
+                                "completed",
+                                "failed",
+                                "cancelled"
+                            ]
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Список целей успешно получен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/GoalResource"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Список целей успешно получен"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "post": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Создание цели",
+                "description": "Создает новую цель для текущего пользователя",
+                "operationId": "6127de0f82207012c84fda169fc40ff2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "type": {
+                                        "type": "string",
+                                        "example": "total_workouts"
+                                    },
+                                    "title": {
+                                        "type": "string",
+                                        "example": "50 тренировок за 3 месяца"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "nullable": true
+                                    },
+                                    "target_value": {
+                                        "type": "number",
+                                        "example": 50
+                                    },
+                                    "start_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-01-01"
+                                    },
+                                    "end_date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2024-03-31",
+                                        "nullable": true
+                                    },
+                                    "exercise_id": {
+                                        "type": "integer",
+                                        "example": 1,
+                                        "nullable": true
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Цель успешно создана",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GoalResource"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цель успешно создана"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/goals/{id}": {
+            "get": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Получение цели",
+                "description": "Возвращает детали цели по ID",
+                "operationId": "be77e120089c0eca42cfec5bde43dc91",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Цель успешно получена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GoalResource"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цель успешно получена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "put": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Обновление цели",
+                "description": "Обновляет цель по ID",
+                "operationId": "aa1ece6b002c55429ef6015761ba5f9f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Цель успешно обновлена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/GoalResource"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цель успешно обновлена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            },
+            "delete": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Удаление цели",
+                "description": "Удаляет или отменяет цель по ID",
+                "operationId": "b816e7dc3db48e5c322c432078425c3f",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Цель успешно удалена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цель успешно удалена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/goals/statistics": {
+            "get": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Статистика достижений",
+                "description": "Возвращает статистику достижений пользователя",
+                "operationId": "233f331e6e21a7c3b08098223604853a",
+                "responses": {
+                    "200": {
+                        "description": "Статистика успешно получена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Статистика успешно получена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/goals/completed": {
+            "get": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Достигнутые цели",
+                "description": "Возвращает список достигнутых целей",
+                "operationId": "c61c8433eb800f988bc23eca7564599d",
+                "responses": {
+                    "200": {
+                        "description": "Список достигнутых целей успешно получен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/GoalResource"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Список достигнутых целей успешно получен"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/goals/failed": {
+            "get": {
+                "tags": [
+                    "Goals"
+                ],
+                "summary": "Проваленные цели",
+                "description": "Возвращает список проваленных целей",
+                "operationId": "0f467630e8f239f092fde53f280074f5",
+                "responses": {
+                    "200": {
+                        "description": "Список проваленных целей успешно получен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "type": "array",
+                                            "items": {
+                                                "$ref": "#/components/schemas/GoalResource"
+                                            }
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Список проваленных целей успешно получен"
                                         }
                                     },
                                     "type": "object"
@@ -7718,6 +8275,103 @@
                 },
                 "type": "object"
             },
+            "GoalResource": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "type": {
+                        "type": "string",
+                        "example": "total_workouts"
+                    },
+                    "title": {
+                        "type": "string",
+                        "example": "50 тренировок за 3 месяца"
+                    },
+                    "description": {
+                        "type": "string",
+                        "example": "Описание цели",
+                        "nullable": true
+                    },
+                    "target_value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50
+                    },
+                    "current_value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 25,
+                        "nullable": true
+                    },
+                    "progress_percentage": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50,
+                        "nullable": true
+                    },
+                    "start_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-01-01"
+                    },
+                    "end_date": {
+                        "type": "string",
+                        "format": "date",
+                        "example": "2024-03-31",
+                        "nullable": true
+                    },
+                    "exercise": {
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Жим лежа"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "status": {
+                        "type": "string",
+                        "example": "active"
+                    },
+                    "completed_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-03-31T23:59:59.000000Z",
+                        "nullable": true
+                    },
+                    "achieved_value": {
+                        "type": "number",
+                        "format": "float",
+                        "example": 50,
+                        "nullable": true
+                    },
+                    "days_to_complete": {
+                        "type": "integer",
+                        "example": 15,
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z",
+                        "nullable": true
+                    },
+                    "updated_at": {
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z",
+                        "nullable": true
+                    }
+                },
+                "type": "object"
+            },
             "PlanDetailResource": {
                 "properties": {
                     "id": {
@@ -8145,6 +8799,10 @@
         {
             "name": "Statistics",
             "description": "Статистика пользователя"
+        },
+        {
+            "name": "Goals",
+            "description": "Управление целями пользователя"
         },
         {
             "name": "Training Programs",

@@ -58,6 +58,31 @@ enum GoalType: string
             self::EXERCISE_VOLUME,
         ], true);
     }
+
+    /**
+     * Получить человекочитаемое название типа цели
+     *
+     * @return string
+     */
+    public function getLabel(): string
+    {
+        return match ($this) {
+            self::TOTAL_WORKOUTS => 'Всего тренировок',
+            self::COMPLETED_WORKOUTS => 'Завершенных тренировок',
+            self::TARGET_WEIGHT => 'Целевой вес',
+            self::WEIGHT_LOSS => 'Похудение/сушка',
+            self::WEIGHT_GAIN => 'Массанабор',
+            self::TOTAL_VOLUME => 'Общий объем тренировок',
+            self::WEEKLY_VOLUME => 'Недельный объем тренировок',
+            self::TOTAL_TRAINING_TIME => 'Общее время тренировок',
+            self::WEEKLY_TRAINING_TIME => 'Недельное время тренировок',
+            self::TRAINING_FREQUENCY => 'Частота тренировок',
+            self::TRAINING_STREAK => 'Серия тренировок подряд',
+            self::EXERCISE_MAX_WEIGHT => 'Максимальный вес в упражнении',
+            self::EXERCISE_MAX_REPS => 'Максимальное количество повторений',
+            self::EXERCISE_VOLUME => 'Объем упражнения',
+        };
+    }
 }
 
 

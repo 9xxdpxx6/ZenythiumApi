@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace App\Http\Controllers;
 
 use App\Enums\GoalStatus;
+use App\Enums\GoalType;
 use App\Http\Requests\StoreGoalRequest;
 use App\Http\Requests\UpdateGoalRequest;
 use App\Http\Resources\GoalResource;
@@ -25,6 +26,42 @@ final class GoalController extends Controller
     public function __construct(
         private readonly GoalService $goalService
     ) {}
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/goals/types",
+     *     summary="Получение списка типов целей",
+     *     description="Возвращает список всех доступных типов целей с информацией о том, требует ли тип упражнение",
+     *     tags={"Goals"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Список типов целей успешно получен",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="array", @OA\Items(
+     *                 @OA\Property(property="value", type="string", example="total_workouts"),
+     *                 @OA\Property(property="requires_exercise", type="boolean", example=false)
+     *             )),
+     *             @OA\Property(property="message", type="string", example="Список типов целей успешно получен")
+     *         )
+     *     )
+     * )
+     */
+    public function types(Request $request): JsonResponse
+    {
+        $types = array_map(function (GoalType $type) {
+            return [
+                'value' => $type->value,
+                'label' => $type->getLabel(),
+                'requires_exercise' => $type->requiresExercise(),
+            ];
+        }, GoalType::cases());
+
+        return response()->json([
+            'data' => $types,
+            'message' => 'Список типов целей успешно получен',
+        ]);
+    }
 
     /**
      * @OA\Get(
@@ -202,6 +239,24 @@ final class GoalController extends Controller
         }
 
         $data = $request->validated();
+
+        // Если меняется тип цели, проверяем требования к упражнению
+        if (isset($data['type'])) {
+            $newType = GoalType::from($data['type']);
+            
+            // Если новый тип не требует упражнение, очищаем exercise_id
+            if (!$newType->requiresExercise()) {
+                $data['exercise_id'] = null;
+            }
+            // Если новый тип требует упражнение, exercise_id должен быть передан
+            // (валидация уже проверила это через Rule::requiredIf)
+        } elseif (array_key_exists('exercise_id', $data)) {
+            // Если тип не меняется, но exercise_id передан явно
+            // и текущий тип не требует упражнение - очищаем exercise_id
+            if (!$goal->type->requiresExercise()) {
+                $data['exercise_id'] = null;
+            }
+        }
 
         // Если меняется статус на cancelled, устанавливаем cancelled_at
         if (isset($data['status']) && $data['status'] === GoalStatus::CANCELLED) {

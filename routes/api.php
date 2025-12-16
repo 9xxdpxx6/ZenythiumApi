@@ -118,6 +118,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::delete('/training-programs/{id}/uninstall', [TrainingProgramController::class, 'uninstall']);
     
     // Goals routes
+    Route::get('/goals/types', [GoalController::class, 'types']);
     Route::get('/goals', [GoalController::class, 'index']);
     Route::post('/goals', [GoalController::class, 'store']);
     Route::get('/goals/statistics', [GoalController::class, 'statistics']);
