@@ -32,7 +32,8 @@
                                     "name",
                                     "email",
                                     "password",
-                                    "password_confirmation"
+                                    "password_confirmation",
+                                    "smartcaptcha_token"
                                 ],
                                 "properties": {
                                     "name": {
@@ -57,6 +58,11 @@
                                         "type": "string",
                                         "format": "password",
                                         "example": "SecurePass123"
+                                    },
+                                    "smartcaptcha_token": {
+                                        "description": "Токен от Yandex SmartCaptcha",
+                                        "type": "string",
+                                        "example": "smartcaptcha_token_here"
                                     }
                                 },
                                 "type": "object"
@@ -5101,11 +5107,6 @@
                                                     "description": "Среднее количество тренировок в неделю за последние 35 дней (5 недель)",
                                                     "type": "number",
                                                     "example": 5.4
-                                                },
-                                                "training_streak_days": {
-                                                    "description": "Количество подряд выполненных тренировок без пропусков в циклах",
-                                                    "type": "integer",
-                                                    "example": 12
                                                 }
                                             },
                                             "type": "object"

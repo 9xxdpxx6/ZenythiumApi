@@ -8,6 +8,7 @@ use App\Http\Requests\RegisterRequest;
 use App\Http\Requests\UpdateProfileRequest;
 use App\Models\User;
 use App\Models\UserDeviceToken;
+use App\Services\SmartCaptchaService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,9 @@ use Illuminate\Validation\ValidationException;
 
 final class AuthController extends Controller
 {
+    public function __construct(
+        private readonly SmartCaptchaService $smartCaptchaService
+    ) {}
     /**
      * @OA\Post(
      *     path="/api/v1/register",
@@ -28,11 +32,12 @@ final class AuthController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","email","password","password_confirmation"},
+     *             required={"name","email","password","password_confirmation","smartcaptcha_token"},
      *             @OA\Property(property="name", type="string", example="Иван Петров", description="Имя пользователя"),
      *             @OA\Property(property="email", type="string", format="email", example="ivan@example.com", description="Email пользователя (должен быть уникальным)"),
      *             @OA\Property(property="password", type="string", format="password", example="SecurePass123", description="Пароль (минимум 8 символов)"),
-     *             @OA\Property(property="password_confirmation", type="string", format="password", example="SecurePass123", description="Подтверждение пароля")
+     *             @OA\Property(property="password_confirmation", type="string", format="password", example="SecurePass123", description="Подтверждение пароля"),
+     *             @OA\Property(property="smartcaptcha_token", type="string", example="smartcaptcha_token_here", description="Токен от Yandex SmartCaptcha")
      *         )
      *     ),
      *     @OA\Response(
@@ -65,6 +70,19 @@ final class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
+        // Проверяем капчу перед регистрацией
+        $ip = $request->ip();
+        $token = $request->input('smartcaptcha_token');
+        
+        if (!$this->smartCaptchaService->verify($token, $ip)) {
+            return response()->json([
+                'message' => 'Ошибка валидации',
+                'errors' => [
+                    'smartcaptcha_token' => ['Не удалось проверить капчу. Попробуйте еще раз.'],
+                ],
+            ], 422);
+        }
+
         $user = User::create([
             'name' => $request->name,
             'email' => $request->email,

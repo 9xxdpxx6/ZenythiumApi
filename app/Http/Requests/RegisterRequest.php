@@ -33,6 +33,7 @@ final class RegisterRequest extends FormRequest
      * - name: обязательная строка до 255 символов
      * - email: обязательный email до 255 символов, уникальный в таблице users
      * - password: обязательная строка минимум 8 символов, требует подтверждения
+     * - smartcaptcha_token: обязательный токен от Yandex SmartCaptcha
      */
     public function rules(): array
     {
@@ -40,6 +41,7 @@ final class RegisterRequest extends FormRequest
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
+            'smartcaptcha_token' => 'required|string',
         ];
     }
 
@@ -63,6 +65,8 @@ final class RegisterRequest extends FormRequest
             'password.string' => 'Пароль должен быть строкой.',
             'password.min' => 'Пароль должен содержать минимум 8 символов.',
             'password.confirmed' => 'Пароль и подтверждение пароля не совпадают.',
+            'smartcaptcha_token.required' => 'Токен капчи обязателен.',
+            'smartcaptcha_token.string' => 'Токен капчи должен быть строкой.',
         ];
     }
 

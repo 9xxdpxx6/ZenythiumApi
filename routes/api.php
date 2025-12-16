@@ -19,11 +19,22 @@ use Illuminate\Support\Facades\Route;
 
 // API v1 routes
 Route::prefix('v1')->group(function () {
-    // Public authentication routes
-    Route::post('/register', [AuthController::class, 'register']);
-    Route::post('/login', [AuthController::class, 'login']);
-    Route::post('/forgot-password', [AuthController::class, 'forgotPassword']);
-    Route::post('/reset-password', [AuthController::class, 'resetPassword']);
+    // Public authentication routes with rate limiting
+    // Регистрация: 5 попыток в минуту (защита от массовой регистрации ботов)
+    Route::post('/register', [AuthController::class, 'register'])
+        ->middleware('throttle:5,1');
+    
+    // Логин: 10 попыток в минуту (защита от брутфорса)
+    Route::post('/login', [AuthController::class, 'login'])
+        ->middleware('throttle:10,1');
+    
+    // Запрос сброса пароля: 3 попытки в минуту (защита от спама email)
+    Route::post('/forgot-password', [AuthController::class, 'forgotPassword'])
+        ->middleware('throttle:3,1');
+    
+    // Сброс пароля: 5 попыток в минуту
+    Route::post('/reset-password', [AuthController::class, 'resetPassword'])
+        ->middleware('throttle:5,1');
     
     // Test endpoint to verify CORS is working
     Route::get('/test', function () {
