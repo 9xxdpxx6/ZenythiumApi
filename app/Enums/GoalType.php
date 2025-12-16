@@ -28,7 +28,6 @@ enum GoalType: string
 
     // Частота и регулярность
     case TRAINING_FREQUENCY = 'training_frequency';
-    case TRAINING_STREAK = 'training_streak';
 
     // Конкретные упражнения
     case EXERCISE_MAX_WEIGHT = 'exercise_max_weight';
@@ -77,7 +76,6 @@ enum GoalType: string
             self::TOTAL_TRAINING_TIME => 'Общее время тренировок',
             self::WEEKLY_TRAINING_TIME => 'Недельное время тренировок',
             self::TRAINING_FREQUENCY => 'Частота тренировок',
-            self::TRAINING_STREAK => 'Серия тренировок подряд',
             self::EXERCISE_MAX_WEIGHT => 'Максимальный вес в упражнении',
             self::EXERCISE_MAX_REPS => 'Максимальное количество повторений',
             self::EXERCISE_VOLUME => 'Объем упражнения',

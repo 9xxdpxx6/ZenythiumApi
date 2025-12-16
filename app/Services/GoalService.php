@@ -40,7 +40,6 @@ final class GoalService
             GoalType::TOTAL_TRAINING_TIME => $this->calculateTotalTrainingTime($user, $startDate, $endDate),
             GoalType::WEEKLY_TRAINING_TIME => $this->calculateWeeklyTrainingTime($user, $startDate, $endDate),
             GoalType::TRAINING_FREQUENCY => $this->calculateTrainingFrequency($user),
-            GoalType::TRAINING_STREAK => (float) $this->calculateTrainingStreak($user),
             GoalType::EXERCISE_MAX_WEIGHT => $this->calculateExerciseMaxWeight($user, $goal->exercise_id),
             GoalType::EXERCISE_MAX_REPS => $this->calculateExerciseMaxReps($user, $goal->exercise_id),
             GoalType::EXERCISE_VOLUME => $this->calculateExerciseVolume($user, $goal->exercise_id, $startDate, $endDate),
@@ -408,100 +407,6 @@ final class GoalService
             ->count();
 
         return round($totalWorkouts / 5, 1);
-    }
-
-    private function calculateTrainingStreak(User $user): int
-    {
-        $cycles = $user->cycles()
-            ->with(['plans' => function($query) {
-                $query->where('is_active', true)->orderBy('order');
-            }])
-            ->get();
-
-        if ($cycles->isEmpty()) {
-            return 0;
-        }
-
-        $maxCurrentStreak = 0;
-        
-        foreach ($cycles as $cycle) {
-            $cycleStreak = $this->calculateCycleStreak($cycle);
-            $maxCurrentStreak = max($maxCurrentStreak, $cycleStreak);
-        }
-
-        return $maxCurrentStreak;
-    }
-
-    private function calculateCycleStreak(Cycle $cycle): int
-    {
-        if ($cycle->relationLoaded('plans')) {
-            $plans = $cycle->plans->where('is_active', true);
-        } else {
-            $plans = $cycle->plans()->where('is_active', true)->get();
-        }
-        
-        if ($plans->isEmpty()) {
-            return 0;
-        }
-
-        $planIds = $plans->pluck('id')->toArray();
-        $expectedPlansPerWeek = count($planIds);
-
-        $workouts = $cycle->workouts()
-            ->where('workouts.user_id', $cycle->user_id)
-            ->whereNotNull('finished_at')
-            ->whereIn('plan_id', $planIds)
-            ->orderBy('finished_at')
-            ->get();
-
-        if ($workouts->isEmpty()) {
-            return 0;
-        }
-
-        $currentStreak = 0;
-        $currentWeekStart = null;
-        $currentWeekWorkouts = [];
-
-        foreach ($workouts as $workout) {
-            $workoutDate = \Carbon\Carbon::parse($workout->finished_at)->startOfDay();
-            
-            if ($currentWeekStart === null) {
-                $currentWeekStart = $workoutDate->copy();
-                $currentWeekWorkouts = [$workout];
-            } else {
-                $daysDiff = $currentWeekStart->diffInDays($workoutDate, false);
-                
-                if ($daysDiff >= 7) {
-                    $completedPlans = array_unique(array_map(fn($w) => $w->plan_id, $currentWeekWorkouts));
-                    $allPlansCompleted = count($completedPlans) >= $expectedPlansPerWeek 
-                        && empty(array_diff($planIds, $completedPlans));
-                    
-                    if ($allPlansCompleted) {
-                        $currentStreak += count($currentWeekWorkouts);
-                    } else {
-                        $currentStreak = 0;
-                    }
-                    
-                    $currentWeekStart = $workoutDate->copy();
-                    $currentWeekWorkouts = [$workout];
-                } else {
-                    $currentWeekWorkouts[] = $workout;
-                }
-            }
-        }
-
-        // Проверяем последнюю неделю
-        if (!empty($currentWeekWorkouts)) {
-            $completedPlans = array_unique(array_map(fn($w) => $w->plan_id, $currentWeekWorkouts));
-            $allPlansCompleted = count($completedPlans) >= $expectedPlansPerWeek 
-                && empty(array_diff($planIds, $completedPlans));
-            
-            if ($allPlansCompleted) {
-                $currentStreak += count($currentWeekWorkouts);
-            }
-        }
-
-        return $currentStreak;
     }
 
     private function calculateExerciseMaxWeight(User $user, ?int $exerciseId): float

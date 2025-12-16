@@ -293,7 +293,6 @@
             'total_training_time': 'Общее время тренировок',
             'weekly_training_time': 'Недельное время тренировок',
             'training_frequency': 'Частота тренировок',
-            'training_streak': 'Серия тренировок подряд',
             'exercise_max_weight': 'Максимальный вес в упражнении',
             'exercise_max_reps': 'Максимальное количество повторений',
             'exercise_volume': 'Объем упражнения'

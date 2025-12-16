@@ -36,7 +36,6 @@ final class StatisticsController extends Controller
      *                 @OA\Property(property="active_cycles_count", type="integer", example=2),
      *                 @OA\Property(property="weight_change_30_days", type="number", example=2),
      *                 @OA\Property(property="training_frequency_4_weeks", type="number", example=5.4, description="Среднее количество тренировок в неделю за последние 35 дней (5 недель)"),
-     *                 @OA\Property(property="training_streak_days", type="integer", example=12, description="Количество подряд выполненных тренировок без пропусков в циклах")
      *             ),
      *             @OA\Property(property="message", type="string", example="Статистика пользователя успешно получена")
      *         )
@@ -128,9 +127,6 @@ final class StatisticsController extends Controller
             // Training frequency (workouts per week in last 35 days / 5 weeks)
             $trainingFrequency = $this->getTrainingFrequency($userId);
 
-            // Training streak (consecutive days with workouts)
-            $trainingStreak = $this->getTrainingStreak($userId);
-
             return response()->json([
                 'data' => [
                     'total_workouts' => (int) $totalWorkouts,
@@ -141,7 +137,6 @@ final class StatisticsController extends Controller
                     'active_cycles_count' => (int) $activeCyclesCount,
                     'weight_change_30_days' => $weightChange !== null ? (float) $weightChange : null,
                     'training_frequency_4_weeks' => (float) ($trainingFrequency ?? 0),
-                    'training_streak_days' => (int) ($trainingStreak ?? 0),
                 ],
                 'message' => 'Статистика пользователя успешно получена'
             ]);
@@ -256,169 +251,6 @@ final class StatisticsController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
             return 0.0;
-        }
-    }
-
-    /**
-     * Get training streak (consecutive workouts without gaps in cycles).
-     * 
-     * Пропуск определяется как неполное выполнение всех планов в цикле за неделю.
-     * Например, если в цикле 4 плана, а выполнено только 3 - это пропуск.
-     * 
-     * Учитываем все циклы пользователя (не только активные), чтобы правильно посчитать серию.
-     */
-    private function getTrainingStreak(int $userId): int
-    {
-        try {
-            $user = User::find($userId);
-            if (!$user) {
-                Log::warning('StatisticsController::getTrainingStreak - User not found', [
-                    'user_id' => $userId,
-                ]);
-                return 0;
-            }
-
-            // Получаем все циклы пользователя (включая завершенные)
-            // чтобы правильно посчитать серию с учетом всей истории
-            $cycles = $user->cycles()
-                ->with(['plans' => function($query) {
-                    $query->where('is_active', true)->orderBy('order');
-                }])
-                ->get();
-
-            if ($cycles->isEmpty()) {
-                return 0;
-            }
-
-            // Возвращаем максимальную текущую активную серию из всех циклов
-            // (не историческую максимальную, а текущую активную)
-            $maxCurrentStreak = 0;
-            
-            foreach ($cycles as $cycle) {
-                $cycleStreak = $this->calculateCycleStreak($cycle);
-                $maxCurrentStreak = max($maxCurrentStreak, $cycleStreak);
-            }
-
-            return $maxCurrentStreak;
-        } catch (Throwable $e) {
-            Log::error('StatisticsController::getTrainingStreak - Error', [
-                'user_id' => $userId,
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return 0;
-        }
-    }
-
-    /**
-     * Calculate streak for a specific cycle.
-     * 
-     * Логика:
-     * - Счетчик увеличивается на +1 за каждую тренировку (не пакетом)
-     * - Серия продолжается если выполнено >= планов цикла в рамках недели (7 дней)
-     * - Если выполнено < планов цикла - серия сбрасывается
-     * - После сброса новая неделя начинается с первой тренировки после сброса
-     */
-    private function calculateCycleStreak(Cycle $cycle): int
-    {
-        try {
-            // Получаем активные планы цикла
-            // Если планы уже загружены через with, используем их, иначе загружаем заново
-            if ($cycle->relationLoaded('plans')) {
-                $plans = $cycle->plans->where('is_active', true);
-            } else {
-                $plans = $cycle->plans()->where('is_active', true)->get();
-            }
-            
-            if ($plans->isEmpty()) {
-                return 0;
-            }
-
-            $planIds = $plans->pluck('id')->toArray();
-            $expectedPlansPerWeek = count($planIds);
-
-            // Получаем все завершенные тренировки этого цикла, отсортированные по дате
-            // Важно: фильтруем по user_id цикла, чтобы получить только тренировки этого пользователя
-            $workouts = $cycle->workouts()
-                ->where('workouts.user_id', $cycle->user_id)
-                ->whereNotNull('finished_at')
-                ->whereIn('plan_id', $planIds)
-                ->orderBy('finished_at')
-                ->get();
-
-        if ($workouts->isEmpty()) {
-            return 0;
-        }
-
-        $currentStreak = 0;
-        $currentWeekStart = null;
-        $currentWeekWorkouts = [];
-
-        foreach ($workouts as $workout) {
-            $workoutDate = \Carbon\Carbon::parse($workout->finished_at)->startOfDay();
-            
-            // Если это первая тренировка или прошло 7+ дней от начала текущей недели
-            if ($currentWeekStart === null) {
-                // Первая тренировка - начинаем новую неделю
-                $currentWeekStart = $workoutDate->copy();
-                $currentWeekWorkouts = [$workout];
-            } else {
-                // Вычисляем разницу в днях от начала текущей недели
-                $daysDiff = $currentWeekStart->diffInDays($workoutDate, false);
-                
-                // Если прошло 7 или больше дней, проверяем предыдущую неделю
-                if ($daysDiff >= 7) {
-                    // Проверяем предыдущую неделю
-                    $completedPlans = array_unique(array_map(fn($w) => $w->plan_id, $currentWeekWorkouts));
-                    $allPlansCompleted = count($completedPlans) >= $expectedPlansPerWeek 
-                        && empty(array_diff($planIds, $completedPlans));
-                    
-                    if ($allPlansCompleted) {
-                        // Неделя полная - увеличиваем серию на количество тренировок в неделе
-                        $currentStreak += count($currentWeekWorkouts);
-                    } else {
-                        // Неделя неполная - сбрасываем streak
-                        $currentStreak = 0;
-                    }
-                    
-                    // Начинаем новую неделю с текущей тренировки
-                    $currentWeekStart = $workoutDate->copy();
-                    $currentWeekWorkouts = [$workout];
-                } else {
-                    // Тренировка в пределах текущей недели
-                    $currentWeekWorkouts[] = $workout;
-                }
-            }
-        }
-
-        // Проверяем последнюю неделю
-        if (!empty($currentWeekWorkouts)) {
-            $completedPlans = array_unique(array_map(fn($w) => $w->plan_id, $currentWeekWorkouts));
-            $allPlansCompleted = count($completedPlans) >= $expectedPlansPerWeek 
-                && empty(array_diff($planIds, $completedPlans));
-            
-            if ($allPlansCompleted) {
-                // Неделя полная - увеличиваем серию на количество тренировок в неделе
-                $currentStreak += count($currentWeekWorkouts);
-            } else {
-                // Неделя неполная - сбрасываем серию
-                $currentStreak = 0;
-            }
-        }
-
-            return $currentStreak;
-        } catch (Throwable $e) {
-            Log::error('StatisticsController::calculateCycleStreak - Error', [
-                'cycle_id' => $cycle->id,
-                'user_id' => $cycle->user_id ?? null,
-                'exception' => get_class($e),
-                'message' => $e->getMessage(),
-                'file' => $e->getFile(),
-                'line' => $e->getLine(),
-                'trace' => $e->getTraceAsString(),
-            ]);
-            return 0;
         }
     }
 

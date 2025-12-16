@@ -246,14 +246,6 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="col-md-6 col-lg-4">
-                                <div class="card" style="background-color: #20c997; color: white;">
-                                    <div class="card-body text-center">
-                                        <div class="stat-value">${stats.training_streak_days || 0}</div>
-                                        <div class="stat-label">Серия тренировок (дней)</div>
-                                    </div>
-                                </div>
-                            </div>
                         </div>
                     `;
                 } else {
