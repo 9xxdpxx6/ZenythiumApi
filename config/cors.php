@@ -34,7 +34,11 @@ return [
 
     'allowed_headers' => ['*'],
 
-    'exposed_headers' => [],
+    // Exposed headers для cookies и CSRF токенов
+    'exposed_headers' => [
+        'Set-Cookie',
+        'X-XSRF-TOKEN',
+    ],
 
     'max_age' => (int) env('CORS_MAX_AGE', 86400),
 

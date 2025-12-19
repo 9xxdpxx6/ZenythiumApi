@@ -31,10 +31,18 @@ return [
 
     'domain' => env('SESSION_DOMAIN'),
 
+    // Для кросс-доменных cookies (production с HTTPS):
+    // SESSION_SECURE_COOKIE=true
+    // SESSION_SAME_SITE=none
+    // Для localhost (development):
+    // SESSION_SECURE_COOKIE=false (или не задано)
+    // SESSION_SAME_SITE=lax
     'secure' => env('SESSION_SECURE_COOKIE'),
 
     'http_only' => env('SESSION_HTTP_ONLY', true),
 
+    // Для кросс-доменных запросов с cookies нужен 'none' (только с HTTPS)
+    // Для localhost можно использовать 'lax'
     'same_site' => env('SESSION_SAME_SITE', 'lax'),
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
