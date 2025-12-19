@@ -11,10 +11,11 @@ final class SmartCaptchaService
 {
     private const VERIFY_URL = 'https://smartcaptcha.yandexcloud.net/validate';
 
-    public function __construct(
-        private readonly ?string $serverKey = null
-    ) {
-        $this->serverKey = $serverKey ?? env('YANDEX_SMARTCAPTCHA_SERVER_KEY');
+    private readonly ?string $serverKey;
+
+    public function __construct(?string $serverKey = null)
+    {
+        $this->serverKey = $serverKey ?? config('services.yandex_smartcaptcha.server_key') ?? env('YANDEX_SMARTCAPTCHA_SERVER_KEY');
     }
 
     /**
