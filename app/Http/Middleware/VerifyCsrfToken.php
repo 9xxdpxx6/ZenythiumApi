@@ -91,6 +91,51 @@ final class VerifyCsrfToken extends Middleware
     }
 
     /**
+     * Get the CSRF token from the request.
+     * Переопределяем, чтобы правильно обрабатывать зашифрованную cookie
+     * Приоритет: cookie > заголовок X-CSRF-TOKEN > заголовок X-XSRF-TOKEN
+     */
+    protected function getTokenFromRequest($request)
+    {
+        // 1. Проверяем параметр _token (для форм)
+        $token = $request->input('_token');
+        
+        // 2. Если нет, проверяем cookie (приоритет cookie, так как она правильная)
+        if (!$token) {
+            $cookieToken = $request->cookie('XSRF-TOKEN');
+            if ($cookieToken) {
+                // Декодируем cookie (URL decode)
+                $decoded = urldecode($cookieToken);
+                // Если это зашифрованная cookie, расшифровываем
+                if (strlen($decoded) > 100) {
+                    try {
+                        $decrypted = \Illuminate\Support\Facades\Crypt::decryptString($decoded);
+                        // После расшифровки получаем JSON, извлекаем токен
+                        $data = json_decode($decrypted, true);
+                        if (isset($data['value'])) {
+                            $token = $data['value'];
+                        }
+                    } catch (\Exception $e) {
+                        // Если не удалось расшифровать, пробуем использовать как есть
+                        // (может быть уже декодированный токен)
+                        $token = $decoded;
+                    }
+                } else {
+                    // Короткий токен - используем как есть
+                    $token = $decoded;
+                }
+            }
+        }
+        
+        // 3. Если токен все еще не найден, проверяем заголовки
+        if (!$token) {
+            $token = $request->header('X-CSRF-TOKEN') ?: $request->header('X-XSRF-TOKEN');
+        }
+        
+        return $token;
+    }
+
+    /**
      * Determine if the session and input CSRF tokens match.
      * Переопределяем для детального логирования
      */
@@ -107,6 +152,22 @@ final class VerifyCsrfToken extends Middleware
         // Декодируем cookie токен для сравнения
         $decodedCookieToken = $cookieToken ? urldecode($cookieToken) : null;
         
+        // Пытаемся извлечь токен из зашифрованной cookie
+        $extractedTokenFromCookie = null;
+        if ($decodedCookieToken && strlen($decodedCookieToken) > 100) {
+            try {
+                $decrypted = \Illuminate\Support\Facades\Crypt::decryptString($decodedCookieToken);
+                $data = json_decode($decrypted, true);
+                if (isset($data['value'])) {
+                    $extractedTokenFromCookie = $data['value'];
+                }
+            } catch (\Exception $e) {
+                // Игнорируем ошибку
+            }
+        } else {
+            $extractedTokenFromCookie = $decodedCookieToken;
+        }
+        
         // Детальное логирование для отладки
         \Illuminate\Support\Facades\Log::info('CSRF: Token validation', [
             'path' => $request->path(),
@@ -119,12 +180,12 @@ final class VerifyCsrfToken extends Middleware
             'session_token' => $sessionToken ? substr($sessionToken, 0, 50) . '...' : 'missing',
             'session_token_length' => $sessionToken ? strlen($sessionToken) : 0,
             'tokens_match' => hash_equals($sessionToken, $token),
+            'extracted_token_from_cookie' => $extractedTokenFromCookie ? substr($extractedTokenFromCookie, 0, 50) . '...' : 'missing',
+            'extracted_matches_session' => $extractedTokenFromCookie ? hash_equals($sessionToken, $extractedTokenFromCookie) : false,
             'cookie_token_raw' => $cookieToken ? substr($cookieToken, 0, 50) . '...' : 'missing',
             'cookie_token_decoded' => $decodedCookieToken ? substr($decodedCookieToken, 0, 50) . '...' : 'missing',
             'header_x_xsrf_token' => $headerToken ? substr($headerToken, 0, 50) . '...' : 'missing',
             'header_x_csrf_token' => $csrfHeaderToken ? substr($csrfHeaderToken, 0, 50) . '...' : 'missing',
-            'cookie_matches_session' => $decodedCookieToken ? hash_equals($sessionToken, $decodedCookieToken) : false,
-            'header_matches_session' => $headerToken ? hash_equals($sessionToken, $headerToken) : false,
             'all_cookies' => array_keys($request->cookies->all()),
         ]);
         
@@ -136,6 +197,7 @@ final class VerifyCsrfToken extends Middleware
                 'session_id' => $request->session()->getId(),
                 'token_from_request' => $token,
                 'session_token' => $sessionToken,
+                'extracted_from_cookie' => $extractedTokenFromCookie,
             ]);
         }
         
