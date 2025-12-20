@@ -60,16 +60,40 @@ final class LogCorsAndCookies
         $referer = $request->headers->get('referer');
         $cookie = $request->headers->get('cookie');
         $userAgent = $request->headers->get('user-agent');
+        
+        // Проверяем, считается ли запрос stateful
+        $sanctumConfig = config('sanctum');
+        $statefulDomains = $sanctumConfig['stateful'] ?? [];
+        $isStateful = false;
+        $originHost = null;
+        
+        if ($origin) {
+            $parsed = parse_url($origin);
+            $originHost = $parsed['host'] ?? null;
+            
+            if ($originHost) {
+                foreach ($statefulDomains as $domain) {
+                    $domain = str_replace(['http://', 'https://'], '', $domain);
+                    if ($originHost === $domain || str_ends_with($originHost, '.' . $domain)) {
+                        $isStateful = true;
+                        break;
+                    }
+                }
+            }
+        }
 
         Log::info('CSRF Cookie Request', [
             'method' => $request->method(),
             'url' => $request->fullUrl(),
             'origin' => $origin,
+            'origin_host' => $originHost,
             'referer' => $referer,
             'has_cookie_header' => !empty($cookie),
             'cookie_header' => $cookie ? 'present' : 'missing',
             'user_agent' => $userAgent,
             'ip' => $request->ip(),
+            'is_stateful' => $isStateful,
+            'stateful_domains' => $statefulDomains,
         ]);
     }
 

@@ -19,13 +19,16 @@ return Application::configure(basePath: dirname(__DIR__))
         
         // ВАЖНО: Применяем CORS middleware к web routes, чтобы он работал для /sanctum/csrf-cookie
         // В Laravel 11 CORS применяется автоматически к API routes, но не к web routes
+        // Также применяем EnsureFrontendRequestsAreStateful к web routes для /sanctum/csrf-cookie
         $middleware->web(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
-            \App\Http\Middleware\ForceCorsHeaders::class,  // Принудительно добавляем CORS заголовки
+            \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
         
-        // Также применяем логирование к web routes
+        // Принудительно добавляем CORS заголовки ПОСЛЕ всех других middleware
+        // Это гарантирует, что заголовки не будут удалены другими middleware
         $middleware->web(append: [
+            \App\Http\Middleware\ForceCorsHeaders::class,
             \App\Http\Middleware\LogCorsAndCookies::class,
         ]);
     })
