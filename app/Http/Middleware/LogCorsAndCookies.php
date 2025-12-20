@@ -124,7 +124,12 @@ final class LogCorsAndCookies
         $exposeHeaders = $response->headers->get('Access-Control-Expose-Headers');
         
         // Получаем Set-Cookie заголовки
+        // get() с false может вернуть строку (если одна cookie) или массив (если несколько)
         $setCookieHeaders = $response->headers->get('Set-Cookie', null, false);
+        // Нормализуем в массив
+        if ($setCookieHeaders !== null) {
+            $setCookieHeaders = is_array($setCookieHeaders) ? $setCookieHeaders : [$setCookieHeaders];
+        }
         $hasSetCookie = !empty($setCookieHeaders);
 
         // Получаем конфигурацию
