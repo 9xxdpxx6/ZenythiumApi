@@ -41,6 +41,7 @@ final class VerifyCsrfToken extends Middleware
         // Это безопасно: CSRF атаки работают только с cookies (stateful),
         // Bearer токены в заголовке не отправляются браузером автоматически
         if ($request->bearerToken()) {
+            \Illuminate\Support\Facades\Log::info('CSRF: Excluded - Bearer token present');
             return true;
         }
 
@@ -63,8 +64,25 @@ final class VerifyCsrfToken extends Middleware
             
             // Если Origin не в списке stateful доменов - это stateless запрос, исключаем CSRF
             if (!$isStateful) {
+                \Illuminate\Support\Facades\Log::info('CSRF: Excluded - Stateless request', [
+                    'origin' => $origin,
+                    'origin_host' => $originHost,
+                    'stateful_domains' => $statefulDomains,
+                ]);
                 return true;
             }
+            
+            // Для stateful запросов логируем детали
+            \Illuminate\Support\Facades\Log::info('CSRF: Stateful request - CSRF required', [
+                'origin' => $origin,
+                'origin_host' => $originHost,
+                'path' => $request->path(),
+                'method' => $request->method(),
+                'has_csrf_token' => $request->hasHeader('X-XSRF-TOKEN'),
+                'csrf_token' => $request->header('X-XSRF-TOKEN') ? 'present' : 'missing',
+                'has_cookie' => $request->hasCookie('XSRF-TOKEN'),
+                'cookie_value' => $request->cookie('XSRF-TOKEN') ? 'present' : 'missing',
+            ]);
         }
 
         // 3. Для stateful запросов (SPA на том же домене, без Bearer токена) - требуем CSRF
