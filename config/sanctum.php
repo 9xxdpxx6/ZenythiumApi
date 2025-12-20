@@ -30,7 +30,7 @@ return [
         'domain' => env('SESSION_DOMAIN', '.zenythium.ru'), // важна точка!
         'secure' => env('SESSION_SECURE_COOKIE', true),
         'http_only' => false, // чтобы фронт видел токен
-        'same_site' => env('SESSION_SAME_SITE', 'lax'),
+        'same_site' => env('SESSION_SAME_SITE', 'none'),
     ],
 
     'guard' => ['web'],

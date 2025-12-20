@@ -89,5 +89,34 @@ final class VerifyCsrfToken extends Middleware
         // EnsureFrontendRequestsAreStateful middleware обработает это автоматически
         return parent::inExceptArray($request);
     }
+
+    /**
+     * Determine if the session and input CSRF tokens match.
+     * Переопределяем для детального логирования
+     */
+    protected function tokensMatch($request): bool
+    {
+        $token = $this->getTokenFromRequest($request);
+        $sessionToken = $request->session()->token();
+        
+        // Детальное логирование для отладки
+        \Illuminate\Support\Facades\Log::info('CSRF: Token validation', [
+            'path' => $request->path(),
+            'method' => $request->method(),
+            'has_token_in_request' => !empty($token),
+            'token_length' => $token ? strlen($token) : 0,
+            'has_session_token' => !empty($sessionToken),
+            'session_token_length' => $sessionToken ? strlen($sessionToken) : 0,
+            'tokens_match' => hash_equals($sessionToken, $token),
+            'cookie_token' => $request->cookie('XSRF-TOKEN') ? 'present' : 'missing',
+            'header_token' => $request->header('X-XSRF-TOKEN') ? 'present' : 'missing',
+            'all_cookies' => array_keys($request->cookies->all()),
+            'all_headers' => array_filter($request->headers->all(), function($key) {
+                return str_contains(strtolower($key), 'xsrf') || str_contains(strtolower($key), 'csrf');
+            }, ARRAY_FILTER_USE_KEY),
+        ]);
+        
+        return parent::tokensMatch($request);
+    }
 }
 
