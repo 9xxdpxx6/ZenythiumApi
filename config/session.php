@@ -47,7 +47,7 @@ return [
     // ВАЖНО: Даже для поддоменов одного домена (zenythium.ru → api.zenythium.ru)
     // это cross-origin запрос, поэтому нужен 'none' (только с HTTPS)
     // Для localhost можно использовать 'lax'
-    'same_site' => env('SESSION_SAME_SITE', 'lax'),
+    'same_site' => env('SESSION_SAME_SITE', 'none'),
 
     'partitioned' => env('SESSION_PARTITIONED_COOKIE', false),
 
