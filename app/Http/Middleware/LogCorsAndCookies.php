@@ -37,11 +37,25 @@ final class LogCorsAndCookies
             $corsApplied = $response->headers->has('Access-Control-Allow-Origin') 
                 || $response->headers->has('Access-Control-Allow-Credentials');
             
+            // Логируем все заголовки для отладки
+            $allHeaders = $response->headers->all();
+            Log::info('LogCorsAndCookies: Response headers check', [
+                'path' => $path,
+                'cors_applied' => $corsApplied,
+                'all_headers_keys' => array_keys($allHeaders),
+                'cors_headers' => [
+                    'Access-Control-Allow-Origin' => $response->headers->get('Access-Control-Allow-Origin'),
+                    'Access-Control-Allow-Credentials' => $response->headers->get('Access-Control-Allow-Credentials'),
+                    'Access-Control-Expose-Headers' => $response->headers->get('Access-Control-Expose-Headers'),
+                ],
+            ]);
+            
             if (!$corsApplied) {
                 Log::warning('CORS headers missing in response', [
                     'path' => $path,
                     'full_url' => $fullUrl,
-                    'response_headers' => array_keys($response->headers->all()),
+                    'response_headers' => array_keys($allHeaders),
+                    'all_headers' => $allHeaders,
                 ]);
             }
             

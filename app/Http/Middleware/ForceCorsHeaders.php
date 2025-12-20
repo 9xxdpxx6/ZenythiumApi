@@ -61,6 +61,13 @@ final class ForceCorsHeaders
                         'Access-Control-Expose-Headers' => $response->headers->get('Access-Control-Expose-Headers'),
                     ],
                 ]);
+                
+                // Проверяем финальное состояние заголовков перед возвратом
+                \Illuminate\Support\Facades\Log::info('ForceCorsHeaders: Final headers before return', [
+                    'all_headers' => $response->headers->all(),
+                    'has_allow_origin' => $response->headers->has('Access-Control-Allow-Origin'),
+                    'has_allow_credentials' => $response->headers->has('Access-Control-Allow-Credentials'),
+                ]);
             } else {
                 \Illuminate\Support\Facades\Log::warning('ForceCorsHeaders: Origin not allowed', [
                     'origin' => $origin,

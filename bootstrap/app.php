@@ -26,11 +26,13 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
         
         // Принудительно добавляем CORS заголовки ПОСЛЕ всех других middleware
-        // Это гарантирует, что заголовки не будут удалены другими middleware
+        // ForceCorsHeaders должен быть последним, чтобы гарантировать установку заголовков
         $middleware->web(append: [
             \App\Http\Middleware\ForceCorsHeaders::class,
-            \App\Http\Middleware\LogCorsAndCookies::class,
         ]);
+        
+        // Логирование применяем глобально, чтобы видеть финальный ответ
+        $middleware->append(\App\Http\Middleware\LogCorsAndCookies::class);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

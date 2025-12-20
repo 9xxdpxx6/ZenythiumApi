@@ -29,11 +29,14 @@ return [
 
     'path' => env('SESSION_PATH', '/'),
 
+    // Для поддоменов одного домена (zenythium.ru и api.zenythium.ru):
+    // SESSION_DOMAIN=.zenythium.ru (с точкой в начале для всех поддоменов)
+    // Для localhost: SESSION_DOMAIN=localhost или не задано
     'domain' => env('SESSION_DOMAIN'),
 
-    // Для кросс-доменных cookies (production с HTTPS):
+    // Для поддоменов одного домена с HTTPS:
     // SESSION_SECURE_COOKIE=true
-    // SESSION_SAME_SITE=none
+    // SESSION_SAME_SITE=none (нужен для cross-origin запросов между поддоменами)
     // Для localhost (development):
     // SESSION_SECURE_COOKIE=false (или не задано)
     // SESSION_SAME_SITE=lax
@@ -41,7 +44,8 @@ return [
 
     'http_only' => env('SESSION_HTTP_ONLY', true),
 
-    // Для кросс-доменных запросов с cookies нужен 'none' (только с HTTPS)
+    // ВАЖНО: Даже для поддоменов одного домена (zenythium.ru → api.zenythium.ru)
+    // это cross-origin запрос, поэтому нужен 'none' (только с HTTPS)
     // Для localhost можно использовать 'lax'
     'same_site' => env('SESSION_SAME_SITE', 'lax'),
 
