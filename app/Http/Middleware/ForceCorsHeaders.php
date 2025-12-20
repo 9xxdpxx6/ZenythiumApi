@@ -32,13 +32,6 @@ final class ForceCorsHeaders
             $allowedOrigins = $corsConfig['allowed_origins'] ?? [];
             $isOriginAllowed = $origin && in_array($origin, $allowedOrigins);
             
-            \Illuminate\Support\Facades\Log::info('ForceCorsHeaders triggered', [
-                'path' => $path,
-                'origin' => $origin,
-                'is_origin_allowed' => $isOriginAllowed,
-                'allowed_origins' => $allowedOrigins,
-            ]);
-            
             if ($isOriginAllowed) {
                 // Принудительно устанавливаем CORS заголовки
                 $response->headers->set('Access-Control-Allow-Origin', $origin);
@@ -53,23 +46,9 @@ final class ForceCorsHeaders
                 // Allow-Methods и Allow-Headers для preflight
                 $response->headers->set('Access-Control-Allow-Methods', implode(', ', $corsConfig['allowed_methods'] ?? ['*']));
                 $response->headers->set('Access-Control-Allow-Headers', '*');
-                
-                \Illuminate\Support\Facades\Log::info('ForceCorsHeaders: CORS headers set', [
-                    'headers_set' => [
-                        'Access-Control-Allow-Origin' => $response->headers->get('Access-Control-Allow-Origin'),
-                        'Access-Control-Allow-Credentials' => $response->headers->get('Access-Control-Allow-Credentials'),
-                        'Access-Control-Expose-Headers' => $response->headers->get('Access-Control-Expose-Headers'),
-                    ],
-                ]);
-                
-                // Проверяем финальное состояние заголовков перед возвратом
-                \Illuminate\Support\Facades\Log::info('ForceCorsHeaders: Final headers before return', [
-                    'all_headers' => $response->headers->all(),
-                    'has_allow_origin' => $response->headers->has('Access-Control-Allow-Origin'),
-                    'has_allow_credentials' => $response->headers->has('Access-Control-Allow-Credentials'),
-                ]);
             } else {
                 \Illuminate\Support\Facades\Log::warning('ForceCorsHeaders: Origin not allowed', [
+                    'path' => $path,
                     'origin' => $origin,
                     'allowed_origins' => $allowedOrigins,
                 ]);

@@ -41,7 +41,6 @@ final class VerifyCsrfToken extends Middleware
         // Это безопасно: CSRF атаки работают только с cookies (stateful),
         // Bearer токены в заголовке не отправляются браузером автоматически
         if ($request->bearerToken()) {
-            \Illuminate\Support\Facades\Log::info('CSRF: Excluded - Bearer token present');
             return true;
         }
 
@@ -64,25 +63,8 @@ final class VerifyCsrfToken extends Middleware
             
             // Если Origin не в списке stateful доменов - это stateless запрос, исключаем CSRF
             if (!$isStateful) {
-                \Illuminate\Support\Facades\Log::info('CSRF: Excluded - Stateless request', [
-                    'origin' => $origin,
-                    'origin_host' => $originHost,
-                    'stateful_domains' => $statefulDomains,
-                ]);
                 return true;
             }
-            
-            // Для stateful запросов логируем детали
-            \Illuminate\Support\Facades\Log::info('CSRF: Stateful request - CSRF required', [
-                'origin' => $origin,
-                'origin_host' => $originHost,
-                'path' => $request->path(),
-                'method' => $request->method(),
-                'has_csrf_token' => $request->hasHeader('X-XSRF-TOKEN'),
-                'csrf_token' => $request->header('X-XSRF-TOKEN') ? 'present' : 'missing',
-                'has_cookie' => $request->hasCookie('XSRF-TOKEN'),
-                'cookie_value' => $request->cookie('XSRF-TOKEN') ? 'present' : 'missing',
-            ]);
         }
 
         // 3. Для stateful запросов (SPA на том же домене, без Bearer токена) - требуем CSRF
@@ -168,36 +150,21 @@ final class VerifyCsrfToken extends Middleware
             $extractedTokenFromCookie = $decodedCookieToken;
         }
         
-        // Детальное логирование для отладки
-        \Illuminate\Support\Facades\Log::info('CSRF: Token validation', [
-            'path' => $request->path(),
-            'method' => $request->method(),
-            'session_id' => $request->session()->getId(),
-            'has_token_in_request' => !empty($token),
-            'token_from_getTokenFromRequest' => $token ? substr($token, 0, 50) . '...' : 'missing',
-            'token_length' => $token ? strlen($token) : 0,
-            'has_session_token' => !empty($sessionToken),
-            'session_token' => $sessionToken ? substr($sessionToken, 0, 50) . '...' : 'missing',
-            'session_token_length' => $sessionToken ? strlen($sessionToken) : 0,
-            'tokens_match' => hash_equals($sessionToken, $token),
-            'extracted_token_from_cookie' => $extractedTokenFromCookie ? substr($extractedTokenFromCookie, 0, 50) . '...' : 'missing',
-            'extracted_matches_session' => $extractedTokenFromCookie ? hash_equals($sessionToken, $extractedTokenFromCookie) : false,
-            'cookie_token_raw' => $cookieToken ? substr($cookieToken, 0, 50) . '...' : 'missing',
-            'cookie_token_decoded' => $decodedCookieToken ? substr($decodedCookieToken, 0, 50) . '...' : 'missing',
-            'header_x_xsrf_token' => $headerToken ? substr($headerToken, 0, 50) . '...' : 'missing',
-            'header_x_csrf_token' => $csrfHeaderToken ? substr($csrfHeaderToken, 0, 50) . '...' : 'missing',
-            'all_cookies' => array_keys($request->cookies->all()),
-        ]);
-        
         $result = parent::tokensMatch($request);
         
+        // Логируем только ошибки для уменьшения объема логов
         if (!$result) {
             \Illuminate\Support\Facades\Log::error('CSRF: Token validation FAILED', [
                 'path' => $request->path(),
+                'method' => $request->method(),
                 'session_id' => $request->session()->getId(),
-                'token_from_request' => $token,
-                'session_token' => $sessionToken,
-                'extracted_from_cookie' => $extractedTokenFromCookie,
+                'token_from_request' => $token ? substr($token, 0, 50) . '...' : 'missing',
+                'token_length' => $token ? strlen($token) : 0,
+                'session_token' => $sessionToken ? substr($sessionToken, 0, 50) . '...' : 'missing',
+                'session_token_length' => $sessionToken ? strlen($sessionToken) : 0,
+                'extracted_from_cookie' => $extractedTokenFromCookie ? substr($extractedTokenFromCookie, 0, 50) . '...' : 'missing',
+                'cookie_present' => !empty($cookieToken),
+                'header_present' => !empty($headerToken),
             ]);
         }
         
