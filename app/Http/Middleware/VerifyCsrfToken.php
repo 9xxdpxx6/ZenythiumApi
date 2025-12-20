@@ -99,24 +99,47 @@ final class VerifyCsrfToken extends Middleware
         $token = $this->getTokenFromRequest($request);
         $sessionToken = $request->session()->token();
         
+        // Получаем токены из разных источников для сравнения
+        $cookieToken = $request->cookie('XSRF-TOKEN');
+        $headerToken = $request->header('X-XSRF-TOKEN');
+        $csrfHeaderToken = $request->header('X-CSRF-TOKEN');
+        
+        // Декодируем cookie токен для сравнения
+        $decodedCookieToken = $cookieToken ? urldecode($cookieToken) : null;
+        
         // Детальное логирование для отладки
         \Illuminate\Support\Facades\Log::info('CSRF: Token validation', [
             'path' => $request->path(),
             'method' => $request->method(),
+            'session_id' => $request->session()->getId(),
             'has_token_in_request' => !empty($token),
+            'token_from_getTokenFromRequest' => $token ? substr($token, 0, 50) . '...' : 'missing',
             'token_length' => $token ? strlen($token) : 0,
             'has_session_token' => !empty($sessionToken),
+            'session_token' => $sessionToken ? substr($sessionToken, 0, 50) . '...' : 'missing',
             'session_token_length' => $sessionToken ? strlen($sessionToken) : 0,
             'tokens_match' => hash_equals($sessionToken, $token),
-            'cookie_token' => $request->cookie('XSRF-TOKEN') ? 'present' : 'missing',
-            'header_token' => $request->header('X-XSRF-TOKEN') ? 'present' : 'missing',
+            'cookie_token_raw' => $cookieToken ? substr($cookieToken, 0, 50) . '...' : 'missing',
+            'cookie_token_decoded' => $decodedCookieToken ? substr($decodedCookieToken, 0, 50) . '...' : 'missing',
+            'header_x_xsrf_token' => $headerToken ? substr($headerToken, 0, 50) . '...' : 'missing',
+            'header_x_csrf_token' => $csrfHeaderToken ? substr($csrfHeaderToken, 0, 50) . '...' : 'missing',
+            'cookie_matches_session' => $decodedCookieToken ? hash_equals($sessionToken, $decodedCookieToken) : false,
+            'header_matches_session' => $headerToken ? hash_equals($sessionToken, $headerToken) : false,
             'all_cookies' => array_keys($request->cookies->all()),
-            'all_headers' => array_filter($request->headers->all(), function($key) {
-                return str_contains(strtolower($key), 'xsrf') || str_contains(strtolower($key), 'csrf');
-            }, ARRAY_FILTER_USE_KEY),
         ]);
         
-        return parent::tokensMatch($request);
+        $result = parent::tokensMatch($request);
+        
+        if (!$result) {
+            \Illuminate\Support\Facades\Log::error('CSRF: Token validation FAILED', [
+                'path' => $request->path(),
+                'session_id' => $request->session()->getId(),
+                'token_from_request' => $token,
+                'session_token' => $sessionToken,
+            ]);
+        }
+        
+        return $result;
     }
 }
 
