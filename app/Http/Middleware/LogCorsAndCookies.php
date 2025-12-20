@@ -17,14 +17,32 @@ final class LogCorsAndCookies
     public function handle(Request $request, Closure $next): Response
     {
         // Логируем только для /sanctum/csrf-cookie
-        if ($request->is('sanctum/csrf-cookie')) {
+        // Проверяем разными способами, так как путь может быть с ведущим слешем или без
+        $path = $request->path();
+        $fullUrl = $request->fullUrl();
+        $isCsrfCookie = $path === 'sanctum/csrf-cookie' 
+            || $request->is('sanctum/csrf-cookie')
+            || $request->is('*/sanctum/csrf-cookie')
+            || str_contains($fullUrl, 'sanctum/csrf-cookie');
+        
+        // Временное отладочное логирование для проверки работы middleware
+        if (str_contains($fullUrl, 'sanctum/csrf-cookie')) {
+            Log::debug('LogCorsAndCookies middleware triggered', [
+                'path' => $path,
+                'full_url' => $fullUrl,
+                'is_csrf_cookie' => $isCsrfCookie,
+                'method' => $request->method(),
+            ]);
+        }
+        
+        if ($isCsrfCookie) {
             $this->logRequest($request);
         }
 
         $response = $next($request);
 
         // Логируем ответ для /sanctum/csrf-cookie
-        if ($request->is('sanctum/csrf-cookie')) {
+        if ($isCsrfCookie) {
             $this->logResponse($request, $response);
         }
 

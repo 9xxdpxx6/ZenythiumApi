@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \App\Http\Middleware\LogCorsAndCookies::class,
         ]);
+        
+        // Также применяем к web routes, так как /sanctum/csrf-cookie может быть web route
+        $middleware->web(append: [
+            \App\Http\Middleware\LogCorsAndCookies::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //
