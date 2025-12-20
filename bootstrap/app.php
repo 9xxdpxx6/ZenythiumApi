@@ -21,6 +21,7 @@ return Application::configure(basePath: dirname(__DIR__))
         // В Laravel 11 CORS применяется автоматически к API routes, но не к web routes
         $middleware->web(prepend: [
             \Illuminate\Http\Middleware\HandleCors::class,
+            \App\Http\Middleware\ForceCorsHeaders::class,  // Принудительно добавляем CORS заголовки
         ]);
         
         // Также применяем логирование к web routes

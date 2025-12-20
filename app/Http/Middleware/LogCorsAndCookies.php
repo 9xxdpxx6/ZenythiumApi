@@ -25,16 +25,6 @@ final class LogCorsAndCookies
             || $request->is('*/sanctum/csrf-cookie')
             || str_contains($fullUrl, 'sanctum/csrf-cookie');
         
-        // Временное отладочное логирование для проверки работы middleware
-        if (str_contains($fullUrl, 'sanctum/csrf-cookie')) {
-            Log::debug('LogCorsAndCookies middleware triggered', [
-                'path' => $path,
-                'full_url' => $fullUrl,
-                'is_csrf_cookie' => $isCsrfCookie,
-                'method' => $request->method(),
-            ]);
-        }
-        
         if ($isCsrfCookie) {
             $this->logRequest($request);
         }
@@ -43,6 +33,18 @@ final class LogCorsAndCookies
 
         // Логируем ответ для /sanctum/csrf-cookie
         if ($isCsrfCookie) {
+            // Проверяем, применен ли CORS middleware
+            $corsApplied = $response->headers->has('Access-Control-Allow-Origin') 
+                || $response->headers->has('Access-Control-Allow-Credentials');
+            
+            if (!$corsApplied) {
+                Log::warning('CORS headers missing in response', [
+                    'path' => $path,
+                    'full_url' => $fullUrl,
+                    'response_headers' => array_keys($response->headers->all()),
+                ]);
+            }
+            
             $this->logResponse($request, $response);
         }
 

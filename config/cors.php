@@ -2,7 +2,11 @@
 
 return [
 
-    'paths' => ['api/*', 'sanctum/csrf-cookie'],
+    'paths' => [
+        'api/*', 
+        'sanctum/csrf-cookie',
+        'sanctum/*',  // Добавляем для всех sanctum маршрутов
+    ],
 
     'allowed_methods' => ['*'],
 
