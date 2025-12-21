@@ -4,9 +4,12 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Exports\TrainingProgramPdfExporter;
+use App\Http\Requests\ExportRequest;
 use App\Http\Resources\TrainingProgramResource;
 use App\Http\Resources\TrainingProgramDetailResource;
 use App\Models\TrainingProgramInstallation;
+use App\Services\TrainingProgramExportService;
 use App\Services\TrainingProgramService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +23,9 @@ use Illuminate\Http\Request;
 final class TrainingProgramController extends Controller
 {
     public function __construct(
-        private readonly TrainingProgramService $trainingProgramService
+        private readonly TrainingProgramService $trainingProgramService,
+        private readonly TrainingProgramExportService $exportService,
+        private readonly TrainingProgramPdfExporter $pdfExporter
     ) {}
 
     /**
@@ -306,5 +311,105 @@ final class TrainingProgramController extends Controller
                 'message' => $e->getMessage()
             ], 400);
         }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/training-programs/{id}/export",
+     *     summary="Экспорт программы тренировок",
+     *     description="Экспортирует программу тренировок в формате JSON или PDF. Поддерживает два типа экспорта: detailed (подробный) и structure (структурный)",
+     *     tags={"Training Programs"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID программы",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="format",
+     *         in="query",
+     *         description="Формат экспорта",
+     *         required=true,
+     *         @OA\Schema(type="string", enum={"json", "pdf"}, example="pdf")
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Тип экспорта: detailed (подробный с статистикой) или structure (только структура)",
+     *         required=true,
+     *         @OA\Schema(type="string", enum={"detailed", "structure"}, example="detailed")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Экспорт успешно выполнен",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(property="data", type="object", description="Данные программы для экспорта (структура зависит от типа: detailed или structure)"),
+     *                 @OA\Property(property="message", type="string", example="Программа успешно экспортирована")
+     *             )
+     *         ),
+     *         @OA\MediaType(
+     *             mediaType="application/pdf",
+     *             @OA\Schema(type="string", format="binary", description="PDF файл с экспортированной программой")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Программа не найдена",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Программа не найдена")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function export(int $id, ExportRequest $request): JsonResponse|\Illuminate\Http\Response
+    {
+        $program = $this->trainingProgramService->getById($id);
+        
+        if (!$program) {
+            return response()->json([
+                'message' => 'Программа не найдена'
+            ], 404);
+        }
+
+        $format = $request->validated()['format'];
+        $type = $request->validated()['type'];
+
+        if ($format === 'pdf') {
+            if ($type === 'detailed') {
+                return $this->pdfExporter->exportDetailed($program);
+            } else {
+                return $this->pdfExporter->exportStructure($program);
+            }
+        }
+
+        // JSON export
+        $data = $type === 'detailed'
+            ? $this->exportService->getDetailedData($program)
+            : $this->exportService->getStructureData($program);
+
+        return response()->json([
+            'data' => $data,
+            'message' => 'Программа успешно экспортирована'
+        ]);
     }
 }

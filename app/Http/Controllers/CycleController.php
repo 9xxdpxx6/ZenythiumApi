@@ -4,10 +4,13 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers;
 
+use App\Exports\CyclePdfExporter;
 use App\Http\Requests\CycleRequest;
+use App\Http\Requests\ExportRequest;
 use App\Http\Resources\CycleResource;
 use App\Http\Resources\CycleDetailResource;
 use App\Models\Cycle;
+use App\Services\CycleExportService;
 use App\Services\CycleService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -15,7 +18,9 @@ use Illuminate\Http\Request;
 final class CycleController extends Controller
 {
     public function __construct(
-        private readonly CycleService $cycleService
+        private readonly CycleService $cycleService,
+        private readonly CycleExportService $exportService,
+        private readonly CyclePdfExporter $pdfExporter
     ) {}
 
     /**
@@ -353,6 +358,106 @@ final class CycleController extends Controller
         return response()->json([
             'data' => null,
             'message' => 'Цикл успешно удален'
+        ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/cycles/{id}/export",
+     *     summary="Экспорт цикла тренировок",
+     *     description="Экспортирует цикл тренировок в формате JSON или PDF. Поддерживает два типа экспорта: detailed (подробный) и structure (структурный)",
+     *     tags={"Cycles"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID цикла",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="format",
+     *         in="query",
+     *         description="Формат экспорта",
+     *         required=true,
+     *         @OA\Schema(type="string", enum={"json", "pdf"}, example="pdf")
+     *     ),
+     *     @OA\Parameter(
+     *         name="type",
+     *         in="query",
+     *         description="Тип экспорта: detailed (подробный с статистикой) или structure (только структура)",
+     *         required=true,
+     *         @OA\Schema(type="string", enum={"detailed", "structure"}, example="detailed")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Экспорт успешно выполнен",
+     *         @OA\MediaType(
+     *             mediaType="application/json",
+     *             @OA\Schema(
+     *                 type="object",
+     *                 @OA\Property(property="data", type="object", description="Данные цикла для экспорта (структура зависит от типа: detailed или structure)"),
+     *                 @OA\Property(property="message", type="string", example="Цикл успешно экспортирован")
+     *             )
+     *         ),
+     *         @OA\MediaType(
+     *             mediaType="application/pdf",
+     *             @OA\Schema(type="string", format="binary", description="PDF файл с экспортированным циклом")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Цикл не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Цикл не найден")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Ошибка валидации",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
+     *             @OA\Property(property="errors", type="object")
+     *         )
+     *     )
+     * )
+     */
+    public function export(int $id, ExportRequest $request): JsonResponse|\Illuminate\Http\Response
+    {
+        $cycle = $this->cycleService->getById($id, $request->user()?->id);
+        
+        if (!$cycle) {
+            return response()->json([
+                'message' => 'Цикл не найден'
+            ], 404);
+        }
+
+        $format = $request->validated()['format'];
+        $type = $request->validated()['type'];
+
+        if ($format === 'pdf') {
+            if ($type === 'detailed') {
+                return $this->pdfExporter->exportDetailed($cycle);
+            } else {
+                return $this->pdfExporter->exportStructure($cycle);
+            }
+        }
+
+        // JSON export
+        $data = $type === 'detailed'
+            ? $this->exportService->getDetailedData($cycle)
+            : $this->exportService->getStructureData($cycle);
+
+        return response()->json([
+            'data' => $data,
+            'message' => 'Цикл успешно экспортирован'
         ]);
     }
 }

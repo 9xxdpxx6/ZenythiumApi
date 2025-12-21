@@ -72,6 +72,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::get('/cycles/{id}', [CycleController::class, 'show']);
     Route::put('/cycles/{id}', [CycleController::class, 'update']);
     Route::delete('/cycles/{id}', [CycleController::class, 'destroy']);
+    Route::get('/cycles/{id}/export', [CycleController::class, 'export']);
     
     // Exercises CRUD routes
     Route::get('/exercises', [ExerciseController::class, 'index']);
@@ -127,6 +128,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::get('/training-programs/{id}', [TrainingProgramController::class, 'show']);
     Route::post('/training-programs/{id}/install', [TrainingProgramController::class, 'install']);
     Route::delete('/training-programs/{id}/uninstall', [TrainingProgramController::class, 'uninstall']);
+    Route::get('/training-programs/{id}/export', [TrainingProgramController::class, 'export']);
     
     // Goals routes
     Route::get('/goals/types', [GoalController::class, 'types']);

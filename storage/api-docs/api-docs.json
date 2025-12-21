@@ -1724,6 +1724,141 @@
                 ]
             }
         },
+        "/api/v1/cycles/{id}/export": {
+            "get": {
+                "tags": [
+                    "Cycles"
+                ],
+                "summary": "Экспорт цикла тренировок",
+                "description": "Экспортирует цикл тренировок в формате JSON или PDF. Поддерживает два типа экспорта: detailed (подробный) и structure (структурный)",
+                "operationId": "3ce232214ec4c4d12934ce98edec9ac6",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID цикла",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "Формат экспорта",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "json",
+                                "pdf"
+                            ],
+                            "example": "pdf"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Тип экспорта: detailed (подробный с статистикой) или structure (только структура)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "detailed",
+                                "structure"
+                            ],
+                            "example": "detailed"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Экспорт успешно выполнен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "description": "Данные цикла для экспорта (структура зависит от типа: detailed или structure)",
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цикл успешно экспортирован"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "description": "PDF файл с экспортированным циклом",
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Цикл не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цикл не найден"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/exercises": {
             "get": {
                 "tags": [
@@ -6008,6 +6143,141 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/training-programs/{id}/export": {
+            "get": {
+                "tags": [
+                    "Training Programs"
+                ],
+                "summary": "Экспорт программы тренировок",
+                "description": "Экспортирует программу тренировок в формате JSON или PDF. Поддерживает два типа экспорта: detailed (подробный) и structure (структурный)",
+                "operationId": "493429d0fb536c84414b0ea57bf41d11",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID программы",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    },
+                    {
+                        "name": "format",
+                        "in": "query",
+                        "description": "Формат экспорта",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "json",
+                                "pdf"
+                            ],
+                            "example": "pdf"
+                        }
+                    },
+                    {
+                        "name": "type",
+                        "in": "query",
+                        "description": "Тип экспорта: detailed (подробный с статистикой) или structure (только структура)",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "detailed",
+                                "structure"
+                            ],
+                            "example": "detailed"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Экспорт успешно выполнен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "description": "Данные программы для экспорта (структура зависит от типа: detailed или structure)",
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Программа успешно экспортирована"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            },
+                            "application/pdf": {
+                                "schema": {
+                                    "description": "PDF файл с экспортированной программой",
+                                    "type": "string",
+                                    "format": "binary"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Программа не найдена",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Программа не найдена"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации"
+                                        },
+                                        "errors": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
