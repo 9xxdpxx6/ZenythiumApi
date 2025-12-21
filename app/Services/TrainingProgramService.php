@@ -323,7 +323,14 @@ final class TrainingProgramService
         TrainingProgramInstallation $install
     ): Exercise {
         $name = $exerciseData['name'];
-        $muscleGroupId = $exerciseData['muscle_group_id'] ?? null;
+        // Поддержка обоих форматов: muscle_group_id (старый) и muscle_group (новый)
+        if (isset($exerciseData['muscle_group_id'])) {
+            $muscleGroupId = $exerciseData['muscle_group_id'];
+        } elseif (isset($exerciseData['muscle_group']) && $exerciseData['muscle_group'] !== null) {
+            $muscleGroupId = $exerciseData['muscle_group']['id'] ?? null;
+        } else {
+            $muscleGroupId = null;
+        }
         $description = $exerciseData['description'] ?? null;
 
         // Ищем существующее упражнение по name + muscle_group_id + user_id
@@ -414,7 +421,7 @@ final class TrainingProgramService
      *           'exercises' => [
      *             [
      *               'name' => '...',
-     *               'muscle_group_id' => 1,
+     *               'muscle_group' => ['id' => 1, 'name' => '...'] | null,
      *               'description' => '...'
      *             ]
      *           ]
@@ -468,11 +475,22 @@ final class TrainingProgramService
                     ];
 
                     foreach ($plan->exercises as $exercise) {
-                        $planData['exercises'][] = [
+                        $exerciseData = [
                             'name' => $exercise->name,
-                            'muscle_group_id' => $exercise->muscle_group_id,
                             'description' => $exercise->description,
                         ];
+
+                        // Добавляем объект muscle_group с id и name, если группа мышц существует
+                        if ($exercise->muscleGroup) {
+                            $exerciseData['muscle_group'] = [
+                                'id' => $exercise->muscleGroup->id,
+                                'name' => $exercise->muscleGroup->name,
+                            ];
+                        } else {
+                            $exerciseData['muscle_group'] = null;
+                        }
+
+                        $planData['exercises'][] = $exerciseData;
                     }
 
                     $cycleData['plans'][] = $planData;
