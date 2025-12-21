@@ -30,7 +30,8 @@ WORKDIR /var/www/html
 COPY composer.json composer.lock ./
 
 # Установка production зависимостей
-RUN composer install --no-dev --optimize-autoloader --no-interaction --no-scripts
+# --no-scripts пропускаем, чтобы выполнился post-autoload-dump для автодискавери пакетов
+RUN composer install --no-dev --optimize-autoloader --no-interaction
 
 # Stage 3: Production - финальный образ
 FROM php:8.3-fpm AS production
@@ -75,8 +76,9 @@ COPY --from=composer:2 /usr/bin/composer /usr/bin/composer
 # Копирование кода приложения
 COPY --chown=www-data:www-data . .
 
-# Запуск post-autoload-dump скриптов
+# Запуск post-autoload-dump скриптов и регистрация пакетов
 RUN composer dump-autoload --optimize --no-interaction || true
+RUN php artisan package:discover --ansi || true
 
 # Создание необходимых директорий с правильными правами
 RUN mkdir -p storage/framework/{sessions,views,cache} \
