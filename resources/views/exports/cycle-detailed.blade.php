@@ -197,7 +197,7 @@
     <div class="info-grid">
         <div class="info-row">
             <div class="info-label">Пользователь:</div>
-            <div class="info-value">{{ $cycle['user']['name'] }}</div>
+            <div class="info-value">{{ $cycle['user']['name'] ?? 'Не указан' }}</div>
         </div>
         <div class="info-row">
             <div class="info-label">Дата начала:</div>

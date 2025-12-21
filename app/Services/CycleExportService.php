@@ -40,19 +40,24 @@ final class CycleExportService
                 'name' => $plan->name,
                 'order' => $plan->order,
                 'is_active' => $plan->is_active,
-                'exercise_count' => $plan->exercise_count,
-                'exercises' => $plan->planExercises->map(function ($planExercise) {
-                    return [
-                        'id' => $planExercise->exercise->id,
-                        'name' => $planExercise->exercise->name,
-                        'description' => $planExercise->exercise->description,
-                        'muscle_group' => $planExercise->exercise->muscleGroup ? [
-                            'id' => $planExercise->exercise->muscleGroup->id,
-                            'name' => $planExercise->exercise->muscleGroup->name,
-                        ] : null,
-                        'order' => $planExercise->order,
-                    ];
-                })->toArray(),
+                'exercise_count' => $plan->planExercises->count(),
+                'exercises' => $plan->planExercises
+                    ->filter(function ($planExercise) {
+                        return $planExercise->exercise !== null;
+                    })
+                    ->map(function ($planExercise) {
+                        return [
+                            'id' => $planExercise->exercise->id,
+                            'name' => $planExercise->exercise->name,
+                            'description' => $planExercise->exercise->description,
+                            'muscle_group' => $planExercise->exercise->muscleGroup ? [
+                                'id' => $planExercise->exercise->muscleGroup->id,
+                                'name' => $planExercise->exercise->muscleGroup->name,
+                            ] : null,
+                            'order' => $planExercise->order,
+                        ];
+                    })
+                    ->toArray(),
                 'created_at' => $plan->created_at?->toISOString(),
                 'updated_at' => $plan->updated_at?->toISOString(),
             ];
@@ -62,6 +67,11 @@ final class CycleExportService
             // Группируем подходы по упражнениям
             $exercises = [];
             foreach ($workout->workoutSets as $set) {
+                // Проверяем наличие planExercise и exercise
+                if (!$set->planExercise || !$set->planExercise->exercise) {
+                    continue;
+                }
+                
                 $exerciseId = $set->planExercise->exercise_id;
                 $exerciseName = $set->planExercise->exercise->name;
                 
@@ -101,10 +111,10 @@ final class CycleExportService
         return [
             'id' => $cycle->id,
             'name' => $cycle->name,
-            'user' => [
+            'user' => $cycle->user ? [
                 'id' => $cycle->user->id,
                 'name' => $cycle->user->name,
-            ],
+            ] : null,
             'start_date' => $cycle->start_date?->toDateString(),
             'end_date' => $cycle->end_date?->toDateString(),
             'weeks' => $cycle->weeks,
@@ -141,14 +151,19 @@ final class CycleExportService
             return [
                 'name' => $plan->name,
                 'order' => $plan->order,
-                'exercises' => $plan->planExercises->map(function ($planExercise) {
-                    return [
-                        'name' => $planExercise->exercise->name,
-                        'description' => $planExercise->exercise->description,
-                        'muscle_group' => $planExercise->exercise->muscleGroup?->name,
-                        'order' => $planExercise->order,
-                    ];
-                })->toArray(),
+                'exercises' => $plan->planExercises
+                    ->filter(function ($planExercise) {
+                        return $planExercise->exercise !== null;
+                    })
+                    ->map(function ($planExercise) {
+                        return [
+                            'name' => $planExercise->exercise->name,
+                            'description' => $planExercise->exercise->description,
+                            'muscle_group' => $planExercise->exercise->muscleGroup?->name,
+                            'order' => $planExercise->order,
+                        ];
+                    })
+                    ->toArray(),
             ];
         })->toArray();
 
