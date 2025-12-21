@@ -930,8 +930,12 @@
                     "Authentication"
                 ],
                 "summary": "Обновление токена доступа",
-                "description": "Удаляет текущий токен и создает новый для продления сессии",
+                "description": "Удаляет текущий токен (даже просроченный) и создает новый для продления сессии. Работает без аутентификации, принимает токен в заголовке Authorization",
                 "operationId": "2cc587dcdbd87fbe33460b0b274cea3f",
+                "requestBody": {
+                    "description": "Токен передается в заголовке Authorization: Bearer {token}",
+                    "required": false
+                },
                 "responses": {
                     "200": {
                         "description": "Токен успешно обновлен",
@@ -980,14 +984,14 @@
                         }
                     },
                     "401": {
-                        "description": "Не авторизован",
+                        "description": "Неверный или отсутствующий токен",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Unauthenticated."
+                                            "example": "Токен не предоставлен"
                                         }
                                     },
                                     "type": "object"
@@ -995,12 +999,7 @@
                             }
                         }
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         },
         "/api/v1/user/device-tokens": {

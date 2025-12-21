@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Password;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Validation\ValidationException;
+use Laravel\Sanctum\PersonalAccessToken;
 
 final class AuthController extends Controller
 {
@@ -621,9 +622,12 @@ final class AuthController extends Controller
      * @OA\Post(
      *     path="/api/v1/refresh-token",
      *     summary="Обновление токена доступа",
-     *     description="Удаляет текущий токен и создает новый для продления сессии",
+     *     description="Удаляет текущий токен (даже просроченный) и создает новый для продления сессии. Работает без аутентификации, принимает токен в заголовке Authorization",
      *     tags={"Authentication"},
-     *     security={{"sanctum": {}}},
+     *     @OA\RequestBody(
+     *         required=false,
+     *         description="Токен передается в заголовке Authorization: Bearer {token}"
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Токен успешно обновлен",
@@ -642,22 +646,72 @@ final class AuthController extends Controller
      *     ),
      *     @OA\Response(
      *         response=401,
-     *         description="Не авторизован",
+     *         description="Неверный или отсутствующий токен",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *             @OA\Property(property="message", type="string", example="Токен не предоставлен")
      *         )
      *     )
      * )
      */
     public function refreshToken(Request $request): JsonResponse
     {
-        $user = $request->user();
+        // Получаем токен из заголовка Authorization
+        $token = $request->bearerToken();
         
-        // Delete current token
-        $request->user()->currentAccessToken()->delete();
+        if (!$token) {
+            return response()->json([
+                'message' => 'Токен не предоставлен',
+            ], 401);
+        }
         
-        // Create new token
-        $token = $user->createToken('auth_token')->plainTextToken;
+        // Находим токен в БД (даже если он просрочен)
+        // Используем findToken(), который может не найти просроченный токен,
+        // поэтому также ищем напрямую через хеш
+        $accessToken = PersonalAccessToken::findToken($token);
+        
+        // Если findToken() не нашел токен (возможно, из-за просрочки),
+        // ищем напрямую через хеш в БД
+        if (!$accessToken) {
+            // Разбираем токен: формат "id|hash"
+            $parts = explode('|', $token, 2);
+            
+            if (count($parts) !== 2) {
+                return response()->json([
+                    'message' => 'Неверный формат токена',
+                ], 401);
+            }
+            
+            [$id, $tokenValue] = $parts;
+            
+            // Вычисляем хеш токена (как это делает Sanctum)
+            $hash = hash('sha256', $tokenValue);
+            
+            // Ищем токен в БД напрямую, игнорируя проверку срока действия
+            $accessToken = PersonalAccessToken::where('id', $id)
+                ->where('token', $hash)
+                ->first();
+        }
+        
+        if (!$accessToken) {
+            return response()->json([
+                'message' => 'Неверный токен',
+            ], 401);
+        }
+        
+        // Получаем пользователя из токена
+        $user = $accessToken->tokenable;
+        
+        if (!$user) {
+            return response()->json([
+                'message' => 'Пользователь не найден',
+            ], 401);
+        }
+        
+        // Удаляем старый токен (даже если он просрочен)
+        $accessToken->delete();
+        
+        // Создаем новый токен
+        $newToken = $user->createToken('auth_token')->plainTextToken;
 
         return response()->json([
             'data' => [
@@ -666,7 +720,7 @@ final class AuthController extends Controller
                     'name' => $user->name,
                     'email' => $user->email,
                 ],
-                'token' => $token,
+                'token' => $newToken,
                 'token_type' => 'Bearer'
             ],
             'message' => 'Токен успешно обновлен'

@@ -36,6 +36,10 @@ Route::prefix('v1')->group(function () {
     Route::post('/reset-password', [AuthController::class, 'resetPassword'])
         ->middleware('throttle:5,1');
     
+    // Обновление токена: 10 попыток в минуту (работает даже с просроченными токенами)
+    Route::post('/refresh-token', [AuthController::class, 'refreshToken'])
+        ->middleware('throttle:10,1');
+    
     // Test endpoint to verify CORS is working
     Route::get('/test', function () {
         return response()->json([
@@ -57,7 +61,6 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::post('/logout-all', [AuthController::class, 'logoutAll']);
     Route::post('/change-password', [AuthController::class, 'changePassword']);
-    Route::post('/refresh-token', [AuthController::class, 'refreshToken']);
     
     // Muscle Groups CRUD routes
     Route::get('/muscle-groups', [MuscleGroupController::class, 'index']);
