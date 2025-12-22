@@ -43,7 +43,8 @@ final class TrainingProgramFilter extends BaseFilter
 
     private function applySortingFilter(Builder $query): void
     {
-        $this->applySorting($query, 'name', 'asc');
+        // По умолчанию сортируем по дате создания (новые сначала)
+        $this->applySorting($query, 'created_at', 'desc');
     }
 }
 

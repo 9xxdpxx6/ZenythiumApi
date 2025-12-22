@@ -63,6 +63,20 @@ final class TrainingProgramController extends Controller
      *         required=false,
      *         @OA\Schema(type="string", enum={"0", "1", "true", "false"}, example="1")
      *     ),
+     *     @OA\Parameter(
+     *         name="sort_by",
+     *         in="query",
+     *         description="Поле для сортировки. Доступные значения: 'created_at', 'name', 'duration_weeks'. По умолчанию: 'created_at'",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"created_at", "name", "duration_weeks"}, example="created_at")
+     *     ),
+     *     @OA\Parameter(
+     *         name="sort_order",
+     *         in="query",
+     *         description="Направление сортировки. Доступные значения: 'asc', 'desc'. По умолчанию: 'desc' (новые сначала)",
+     *         required=false,
+     *         @OA\Schema(type="string", enum={"asc", "desc"}, example="desc")
+     *     ),
      *     @OA\Response(
      *         response=200,
      *         description="Программы успешно получены",

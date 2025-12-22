@@ -5808,6 +5808,35 @@
                             ],
                             "example": "1"
                         }
+                    },
+                    {
+                        "name": "sort_by",
+                        "in": "query",
+                        "description": "Поле для сортировки. Доступные значения: 'created_at', 'name', 'duration_weeks'. По умолчанию: 'created_at'",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "created_at",
+                                "name",
+                                "duration_weeks"
+                            ],
+                            "example": "created_at"
+                        }
+                    },
+                    {
+                        "name": "sort_order",
+                        "in": "query",
+                        "description": "Направление сортировки. Доступные значения: 'asc', 'desc'. По умолчанию: 'desc' (новые сначала)",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "enum": [
+                                "asc",
+                                "desc"
+                            ],
+                            "example": "desc"
+                        }
                     }
                 ],
                 "responses": {
