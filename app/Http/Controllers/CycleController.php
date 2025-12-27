@@ -12,15 +12,18 @@ use App\Http\Resources\CycleDetailResource;
 use App\Models\Cycle;
 use App\Services\CycleExportService;
 use App\Services\CycleService;
+use App\Services\CycleShareService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 final class CycleController extends Controller
 {
     public function __construct(
         private readonly CycleService $cycleService,
         private readonly CycleExportService $exportService,
-        private readonly CyclePdfExporter $pdfExporter
+        private readonly CyclePdfExporter $pdfExporter,
+        private readonly CycleShareService $shareService
     ) {}
 
     /**
@@ -459,5 +462,116 @@ final class CycleController extends Controller
             'data' => $data,
             'message' => 'Цикл успешно экспортирован'
         ]);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/cycles/{id}/share-link",
+     *     summary="Генерация ссылки для расшаривания цикла",
+     *     description="Генерирует или возвращает существующую ссылку для расшаривания цикла тренировок. Только владелец цикла может создать ссылку.",
+     *     tags={"Cycles"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID цикла",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Ссылка успешно сгенерирована",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="share_link", type="string", example="https://example.com/shared-cycles/550e8400-e29b-41d4-a716-446655440000", description="Полная ссылка для расшаривания"),
+     *             @OA\Property(property="share_id", type="string", example="550e8400-e29b-41d4-a716-446655440000", description="UUID ссылки"),
+     *             @OA\Property(property="message", type="string", example="Ссылка успешно сгенерирована")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Нет прав на генерацию ссылки",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Цикл не найден или вы не имеете прав на его расшаривание")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Цикл не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Цикл не найден")
+     *         )
+     *     )
+     * )
+     */
+    public function shareLink(int $id, Request $request): JsonResponse
+    {
+        $user = $request->user();
+        
+        if (!$user) {
+            return response()->json([
+                'message' => 'Не авторизован'
+            ], 401);
+        }
+
+        $userId = $user->id;
+
+        // Проверяем существование цикла и права доступа
+        $cycle = Cycle::where('id', $id)
+            ->where('user_id', $userId)
+            ->first();
+
+        if (!$cycle) {
+            // Проверяем, существует ли цикл вообще
+            $cycleExists = Cycle::where('id', $id)->exists();
+            
+            if (!$cycleExists) {
+                return response()->json([
+                    'message' => 'Цикл не найден'
+                ], 404);
+            }
+
+            // Цикл существует, но не принадлежит пользователю
+            return response()->json([
+                'message' => 'Цикл не найден или вы не имеете прав на его расшаривание'
+            ], 403);
+        }
+
+        try {
+            $shareLink = $this->shareService->generateShareLink($id, $userId);
+            
+            // Извлекаем share_id из ссылки
+            $shareId = basename($shareLink);
+
+            // Логируем операцию
+            Log::info('Cycle shared', [
+                'cycle_id' => $id,
+                'user_id' => $userId,
+                'share_id' => $shareId,
+            ]);
+
+            return response()->json([
+                'share_link' => $shareLink,
+                'share_id' => $shareId,
+                'message' => 'Ссылка успешно сгенерирована'
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error generating share link', [
+                'cycle_id' => $id,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => $e->getMessage() ?: 'Ошибка при генерации ссылки'
+            ], 500);
+        }
     }
 }

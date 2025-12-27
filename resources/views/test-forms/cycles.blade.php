@@ -290,6 +290,7 @@
                                             <th>Прогресс</th>
                                             <th>Завершено тренировок</th>
                                             <th>Создано</th>
+                                            <th>Действия</th>
                                         </tr>
                                     </thead>
                                     <tbody>
@@ -303,6 +304,11 @@
                                                 <td>${item.progress_percentage}%</td>
                                                 <td>${item.completed_workouts_count}</td>
                                                 <td>${new Date(item.created_at).toLocaleString('ru-RU')}</td>
+                                                <td>
+                                                    <button class="btn btn-sm btn-info" onclick="generateShareLink(${item.id})" title="Сгенерировать ссылку для расшаривания">
+                                                        <i class="fas fa-share-alt"></i>
+                                                    </button>
+                                                </td>
                                             </tr>
                                         `).join('')}
                                     </tbody>
@@ -473,6 +479,54 @@
                 showResponse({error: error.message}, true);
             }
         });
+
+        // Generate Share Link
+        async function generateShareLink(cycleId) {
+            const token = localStorage.getItem('auth_token');
+            if (!token) {
+                alert('Вы не авторизованы. Пожалуйста, сначала выполните авторизацию.');
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/cycles/${cycleId}/share-link`, {
+                    method: 'GET',
+                    headers: getAuthHeaders()
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    const shareLink = data.share_link;
+                    const shareId = data.share_id;
+                    
+                    const message = `Ссылка для расшаривания:\n\nShare ID: ${shareId}\nСсылка: ${shareLink}\n\nСкопировать ссылку в буфер обмена?`;
+                    
+                    if (confirm(message)) {
+                        await navigator.clipboard.writeText(shareLink);
+                        alert('Ссылка скопирована в буфер обмена!');
+                    }
+                    
+                    showResponse(data, false);
+                } else {
+                    let errorMessage = data.message || 'Не удалось сгенерировать ссылку';
+                    
+                    if (response.status === 401) {
+                        errorMessage = 'Вы не авторизованы. Пожалуйста, выполните авторизацию.';
+                    } else if (response.status === 403) {
+                        errorMessage = 'Цикл не найден или вы не имеете прав на его расшаривание. Убедитесь, что цикл принадлежит вам.';
+                    } else if (response.status === 404) {
+                        errorMessage = 'Цикл не найден. Проверьте правильность ID.';
+                    }
+                    
+                    alert(`Ошибка (${response.status}): ${errorMessage}`);
+                    showResponse(data, true);
+                }
+            } catch (error) {
+                alert(`Ошибка сети: ${error.message}`);
+                showResponse({error: error.message}, true);
+            }
+        }
     </script>
 </body>
 </html>

@@ -82,6 +82,9 @@ final class CycleService
 
     /**
      * Update cycle by ID.
+     * 
+     * При изменении цикла автоматически инвалидируется кэш связанного SharedCycle
+     * (через события модели Cycle).
      */
     public function update(int $id, array $data, ?int $userId = null): ?Cycle
     {
@@ -115,6 +118,10 @@ final class CycleService
 
     /**
      * Delete cycle by ID.
+     * 
+     * При удалении цикла автоматически:
+     * - Удаляется связанный SharedCycle (через cascade on delete в БД)
+     * - Инвалидируется кэш shared_cycle_data_{share_id} (через события модели Cycle)
      */
     public function delete(int $id, ?int $userId = null): bool
     {

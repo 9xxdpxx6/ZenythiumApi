@@ -27,6 +27,10 @@ final class TrainingProgramService
 {
     use HasPagination;
 
+    public function __construct(
+        private readonly ExerciseResolutionService $exerciseResolutionService
+    ) {}
+
     /**
      * Получить все программы тренировок с фильтрацией и пагинацией
      * 
@@ -123,7 +127,7 @@ final class TrainingProgramService
             // Создаем цикл
             if (!empty($programData['cycles'])) {
                 $cycleData = $programData['cycles'][0]; // Пока поддерживаем один цикл
-                $cycleName = $this->resolveUniqueName(
+                $cycleName = $this->exerciseResolutionService->resolveUniqueName(
                     Cycle::class,
                     $cycleData['name'],
                     $userId
@@ -141,7 +145,7 @@ final class TrainingProgramService
 
                 // Создаем планы в цикле
                 foreach ($cycleData['plans'] ?? [] as $planIndex => $planData) {
-                    $planName = $this->resolveUniqueName(
+                    $planName = $this->exerciseResolutionService->resolveUniqueName(
                         Plan::class,
                         $planData['name'],
                         $userId
@@ -160,11 +164,24 @@ final class TrainingProgramService
 
                     // Создаем упражнения для плана
                     foreach ($planData['exercises'] ?? [] as $exerciseIndex => $exerciseData) {
-                        $exercise = $this->resolveOrCreateExercise(
+                        // Проверяем, существует ли упражнение до создания
+                        $name = $exerciseData['name'];
+                        $muscleGroupId = $exerciseData['muscle_group_id'] ?? ($exerciseData['muscle_group']['id'] ?? null);
+                        
+                        $existingExerciseId = Exercise::where('user_id', $userId)
+                            ->where('name', $name)
+                            ->where('muscle_group_id', $muscleGroupId)
+                            ->value('id');
+
+                        $exercise = $this->exerciseResolutionService->resolveOrCreateExercise(
                             $exerciseData,
-                            $userId,
-                            $install
+                            $userId
                         );
+
+                        // Сохраняем в install_items только если упражнение было создано (не существовало)
+                        if (!$existingExerciseId || $exercise->id !== $existingExerciseId) {
+                            $this->saveInstallItem($install, TrainingProgramInstallationItemType::EXERCISE, $exercise->id);
+                        }
 
                         // Создаем связь упражнения с планом
                         PlanExercise::create([
@@ -284,95 +301,6 @@ final class TrainingProgramService
         }
     }
 
-    /**
-     * Разрешить уникальное название для сущности
-     * 
-     * @param string $modelClass Класс модели
-     * @param string $baseName Базовое название
-     * @param int $userId ID пользователя
-     * 
-     * @return string Уникальное название
-     */
-    private function resolveUniqueName(string $modelClass, string $baseName, int $userId): string
-    {
-        $name = $baseName;
-        $counter = 1;
-
-        while ($modelClass::where('user_id', $userId)
-            ->where('name', $name)
-            ->exists()) {
-            $name = $baseName . ' ' . $counter;
-            $counter++;
-        }
-
-        return $name;
-    }
-
-    /**
-     * Найти существующее упражнение или создать новое
-     * 
-     * @param array $exerciseData Данные упражнения из программы
-     * @param int $userId ID пользователя
-     * @param TrainingProgramInstallation $install Запись установки
-     * 
-     * @return Exercise Упражнение (существующее или созданное)
-     */
-    private function resolveOrCreateExercise(
-        array $exerciseData,
-        int $userId,
-        TrainingProgramInstallation $install
-    ): Exercise {
-        $name = $exerciseData['name'];
-        // Поддержка обоих форматов: muscle_group_id (старый) и muscle_group (новый)
-        if (isset($exerciseData['muscle_group_id'])) {
-            $muscleGroupId = $exerciseData['muscle_group_id'];
-        } elseif (isset($exerciseData['muscle_group']) && $exerciseData['muscle_group'] !== null) {
-            $muscleGroupId = $exerciseData['muscle_group']['id'] ?? null;
-        } else {
-            $muscleGroupId = null;
-        }
-        $description = $exerciseData['description'] ?? null;
-
-        // Ищем существующее упражнение по name + muscle_group_id + user_id
-        $existingExercise = Exercise::where('user_id', $userId)
-            ->where('name', $name)
-            ->where('muscle_group_id', $muscleGroupId)
-            ->first();
-
-        if ($existingExercise) {
-            // Используем существующее упражнение
-            return $existingExercise;
-        }
-
-        // Если упражнение с таким названием есть, но другая группа мышц
-        $existingWithDifferentGroup = Exercise::where('user_id', $userId)
-            ->where('name', $name)
-            ->where('muscle_group_id', '!=', $muscleGroupId)
-            ->first();
-
-        if ($existingWithDifferentGroup && $muscleGroupId) {
-            // Получаем название группы мышц
-            $muscleGroup = \App\Models\MuscleGroup::find($muscleGroupId);
-            $groupName = $muscleGroup ? $muscleGroup->name : '';
-
-            // Добавляем название группы к названию упражнения
-            $name = $name . ' (' . $groupName . ')';
-        }
-
-        // Создаем новое упражнение
-        $exercise = Exercise::create([
-            'user_id' => $userId,
-            'name' => $name,
-            'description' => $description,
-            'muscle_group_id' => $muscleGroupId,
-            'is_active' => true,
-        ]);
-
-        // Сохраняем в install_items
-        $this->saveInstallItem($install, TrainingProgramInstallationItemType::EXERCISE, $exercise->id);
-
-        return $exercise;
-    }
 
     /**
      * Сохранить элемент установки

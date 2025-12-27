@@ -175,6 +175,20 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Shared Cycles -->
+                    <div class="col-md-6 col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-body text-center">
+                                <i class="fas fa-share-alt fa-3x mb-3" style="color: #17a2b8;"></i>
+                                <h5 class="card-title">Расшаренные циклы</h5>
+                                <p class="card-text">Генерация ссылок, просмотр и импорт циклов</p>
+                                <a href="/test-forms/shared-cycles" class="btn" style="background-color: #17a2b8; border-color: #17a2b8; color: white;">
+                                    <i class="fas fa-share-alt"></i> Открыть
+                                </a>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <div class="mt-5 text-center">

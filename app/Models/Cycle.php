@@ -9,7 +9,9 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasManyThrough;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\Cache;
 
 final class Cycle extends Model
 {
@@ -56,6 +58,14 @@ final class Cycle extends Model
     public function workouts(): HasManyThrough
     {
         return $this->hasManyThrough(Workout::class, Plan::class);
+    }
+
+    /**
+     * Get the shared cycle for this cycle.
+     */
+    public function sharedCycle(): HasOne
+    {
+        return $this->hasOne(SharedCycle::class);
     }
 
     /**
@@ -121,5 +131,31 @@ final class Cycle extends Model
         $calculatedWeek = (int) ceil(($progressPercentage / 100) * $this->weeks);
         
         return min($this->weeks, max(1, $calculatedWeek));
+    }
+
+    /**
+     * Boot the model.
+     */
+    protected static function boot(): void
+    {
+        parent::boot();
+
+        // При обновлении цикла инвалидировать кэш связанного shared_cycle
+        static::updating(function (Cycle $cycle) {
+            if ($cycle->isDirty()) {
+                $sharedCycle = $cycle->sharedCycle;
+                if ($sharedCycle) {
+                    Cache::forget("shared_cycle_data_{$sharedCycle->share_id}");
+                }
+            }
+        });
+
+        // При удалении цикла инвалидировать кэш связанного shared_cycle
+        static::deleting(function (Cycle $cycle) {
+            $sharedCycle = $cycle->sharedCycle;
+            if ($sharedCycle) {
+                Cache::forget("shared_cycle_data_{$sharedCycle->share_id}");
+            }
+        });
     }
 }

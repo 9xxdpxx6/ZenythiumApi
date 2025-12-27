@@ -14,6 +14,7 @@ use App\Http\Controllers\WorkoutController;
 use App\Http\Controllers\WorkoutSetController;
 use App\Http\Controllers\TrainingProgramController;
 use App\Http\Controllers\GoalController;
+use App\Http\Controllers\SharedCycleController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -76,6 +77,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::put('/cycles/{id}', [CycleController::class, 'update']);
     Route::delete('/cycles/{id}', [CycleController::class, 'destroy']);
     Route::get('/cycles/{id}/export', [CycleController::class, 'export']);
+    Route::get('/cycles/{id}/share-link', [CycleController::class, 'shareLink'])->middleware('throttle:10,60');
     
     // Exercises CRUD routes
     Route::get('/exercises', [ExerciseController::class, 'index']);
@@ -132,6 +134,10 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     Route::post('/training-programs/{id}/install', [TrainingProgramController::class, 'install']);
     Route::delete('/training-programs/{id}/uninstall', [TrainingProgramController::class, 'uninstall']);
     Route::get('/training-programs/{id}/export', [TrainingProgramController::class, 'export']);
+    
+    // Shared Cycles routes
+    Route::get('/shared-cycles/{shareId}', [SharedCycleController::class, 'show'])->middleware('throttle:60,1');
+    Route::post('/shared-cycles/{shareId}/import', [SharedCycleController::class, 'import'])->middleware('throttle:20,1440');
     
     // Goals routes
     Route::get('/goals/types', [GoalController::class, 'types']);
