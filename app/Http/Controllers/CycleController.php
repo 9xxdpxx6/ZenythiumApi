@@ -561,6 +561,19 @@ final class CycleController extends Controller
                 'share_id' => $shareId,
                 'message' => 'Ссылка успешно сгенерирована'
             ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Ошибки базы данных - не показываем детали пользователю
+            Log::error('Database error generating share link', [
+                'cycle_id' => $id,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql() ?? null,
+                'bindings' => $e->getBindings() ?? null,
+            ]);
+
+            return response()->json([
+                'message' => 'Ошибка базы данных. Пожалуйста, обратитесь к администратору.'
+            ], 500);
         } catch (\Exception $e) {
             Log::error('Error generating share link', [
                 'cycle_id' => $id,
@@ -569,8 +582,16 @@ final class CycleController extends Controller
                 'trace' => $e->getTraceAsString(),
             ]);
 
+            // Не показываем технические детали ошибок пользователю
+            $message = 'Ошибка при генерации ссылки';
+            
+            // Только для известных ошибок показываем понятное сообщение
+            if (str_contains($e->getMessage(), 'не найден') || str_contains($e->getMessage(), 'не имеете прав')) {
+                $message = $e->getMessage();
+            }
+
             return response()->json([
-                'message' => $e->getMessage() ?: 'Ошибка при генерации ссылки'
+                'message' => $message
             ], 500);
         }
     }

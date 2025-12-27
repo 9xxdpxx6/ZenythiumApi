@@ -99,36 +99,72 @@ final class SharedCycleController extends Controller
             ], 422);
         }
 
-        $sharedCycle = $this->shareService->getSharedCycle($shareId);
+        try {
+            $sharedCycle = $this->shareService->getSharedCycle($shareId);
 
-        if (!$sharedCycle) {
-            // Проверяем, существует ли вообще shared_cycle (может быть истекла или неактивна)
-            $sharedCycleExists = SharedCycle::where('share_id', $shareId)->exists();
-            
-            if ($sharedCycleExists) {
+            if (!$sharedCycle) {
+                // Проверяем, существует ли вообще shared_cycle (может быть истекла или неактивна)
+                try {
+                    $sharedCycleExists = SharedCycle::where('share_id', $shareId)->exists();
+                    
+                    if ($sharedCycleExists) {
+                        return response()->json([
+                            'message' => 'Ссылка истекла или деактивирована'
+                        ], 410);
+                    }
+                } catch (\Illuminate\Database\QueryException $e) {
+                    Log::error('Database error checking shared cycle', [
+                        'share_id' => $shareId,
+                        'error' => $e->getMessage(),
+                    ]);
+                    return response()->json([
+                        'message' => 'Ошибка базы данных. Пожалуйста, обратитесь к администратору.'
+                    ], 500);
+                }
+
                 return response()->json([
-                    'message' => 'Ссылка истекла или деактивирована'
-                ], 410);
+                    'message' => 'Расшаренный цикл не найден'
+                ], 404);
             }
 
+            // Инкрементируем счетчик просмотров
+            $this->shareService->incrementViewCount($shareId);
+
+            // Логируем просмотр
+            Log::info('Shared cycle viewed', [
+                'share_id' => $shareId,
+                'user_id' => $userId,
+            ]);
+
             return response()->json([
-                'message' => 'Расшаренный цикл не найден'
-            ], 404);
+                'data' => new SharedCycleResource($sharedCycle),
+                'message' => 'Данные цикла успешно получены'
+            ]);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Ошибки базы данных - не показываем детали пользователю
+            Log::error('Database error viewing shared cycle', [
+                'share_id' => $shareId,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql() ?? null,
+                'bindings' => $e->getBindings() ?? null,
+            ]);
+
+            return response()->json([
+                'message' => 'Ошибка базы данных. Пожалуйста, обратитесь к администратору.'
+            ], 500);
+        } catch (\Exception $e) {
+            Log::error('Error viewing shared cycle', [
+                'share_id' => $shareId,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'message' => 'Ошибка при загрузке данных цикла. Пожалуйста, попробуйте позже.'
+            ], 500);
         }
-
-        // Инкрементируем счетчик просмотров
-        $this->shareService->incrementViewCount($shareId);
-
-        // Логируем просмотр
-        Log::info('Shared cycle viewed', [
-            'share_id' => $shareId,
-            'user_id' => $userId,
-        ]);
-
-        return response()->json([
-            'data' => new SharedCycleResource($sharedCycle),
-            'message' => 'Данные цикла успешно получены'
-        ]);
     }
 
     /**
@@ -216,18 +252,46 @@ final class SharedCycleController extends Controller
                     'exercises_count' => $result['exercises']->count(),
                 ]
             ], 201);
+        } catch (\Illuminate\Database\QueryException $e) {
+            // Ошибки базы данных - не показываем детали пользователю
+            Log::error('Database error importing shared cycle', [
+                'share_id' => $shareId,
+                'user_id' => $userId,
+                'error' => $e->getMessage(),
+                'sql' => $e->getSql() ?? null,
+                'bindings' => $e->getBindings() ?? null,
+            ]);
+
+            return response()->json([
+                'message' => 'Ошибка базы данных. Пожалуйста, обратитесь к администратору.'
+            ], 500);
         } catch (\Exception $e) {
             $message = $e->getMessage();
+
+            Log::error('Error importing shared cycle', [
+                'share_id' => $shareId,
+                'user_id' => $userId,
+                'error' => $message,
+                'trace' => $e->getTraceAsString(),
+            ]);
 
             // Определяем код ошибки на основе сообщения
             if (str_contains($message, 'не найден') || str_contains($message, 'недоступен')) {
                 // Проверяем, существует ли вообще shared_cycle
-                $sharedCycleExists = SharedCycle::where('share_id', $shareId)->exists();
-                
-                if ($sharedCycleExists) {
-                    return response()->json([
-                        'message' => 'Ссылка истекла или деактивирована'
-                    ], 410);
+                try {
+                    $sharedCycleExists = SharedCycle::where('share_id', $shareId)->exists();
+                    
+                    if ($sharedCycleExists) {
+                        return response()->json([
+                            'message' => 'Ссылка истекла или деактивирована'
+                        ], 410);
+                    }
+                } catch (\Exception $dbError) {
+                    // Если не можем проверить - просто возвращаем 404
+                    Log::error('Error checking shared cycle existence', [
+                        'share_id' => $shareId,
+                        'error' => $dbError->getMessage(),
+                    ]);
                 }
 
                 return response()->json([
@@ -247,10 +311,10 @@ final class SharedCycleController extends Controller
                 ], 422);
             }
 
-            // Для других ошибок возвращаем 400
+            // Для других ошибок возвращаем общее сообщение
             return response()->json([
-                'message' => $message
-            ], 400);
+                'message' => 'Ошибка при импорте цикла. Пожалуйста, попробуйте позже.'
+            ], 500);
         }
     }
 }
