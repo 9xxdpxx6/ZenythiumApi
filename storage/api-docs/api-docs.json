@@ -1858,6 +1858,109 @@
                 ]
             }
         },
+        "/api/v1/cycles/{id}/share-link": {
+            "get": {
+                "tags": [
+                    "Cycles"
+                ],
+                "summary": "Генерация ссылки для расшаривания цикла",
+                "description": "Генерирует или возвращает существующую ссылку для расшаривания цикла тренировок. Только владелец цикла может создать ссылку.",
+                "operationId": "48345b6369089b1ff840824e09581b76",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID цикла",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Ссылка успешно сгенерирована",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "share_link": {
+                                            "description": "Полная ссылка для расшаривания",
+                                            "type": "string",
+                                            "example": "https://example.com/shared-cycles/550e8400-e29b-41d4-a716-446655440000"
+                                        },
+                                        "share_id": {
+                                            "description": "UUID ссылки",
+                                            "type": "string",
+                                            "example": "550e8400-e29b-41d4-a716-446655440000"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ссылка успешно сгенерирована"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Нет прав на генерацию ссылки",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цикл не найден или вы не имеете прав на его расшаривание"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Цикл не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цикл не найден"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
         "/api/v1/exercises": {
             "get": {
                 "tags": [
@@ -5176,6 +5279,268 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Упражнение в плане не найдено"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/shared-cycles/{shareId}": {
+            "get": {
+                "tags": [
+                    "Shared Cycles"
+                ],
+                "summary": "Получение данных расшаренного цикла",
+                "description": "Возвращает данные расшаренного цикла для предпросмотра перед импортом. Только для авторизованных пользователей.",
+                "operationId": "ebe0f1d2a7324d29eb24cffac4a5ad9e",
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "description": "UUID ссылки для расшаривания",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440000"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Данные цикла успешно получены",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "$ref": "#/components/schemas/SharedCycleResource"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Данные цикла успешно получены"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Расшаренный цикл не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Расшаренный цикл не найден"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "410": {
+                        "description": "Ссылка истекла или деактивирована",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ссылка истекла или деактивирована"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации"
+                                        },
+                                        "errors": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/shared-cycles/{shareId}/import": {
+            "post": {
+                "tags": [
+                    "Shared Cycles"
+                ],
+                "summary": "Импорт расшаренного цикла",
+                "description": "Импортирует расшаренный цикл тренировок для текущего пользователя. Создает новый цикл с копией всех планов и упражнений.",
+                "operationId": "8b82f87a6d13b124fe4f20738d9ac992",
+                "parameters": [
+                    {
+                        "name": "shareId",
+                        "in": "path",
+                        "description": "UUID ссылки для расшаривания",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "format": "uuid",
+                            "example": "550e8400-e29b-41d4-a716-446655440000"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Цикл успешно импортирован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Цикл успешно импортирован"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "cycle_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "plans_count": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "exercises_count": {
+                                                    "type": "integer",
+                                                    "example": 12
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Ошибка импорта (попытка импорта своей программы)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Нельзя импортировать свою собственную программу"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Расшаренный цикл не найден",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Расшаренный цикл не найден или недоступен"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "410": {
+                        "description": "Ссылка истекла или деактивирована",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ссылка истекла или деактивирована"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Ошибка валидации (невалидный UUID или программа слишком большая)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка валидации"
+                                        },
+                                        "errors": {
+                                            "type": "object"
                                         }
                                     },
                                     "type": "object"
@@ -8833,6 +9198,143 @@
                 },
                 "type": "object"
             },
+            "SharedCycleResource": {
+                "description": "Данные расшаренного цикла тренировок для предпросмотра",
+                "properties": {
+                    "id": {
+                        "description": "ID цикла",
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "name": {
+                        "description": "Название цикла",
+                        "type": "string",
+                        "example": "Программа на массу"
+                    },
+                    "weeks": {
+                        "description": "Продолжительность цикла в неделях",
+                        "type": "integer",
+                        "example": 12
+                    },
+                    "author": {
+                        "description": "Автор цикла",
+                        "properties": {
+                            "id": {
+                                "type": "integer",
+                                "example": 1
+                            },
+                            "name": {
+                                "type": "string",
+                                "example": "Иван Петров"
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "plans_count": {
+                        "description": "Количество планов",
+                        "type": "integer",
+                        "example": 3
+                    },
+                    "exercises_count": {
+                        "description": "Общее количество упражнений",
+                        "type": "integer",
+                        "example": 15
+                    },
+                    "view_count": {
+                        "description": "Количество просмотров",
+                        "type": "integer",
+                        "example": 5
+                    },
+                    "import_count": {
+                        "description": "Количество импортов",
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "structure": {
+                        "description": "Структура цикла: планы и упражнения",
+                        "properties": {
+                            "cycles": {
+                                "description": "Список циклов",
+                                "type": "array",
+                                "items": {
+                                    "properties": {
+                                        "name": {
+                                            "description": "Название цикла",
+                                            "type": "string",
+                                            "example": "Программа на массу"
+                                        },
+                                        "plans": {
+                                            "description": "Список планов в цикле",
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "name": {
+                                                        "description": "Название плана",
+                                                        "type": "string",
+                                                        "example": "День 1: Грудь и трицепс"
+                                                    },
+                                                    "exercises": {
+                                                        "description": "Список упражнений в плане",
+                                                        "type": "array",
+                                                        "items": {
+                                                            "properties": {
+                                                                "name": {
+                                                                    "description": "Название упражнения",
+                                                                    "type": "string",
+                                                                    "example": "Жим лежа"
+                                                                },
+                                                                "muscle_group": {
+                                                                    "properties": {
+                                                                        "id": {
+                                                                            "type": "integer",
+                                                                            "example": 1
+                                                                        },
+                                                                        "name": {
+                                                                            "type": "string",
+                                                                            "example": "Грудь"
+                                                                        }
+                                                                    },
+                                                                    "type": "object",
+                                                                    "nullable": true
+                                                                },
+                                                                "description": {
+                                                                    "description": "Описание упражнения",
+                                                                    "type": "string",
+                                                                    "example": "Базовое упражнение",
+                                                                    "nullable": true
+                                                                }
+                                                            },
+                                                            "type": "object"
+                                                        }
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        },
+                        "type": "object",
+                        "nullable": true
+                    },
+                    "created_at": {
+                        "description": "Дата создания",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    },
+                    "updated_at": {
+                        "description": "Дата обновления",
+                        "type": "string",
+                        "format": "date-time",
+                        "example": "2024-01-01T00:00:00.000000Z"
+                    }
+                },
+                "type": "object"
+            },
             "TrainingProgramDetailResource": {
                 "description": "Детальная информация о программе тренировок со структурой",
                 "properties": {
@@ -9102,6 +9604,10 @@
         {
             "name": "Goals",
             "description": "Управление целями пользователя"
+        },
+        {
+            "name": "Shared Cycles",
+            "description": "Управление расшаренными циклами тренировок"
         },
         {
             "name": "Training Programs",
