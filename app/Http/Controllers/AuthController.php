@@ -216,7 +216,16 @@ final class AuthController extends Controller
      */
     public function logout(Request $request): JsonResponse
     {
-        $request->user()->currentAccessToken()->delete();
+        $user = $request->user();
+        $token = $user->currentAccessToken();
+
+        // Проверяем, является ли токен PersonalAccessToken (token-based) или TransientToken (cookie-based)
+        if ($token instanceof PersonalAccessToken) {
+            // Для token-based аутентификации удаляем токен из БД
+            $token->delete();
+        }
+        // Для cookie-based аутентификации (TransientToken) просто завершаем сессию
+        // Cookie будет очищен автоматически при следующем запросе или можно использовать Auth::logout()
 
         return response()->json([
             'data' => null,
@@ -250,7 +259,11 @@ final class AuthController extends Controller
      */
     public function logoutAll(Request $request): JsonResponse
     {
-        $request->user()->tokens()->delete();
+        $user = $request->user();
+        
+        // Удаляем только PersonalAccessToken (token-based)
+        // Для cookie-based аутентификации токены не хранятся в БД
+        $user->tokens()->delete();
 
         return response()->json([
             'data' => null,

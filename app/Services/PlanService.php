@@ -149,13 +149,28 @@ final class PlanService
             return null;
         }
         
-        $exerciseIds = $data['exercise_ids'] ?? null;
+        // Проверяем, был ли передан exercise_ids в запросе
+        // Важно: синхронизируем упражнения только если exercise_ids явно передан
+        // и это не пустой массив (пустой массив при обновлении только имени - это баг фронтенда)
+        $exerciseIds = null;
+        $shouldSyncExercises = false;
+        
+        if (array_key_exists('exercise_ids', $data)) {
+            $exerciseIds = $data['exercise_ids'];
+            // Синхронизируем только если передан непустой массив
+            // Пустой массив при обновлении других полей плана - игнорируем
+            if (is_array($exerciseIds) && !empty($exerciseIds)) {
+                $shouldSyncExercises = true;
+            }
+            // Если exercise_ids = null, это означает явное желание не трогать упражнения
+        }
         unset($data['exercise_ids']);
         
         $plan->update($data);
         
-        // Обновляем упражнения плана, если они указаны
-        if ($exerciseIds !== null) {
+        // Обновляем упражнения плана, только если exercise_ids был явно передан
+        // и это непустой массив (явное намерение синхронизировать)
+        if ($shouldSyncExercises && $exerciseIds !== null) {
             $this->syncExercisesToPlan($plan, $exerciseIds);
         }
         
