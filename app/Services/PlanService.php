@@ -166,6 +166,14 @@ final class PlanService
         }
         unset($data['exercise_ids']);
         
+        // Не позволяем обнулить поле order через null:
+        // план с order = null в MySQL оказывается первым при ORDER BY order ASC,
+        // что ломает сортировку внутри цикла.
+        // Если фронтенд передал order: null — просто не обновляем это поле.
+        if (array_key_exists('order', $data) && $data['order'] === null) {
+            unset($data['order']);
+        }
+        
         $plan->update($data);
         
         // Обновляем упражнения плана, только если exercise_ids был явно передан
@@ -324,7 +332,11 @@ final class PlanService
     /**
      * Синхронизировать упражнения плана (для обновления).
      * 
-     * Удаляет все существующие упражнения плана и добавляет новые в указанном порядке.
+     * Дифференциальная синхронизация: удаляются только упражнения, которых нет в новом списке,
+     * у существующих обновляется порядок, новые добавляются.
+     * Такой подход сохраняет записи plan_exercises (и связанные workout_sets/подходы) для
+     * упражнений, которые остаются в плане, предотвращая каскадное удаление подходов из тренировок.
+     * 
      * Для планов с циклом проверяет принадлежность упражнений пользователю.
      * Для standalone планов добавляет упражнения без проверки принадлежности.
      * 
@@ -334,9 +346,26 @@ final class PlanService
      */
     private function syncExercisesToPlan(Plan $plan, array $exerciseIds): void
     {
-        // Удаляем все существующие упражнения плана
-        \App\Models\PlanExercise::where('plan_id', $plan->id)->delete();
-        
+        // Загружаем текущие упражнения плана, индексированные по exercise_id
+        $existingPlanExercises = \App\Models\PlanExercise::where('plan_id', $plan->id)
+            ->get()
+            ->keyBy('exercise_id');
+
+        $existingExerciseIds = $existingPlanExercises->keys()->toArray();
+
+        // Упражнения, которые надо удалить (их нет в новом списке)
+        $exerciseIdsToRemove = array_diff($existingExerciseIds, $exerciseIds);
+        if (!empty($exerciseIdsToRemove)) {
+            $planExerciseIdsToDelete = $existingPlanExercises
+                ->only($exerciseIdsToRemove)
+                ->pluck('id')
+                ->toArray();
+
+            // Удаляем только лишние записи — их workout_sets каскадно удалятся,
+            // но подходы к оставшимся упражнениям остаются нетронутыми.
+            \App\Models\PlanExercise::whereIn('id', $planExerciseIdsToDelete)->delete();
+        }
+
         if (empty($exerciseIds)) {
             return;
         }
@@ -353,27 +382,29 @@ final class PlanService
         $planExercisesToCreate = [];
         foreach ($exerciseIds as $index => $exerciseId) {
             $exercise = $exercises->get($exerciseId);
-            
-            if ($exercise) {
-                if ($plan->cycle_id !== null) {
-                    if ($exercise->user_id === $planUserId) {
-                        $planExercisesToCreate[] = [
-                            'plan_id' => $plan->id,
-                            'exercise_id' => $exerciseId,
-                            'order' => $index + 1,
-                            'created_at' => now(),
-                            'updated_at' => now(),
-                        ];
-                    }
-                } else {
-                    $planExercisesToCreate[] = [
-                        'plan_id' => $plan->id,
-                        'exercise_id' => $exerciseId,
-                        'order' => $index + 1,
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ];
-                }
+
+            if (!$exercise) {
+                continue;
+            }
+
+            // Для планов в цикле проверяем, что упражнение принадлежит тому же пользователю
+            if ($plan->cycle_id !== null && $exercise->user_id !== $planUserId) {
+                continue;
+            }
+
+            if ($existingPlanExercises->has($exerciseId)) {
+                // Упражнение уже есть в плане — просто обновляем порядок,
+                // не трогая plan_exercise.id, чтобы workout_sets сохранились.
+                $existingPlanExercises[$exerciseId]->update(['order' => $index + 1]);
+            } else {
+                // Новое упражнение — добавляем
+                $planExercisesToCreate[] = [
+                    'plan_id' => $plan->id,
+                    'exercise_id' => $exerciseId,
+                    'order' => $index + 1,
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ];
             }
         }
 
