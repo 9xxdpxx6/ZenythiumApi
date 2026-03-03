@@ -1,7 +1,7 @@
 # Multi-stage production Dockerfile для Laravel
 
 # Stage 1: Frontend Builder - сборка фронтенда
-FROM node:18-alpine AS frontend
+FROM node:22-alpine AS frontend
 
 WORKDIR /app
 COPY package*.json ./
