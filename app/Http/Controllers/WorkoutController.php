@@ -81,9 +81,9 @@ final class WorkoutController extends Controller
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Количество элементов на странице",
+     *         description="Количество элементов на странице (от 1 до 100, по умолчанию 100)",
      *         required=false,
-     *         @OA\Schema(type="integer", example=15)
+     *         @OA\Schema(type="integer", example=100, minimum=1, maximum=100)
      *     ),
      *     @OA\Parameter(
      *         name="search",
@@ -164,7 +164,7 @@ final class WorkoutController extends Controller
      *             @OA\Property(property="meta", type="object",
      *                 @OA\Property(property="current_page", type="integer", example=1),
      *                 @OA\Property(property="last_page", type="integer", example=3),
-     *                 @OA\Property(property="per_page", type="integer", example=15),
+     *                 @OA\Property(property="per_page", type="integer", example=100),
      *                 @OA\Property(property="total", type="integer", example=45),
      *                 @OA\Property(property="from", type="integer", example=1),
      *                 @OA\Property(property="to", type="integer", example=15)
@@ -259,7 +259,7 @@ final class WorkoutController extends Controller
      * @OA\Get(
      *     path="/api/v1/workouts/{workout}",
      *     summary="Получение конкретной тренировки",
-     *     description="Возвращает детальную информацию о тренировке по ID, включая список упражнений из плана с историей их выполнения. История содержит: текущую тренировку (workout_date=null если незавершена) + последние 3 завершенные тренировки (workout_date=finished_at)",
+     *     description="Возвращает детальную информацию о тренировке по ID, включая список упражнений из плана с историей их выполнения. История содержит: текущую тренировку (workout_date=null если незавершена) + последние 3 завершенные тренировки, завершённые ДО начала текущей тренировки (workout_date=finished_at). Тренировки, завершённые после начала текущей, в историю не попадают.",
      *     tags={"Workouts"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
@@ -315,14 +315,21 @@ final class WorkoutController extends Controller
         $exerciseIds = $workout->plan->planExercises->pluck('exercise.id')->unique()->toArray();
         
         // Оптимизация: сначала загружаем подходы по plan_exercise_id из текущего плана (прямой запрос, без JOIN)
+        // Фильтруем только тренировки, завершённые ДО начала текущей (чтобы не показывать будущие подходы)
+        $workoutStartedAt = $workout->started_at;
         $workoutSetsByPlan = \App\Models\WorkoutSet::query()
             ->with(['workout:id,user_id,finished_at', 'planExercise:id,exercise_id'])
             ->whereIn('plan_exercise_id', $planExerciseIds)
-            ->whereHas('workout', function ($query) use ($userId, $id) {
+            ->whereHas('workout', function ($query) use ($userId, $id, $workoutStartedAt) {
                 $query->where('user_id', $userId)
-                    ->where(function ($subQuery) use ($id) {
-                        $subQuery->whereNotNull('finished_at')
-                            ->orWhere('id', $id); // включаем текущую тренировку (может быть незавершенной)
+                    ->where(function ($subQuery) use ($id, $workoutStartedAt) {
+                        $subQuery->where(function ($q) use ($workoutStartedAt) {
+                            $q->whereNotNull('finished_at');
+                            if ($workoutStartedAt) {
+                                $q->where('finished_at', '<=', $workoutStartedAt);
+                            }
+                        })
+                        ->orWhere('id', $id); // включаем текущую тренировку (может быть незавершенной)
                     });
             })
             ->orderBy('created_at', 'desc')
@@ -342,11 +349,16 @@ final class WorkoutController extends Controller
         if (!empty($missingExerciseIds)) {
             $workoutSetsByExercise = \App\Models\WorkoutSet::query()
                 ->with(['workout:id,user_id,finished_at', 'planExercise:id,exercise_id'])
-                ->whereHas('workout', function ($query) use ($userId, $id) {
+                ->whereHas('workout', function ($query) use ($userId, $id, $workoutStartedAt) {
                     $query->where('user_id', $userId)
-                        ->where(function ($subQuery) use ($id) {
-                            $subQuery->whereNotNull('finished_at')
-                                ->orWhere('id', $id);
+                        ->where(function ($subQuery) use ($id, $workoutStartedAt) {
+                            $subQuery->where(function ($q) use ($workoutStartedAt) {
+                                $q->whereNotNull('finished_at');
+                                if ($workoutStartedAt) {
+                                    $q->where('finished_at', '<=', $workoutStartedAt);
+                                }
+                            })
+                            ->orWhere('id', $id);
                         });
                 })
                 ->whereHas('planExercise', function ($query) use ($missingExerciseIds) {
