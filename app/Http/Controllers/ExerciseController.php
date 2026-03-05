@@ -6,7 +6,6 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ExerciseRequest;
 use App\Http\Resources\ExerciseResource;
-use App\Models\Exercise;
 use App\Services\ExerciseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -51,9 +50,9 @@ final class ExerciseController extends Controller
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Количество элементов на странице",
+     *         description="Количество элементов на странице (от 1 до 100, по умолчанию 100)",
      *         required=false,
-     *         @OA\Schema(type="integer", example=15)
+     *         @OA\Schema(type="integer", minimum=1, maximum=100, default=100, example=100)
      *     ),
      *     @OA\Parameter(
      *         name="user_id",
@@ -401,5 +400,201 @@ final class ExerciseController extends Controller
             'data' => null,
             'message' => 'Упражнение успешно удалено'
         ]);
+    }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/exercises/install-base-pack",
+     *     summary="Установка базового набора упражнений",
+     *     description="Устанавливает стартовый набор из ~37 универсальных упражнений, покрывающих все основные группы мышц. Упражнения, которые уже существуют у пользователя (по совпадению названия и группы мышц), пропускаются. Можно вызывать повторно — дубликаты не создаются.",
+     *     tags={"Exercises"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=201,
+     *         description="Базовый набор упражнений установлен",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Базовый набор упражнений установлен"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="created", type="integer", example=37, description="Количество созданных упражнений"),
+     *                 @OA\Property(property="skipped", type="integer", example=0, description="Количество пропущенных (уже существуют)"),
+     *                 @OA\Property(property="total", type="integer", example=37, description="Общее количество упражнений в пакете")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Базовый набор уже был установлен ранее",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Базовый набор упражнений уже установлен"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="created", type="integer", example=0),
+     *                 @OA\Property(property="skipped", type="integer", example=37),
+     *                 @OA\Property(property="total", type="integer", example=37)
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Ошибка сервера (группы мышц отсутствуют)",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка при установке базового набора упражнений")
+     *         )
+     *     )
+     * )
+     */
+    public function installBasePack(Request $request): JsonResponse
+    {
+        $userId = $request->user()?->id;
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Не авторизован'
+            ], 401);
+        }
+
+        try {
+            $result = $this->exerciseService->installBasePack($userId);
+
+            if ($result['created'] === 0) {
+                return response()->json([
+                    'message' => 'Базовый набор упражнений уже установлен',
+                    'data' => $result,
+                ]);
+            }
+
+            return response()->json([
+                'message' => 'Базовый набор упражнений установлен',
+                'data' => $result,
+            ], 201);
+        } catch (\RuntimeException $e) {
+            return response()->json([
+                'message' => 'Ошибка при установке базового набора упражнений',
+            ], 500);
+        }
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/v1/exercises/base-pack-status",
+     *     summary="Проверка статуса базового набора упражнений",
+     *     description="Проверяет, установлен ли базовый набор упражнений у текущего пользователя. Пакет считается установленным, если есть хотя бы одно упражнение с source='base_pack'.",
+     *     tags={"Exercises"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Статус базового набора",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="installed", type="boolean", example=false, description="Установлен ли базовый набор"),
+     *                 @OA\Property(property="installed_count", type="integer", example=0, description="Количество установленных упражнений из пакета"),
+     *                 @OA\Property(property="pack_size", type="integer", example=37, description="Общее количество упражнений в пакете")
+     *             ),
+     *             @OA\Property(property="message", type="string", example="Статус базового набора")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     )
+     * )
+     */
+    public function basePackStatus(Request $request): JsonResponse
+    {
+        $userId = $request->user()?->id;
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Не авторизован'
+            ], 401);
+        }
+
+        $status = $this->exerciseService->getBasePackStatus($userId);
+
+        return response()->json([
+            'data' => $status,
+            'message' => 'Статус базового набора',
+        ]);
+    }
+
+    /**
+     * @OA\Delete(
+     *     path="/api/v1/exercises/uninstall-base-pack",
+     *     summary="Откат установки базового набора упражнений",
+     *     description="Удаляет все упражнения, установленные из базового пакета (source='base_pack'). Упражнения, которые уже использовались в тренировках (есть записи в workout_sets), не удаляются, а деактивируются (is_active=false) и открепляются от пакета. Работает корректно даже если упражнения были переименованы.",
+     *     tags={"Exercises"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Базовый набор упражнений удалён",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Базовый набор упражнений удалён"),
+     *             @OA\Property(property="data", type="object",
+     *                 @OA\Property(property="deleted", type="integer", example=35, description="Количество полностью удалённых упражнений"),
+     *                 @OA\Property(property="deactivated", type="integer", example=2, description="Количество деактивированных (задействованы в тренировках)"),
+     *                 @OA\Property(property="total_found", type="integer", example=37, description="Общее количество найденных упражнений из пакета")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Базовый набор не установлен",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Базовый набор упражнений не установлен")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Ошибка сервера",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Ошибка при удалении базового набора упражнений")
+     *         )
+     *     )
+     * )
+     */
+    public function uninstallBasePack(Request $request): JsonResponse
+    {
+        $userId = $request->user()?->id;
+
+        if (!$userId) {
+            return response()->json([
+                'message' => 'Не авторизован'
+            ], 401);
+        }
+
+        try {
+            $result = $this->exerciseService->uninstallBasePack($userId);
+
+            if ($result['total_found'] === 0) {
+                return response()->json([
+                    'message' => 'Базовый набор упражнений не установлен',
+                ], 404);
+            }
+
+            return response()->json([
+                'message' => 'Базовый набор упражнений удалён',
+                'data' => $result,
+            ]);
+        } catch (\Exception $e) {
+            return response()->json([
+                'message' => 'Ошибка при удалении базового набора упражнений',
+            ], 500);
+        }
     }
 }

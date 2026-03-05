@@ -20,7 +20,7 @@ beforeEach(function () {
     $this->cycle = Cycle::factory()->create([
         'user_id' => $this->user->id,
         'start_date' => '2024-03-01',
-        'end_date' => '2024-03-31',
+        'end_date' => null,
         'weeks' => 6,
     ]);
     $this->plan = Plan::factory()->create([
@@ -1010,9 +1010,10 @@ describe('WorkoutController', function () {
         });
 
         it('uses latest cycle when multiple cycles exist', function () {
-            // Создаем более новый цикл
+            // Создаем более новый активный цикл
             $newerCycle = Cycle::factory()->create([
                 'user_id' => $this->user->id,
+                'end_date' => null,
                 'created_at' => now()->addDay(),
             ]);
             $newerPlan = Plan::factory()->create([

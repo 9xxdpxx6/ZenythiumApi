@@ -3,11 +3,23 @@
 declare(strict_types=1);
 
 use App\Models\User;
+use App\Services\SmartCaptchaService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Notification;
 
 uses(RefreshDatabase::class);
+
+beforeEach(function () {
+    // SmartCaptchaService is final — мокаем HTTP-вызов к Yandex SmartCaptcha API
+    Http::fake([
+        'smartcaptcha.yandexcloud.net/*' => Http::response(['status' => 'ok'], 200),
+    ]);
+
+    // Биндим реальный сервис с тестовым ключом (без ключа verify() вернёт false)
+    app()->instance(SmartCaptchaService::class, new SmartCaptchaService('test-server-key'));
+});
 
 describe('Authentication', function () {
     describe('Registration', function () {
@@ -17,6 +29,7 @@ describe('Authentication', function () {
                 'email' => 'test@example.com',
                 'password' => 'password123',
                 'password_confirmation' => 'password123',
+                'smartcaptcha_token' => 'test-token',
             ];
 
             $response = $this->postJson('/api/v1/register', $userData);
@@ -52,6 +65,7 @@ describe('Authentication', function () {
                 'email' => 'existing@example.com',
                 'password' => 'password123',
                 'password_confirmation' => 'password123',
+                'smartcaptcha_token' => 'test-token',
             ];
 
             $response = $this->postJson('/api/v1/register', $userData);

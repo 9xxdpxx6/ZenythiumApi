@@ -35,9 +35,9 @@ final class PlanController extends Controller
      *     @OA\Parameter(
      *         name="per_page",
      *         in="query",
-     *         description="Количество элементов на странице",
+     *         description="Количество элементов на странице (от 1 до 100, по умолчанию 100)",
      *         required=false,
-     *         @OA\Schema(type="integer", example=15)
+     *         @OA\Schema(type="integer", minimum=1, maximum=100, default=100, example=100)
      *     ),
      *     @OA\Parameter(
      *         name="user_id",

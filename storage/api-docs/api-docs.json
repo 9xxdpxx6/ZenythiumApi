@@ -1153,11 +1153,14 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Количество элементов на странице",
+                        "description": "Количество элементов на странице (от 1 до 100, по умолчанию 100)",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "example": 15
+                            "default": 100,
+                            "maximum": 100,
+                            "minimum": 1,
+                            "example": 100
                         }
                     },
                     {
@@ -1983,11 +1986,14 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Количество элементов на странице",
+                        "description": "Количество элементов на странице (от 1 до 100, по умолчанию 100)",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "example": 15
+                            "default": 100,
+                            "maximum": 100,
+                            "minimum": 1,
+                            "example": 100
                         }
                     },
                     {
@@ -2590,6 +2596,294 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Упражнение не найдено"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/exercises/install-base-pack": {
+            "post": {
+                "tags": [
+                    "Exercises"
+                ],
+                "summary": "Установка базового набора упражнений",
+                "description": "Устанавливает стартовый набор из ~37 универсальных упражнений, покрывающих все основные группы мышц. Упражнения, которые уже существуют у пользователя (по совпадению названия и группы мышц), пропускаются. Можно вызывать повторно — дубликаты не создаются.",
+                "operationId": "8172cb88e30a1526ca3ace855de9df8c",
+                "responses": {
+                    "201": {
+                        "description": "Базовый набор упражнений установлен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Базовый набор упражнений установлен"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "created": {
+                                                    "description": "Количество созданных упражнений",
+                                                    "type": "integer",
+                                                    "example": 37
+                                                },
+                                                "skipped": {
+                                                    "description": "Количество пропущенных (уже существуют)",
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "total": {
+                                                    "description": "Общее количество упражнений в пакете",
+                                                    "type": "integer",
+                                                    "example": 37
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "200": {
+                        "description": "Базовый набор уже был установлен ранее",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Базовый набор упражнений уже установлен"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "created": {
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "skipped": {
+                                                    "type": "integer",
+                                                    "example": 37
+                                                },
+                                                "total": {
+                                                    "type": "integer",
+                                                    "example": 37
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера (группы мышц отсутствуют)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка при установке базового набора упражнений"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/exercises/base-pack-status": {
+            "get": {
+                "tags": [
+                    "Exercises"
+                ],
+                "summary": "Проверка статуса базового набора упражнений",
+                "description": "Проверяет, установлен ли базовый набор упражнений у текущего пользователя. Пакет считается установленным, если есть хотя бы одно упражнение с source='base_pack'.",
+                "operationId": "69397cace49d2bf7d85cc5c6255ba564",
+                "responses": {
+                    "200": {
+                        "description": "Статус базового набора",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "data": {
+                                            "properties": {
+                                                "installed": {
+                                                    "description": "Установлен ли базовый набор",
+                                                    "type": "boolean",
+                                                    "example": false
+                                                },
+                                                "installed_count": {
+                                                    "description": "Количество установленных упражнений из пакета",
+                                                    "type": "integer",
+                                                    "example": 0
+                                                },
+                                                "pack_size": {
+                                                    "description": "Общее количество упражнений в пакете",
+                                                    "type": "integer",
+                                                    "example": 37
+                                                }
+                                            },
+                                            "type": "object"
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Статус базового набора"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/v1/exercises/uninstall-base-pack": {
+            "delete": {
+                "tags": [
+                    "Exercises"
+                ],
+                "summary": "Откат установки базового набора упражнений",
+                "description": "Удаляет все упражнения, установленные из базового пакета (source='base_pack'). Упражнения, которые уже использовались в тренировках (есть записи в workout_sets), не удаляются, а деактивируются (is_active=false) и открепляются от пакета. Работает корректно даже если упражнения были переименованы.",
+                "operationId": "8f37a6e1db86054ae4c35aa631715995",
+                "responses": {
+                    "200": {
+                        "description": "Базовый набор упражнений удалён",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Базовый набор упражнений удалён"
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "deleted": {
+                                                    "description": "Количество полностью удалённых упражнений",
+                                                    "type": "integer",
+                                                    "example": 35
+                                                },
+                                                "deactivated": {
+                                                    "description": "Количество деактивированных (задействованы в тренировках)",
+                                                    "type": "integer",
+                                                    "example": 2
+                                                },
+                                                "total_found": {
+                                                    "description": "Общее количество найденных упражнений из пакета",
+                                                    "type": "integer",
+                                                    "example": 37
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Базовый набор не установлен",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Базовый набор упражнений не установлен"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Не авторизован",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Unauthenticated."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Ошибка сервера",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ошибка при удалении базового набора упражнений"
                                         }
                                     },
                                     "type": "object"
@@ -4079,11 +4373,14 @@
                     {
                         "name": "per_page",
                         "in": "query",
-                        "description": "Количество элементов на странице",
+                        "description": "Количество элементов на странице (от 1 до 100, по умолчанию 100)",
                         "required": false,
                         "schema": {
                             "type": "integer",
-                            "example": 15
+                            "default": 100,
+                            "maximum": 100,
+                            "minimum": 1,
+                            "example": 100
                         }
                     },
                     {
@@ -5562,7 +5859,7 @@
                     "Statistics"
                 ],
                 "summary": "Получение статистики пользователя",
-                "description": "Возвращает комплексную статистику тренировок и прогресса пользователя. Включает общее количество тренировок, время тренировок, объемы, изменения веса и частоту тренировок",
+                "description": "Возвращает комплексную статистику тренировок и прогресса пользователя. Включает общее количество тренировок, среднее время тренировки за 30 дней, объемы, изменения веса и частоту тренировок",
                 "operationId": "14b070c87e31018911344cd6ea683155",
                 "responses": {
                     "200": {
@@ -5581,13 +5878,16 @@
                                                     "type": "integer",
                                                     "example": 42
                                                 },
-                                                "total_training_time": {
+                                                "avg_training_time_30_days": {
+                                                    "description": "Среднее время тренировки в минутах за последние 30 дней",
                                                     "type": "integer",
-                                                    "example": 3150
+                                                    "example": 65
                                                 },
                                                 "total_volume": {
-                                                    "type": "string",
-                                                    "example": "125000.00"
+                                                    "description": "Суммарный объём (вес × повторения) по всем завершённым тренировкам",
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 125000
                                                 },
                                                 "current_weight": {
                                                     "type": "number",
@@ -5595,17 +5895,19 @@
                                                     "example": 75.5
                                                 },
                                                 "active_cycles_count": {
+                                                    "description": "Количество активных циклов (без end_date)",
                                                     "type": "integer",
-                                                    "example": 2
+                                                    "example": 1
                                                 },
                                                 "weight_change_30_days": {
+                                                    "description": "Изменение веса за 30 дней (разница между последним замером и замером ~30 дней назад). null если недостаточно данных",
                                                     "type": "number",
                                                     "example": 2
                                                 },
                                                 "training_frequency_4_weeks": {
-                                                    "description": "Среднее количество тренировок в неделю за последние 35 дней (5 недель)",
+                                                    "description": "Среднее количество тренировок в неделю за последние 35 дней. Делится на фактическое число недель активности (макс. 5)",
                                                     "type": "number",
-                                                    "example": 5.4
+                                                    "example": 3.5
                                                 }
                                             },
                                             "type": "object"
@@ -5650,7 +5952,7 @@
                     "Statistics"
                 ],
                 "summary": "Получение детальной статистики по упражнениям",
-                "description": "Возвращает детальную статистику по упражнениям пользователя: топ упражнений, прогресс по весам, количество подходов",
+                "description": "Возвращает детальную статистику по упражнениям пользователя: топ-10 упражнений по количеству подходов (только завершённые тренировки), прогресс по весам за последние 3 месяца",
                 "operationId": "6a1d267268907e27573094095cf62feb",
                 "responses": {
                     "200": {
@@ -5877,7 +6179,7 @@
                     "Statistics"
                 ],
                 "summary": "Получение статистики по мышечным группам",
-                "description": "Возвращает статистику по мышечным группам: объем работы, частота тренировок, дисбаланс",
+                "description": "Возвращает статистику по мышечным группам (только завершённые тренировки): объем работы, частота тренировок, анализ баланса",
                 "operationId": "78a76bb33d69a81e2b7e9f979cb5659f",
                 "responses": {
                     "200": {
@@ -5994,7 +6296,7 @@
                     "Statistics"
                 ],
                 "summary": "Получение рекордов пользователя",
-                "description": "Возвращает личные рекорды пользователя: максимальные веса, объемы, лучшие результаты",
+                "description": "Возвращает личные рекорды пользователя (только завершённые тренировки): максимальные веса с датой первого достижения, рекорды по объёму и длительности тренировок",
                 "operationId": "c76c5096a8a61ca34772f61b5f456b48",
                 "responses": {
                     "200": {
@@ -6006,6 +6308,7 @@
                                         "data": {
                                             "properties": {
                                                 "personal_records": {
+                                                    "description": "Рекорды по упражнениям. max_weight и max_reps гарантированно из одного подхода (самый тяжёлый сет)",
                                                     "type": "array",
                                                     "items": {
                                                         "properties": {
@@ -6016,15 +6319,19 @@
                                                                 "type": "string"
                                                             },
                                                             "max_weight": {
+                                                                "description": "Максимальный вес в одном подходе",
                                                                 "type": "number"
                                                             },
                                                             "max_reps": {
+                                                                "description": "Количество повторений в подходе с максимальным весом",
                                                                 "type": "integer"
                                                             },
                                                             "max_volume": {
+                                                                "description": "Максимальный объём (вес × повторения) за один подход (может быть из другого сета)",
                                                                 "type": "number"
                                                             },
                                                             "achieved_date": {
+                                                                "description": "Дата тренировки, где был установлен рекорд по весу",
                                                                 "type": "string",
                                                                 "format": "date"
                                                             }

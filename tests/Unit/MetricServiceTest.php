@@ -4,12 +4,13 @@ declare(strict_types=1);
 
 use App\Models\Metric;
 use App\Models\User;
+use App\Services\GoalService;
 use App\Services\MetricService;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    $this->metricService = new MetricService();
+    $this->metricService = new MetricService(new GoalService());
     $this->metric = Metric::factory()->create([
         'user_id' => $this->user->id,
         'date' => '2024-03-15',

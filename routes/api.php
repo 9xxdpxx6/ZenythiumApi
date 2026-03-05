@@ -82,6 +82,9 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1'])->group(funct
     // Exercises CRUD routes
     Route::get('/exercises', [ExerciseController::class, 'index']);
     Route::post('/exercises', [ExerciseController::class, 'store']);
+    Route::post('/exercises/install-base-pack', [ExerciseController::class, 'installBasePack']);
+    Route::delete('/exercises/uninstall-base-pack', [ExerciseController::class, 'uninstallBasePack']);
+    Route::get('/exercises/base-pack-status', [ExerciseController::class, 'basePackStatus']);
     Route::get('/exercises/{id}', [ExerciseController::class, 'show']);
     Route::put('/exercises/{id}', [ExerciseController::class, 'update']);
     Route::delete('/exercises/{id}', [ExerciseController::class, 'destroy']);

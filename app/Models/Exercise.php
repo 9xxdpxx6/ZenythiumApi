@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use App\Enums\ExerciseSource;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -21,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int $muscle_group_id ID группы мышц
  * @property int $user_id ID пользователя-создателя
  * @property bool $is_active Активность упражнения
+ * @property ExerciseSource|null $source Источник создания (null=вручную, ExerciseSource::BASE_PACK=базовый пакет)
  * @property \Carbon\Carbon $created_at Время создания записи
  * @property \Carbon\Carbon $updated_at Время последнего обновления записи
  * 
@@ -38,10 +40,12 @@ final class Exercise extends Model
         'muscle_group_id',
         'user_id',
         'is_active',
+        'source',
     ];
 
     protected $casts = [
         'is_active' => 'boolean',
+        'source' => ExerciseSource::class,
     ];
 
     /**

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Models\Workout;
 use App\Services\WorkoutService;
 use App\Services\CycleService;
+use App\Services\GoalService;
 
 dataset('exception_scenarios', [
     'non_existent' => [PHP_INT_MAX, 'non-existent workout'],
@@ -16,14 +17,15 @@ dataset('exception_scenarios', [
 
 beforeEach(function () {
     $this->user = User::factory()->create();
-    $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+    $this->cycle = Cycle::factory()->create(['user_id' => $this->user->id, 'end_date' => null]);
     $this->plan = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
     $this->workout = Workout::factory()->completed()->create([
         'plan_id' => $this->plan->id,
         'user_id' => $this->user->id,
     ]);
     $this->cycleService = new CycleService();
-    $this->workoutService = new WorkoutService($this->cycleService);
+    $this->goalService = new GoalService();
+    $this->workoutService = new WorkoutService($this->cycleService, $this->goalService);
 });
 
 describe('WorkoutService', function () {
@@ -318,12 +320,13 @@ describe('WorkoutService', function () {
             // Для тестов determineNextPlan создаем только пользователя без циклов
             $this->user = User::factory()->create();
             $this->cycleService = new CycleService();
-            $this->workoutService = new WorkoutService($this->cycleService);
+            $this->goalService = new GoalService();
+            $this->workoutService = new WorkoutService($this->cycleService, $this->goalService);
         });
 
         it('returns first plan when no workouts completed', function () {
-            // Создаем новый цикл для этого теста
-            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            // Создаем новый активный цикл (end_date = null) для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id, 'end_date' => null]);
             
             // Создаем цикл с несколькими планами
             $plan1 = Plan::factory()->create([
@@ -345,8 +348,8 @@ describe('WorkoutService', function () {
         });
 
         it('returns plan with least total workouts', function () {
-            // Создаем новый цикл для этого теста
-            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            // Создаем новый активный цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id, 'end_date' => null]);
             
             // Создаем цикл с несколькими планами
             $plan1 = Plan::factory()->create([
@@ -380,8 +383,8 @@ describe('WorkoutService', function () {
         });
 
         it('returns first plan by order when equal completed workouts', function () {
-            // Создаем новый цикл для этого теста
-            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            // Создаем новый активный цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id, 'end_date' => null]);
             
             // Создаем цикл с несколькими планами
             $plan1 = Plan::factory()->create([
@@ -413,8 +416,8 @@ describe('WorkoutService', function () {
         });
 
         it('ignores inactive plans', function () {
-            // Создаем новый цикл для этого теста
-            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            // Создаем новый активный цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id, 'end_date' => null]);
             
             // Создаем активный план
             $activePlan = Plan::factory()->create([
@@ -447,8 +450,8 @@ describe('WorkoutService', function () {
         });
 
         it('returns null when cycle has no active plans', function () {
-            // Создаем новый цикл для этого теста
-            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            // Создаем новый активный цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id, 'end_date' => null]);
             
             // Создаем цикл только с неактивными планами
             $inactivePlan = Plan::factory()->create([
@@ -464,8 +467,8 @@ describe('WorkoutService', function () {
         });
 
         it('returns -1 when all plans have active workouts', function () {
-            // Создаем новый цикл для этого теста
-            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            // Создаем новый активный цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id, 'end_date' => null]);
             
             // Создаем цикл с несколькими планами
             $plan1 = Plan::factory()->create([
@@ -501,9 +504,10 @@ describe('WorkoutService', function () {
         });
 
         it('selects from most recent cycle when user has multiple cycles', function () {
-            // Создаем старый цикл
+            // Создаем старый активный цикл
             $oldCycle = Cycle::factory()->create([
                 'user_id' => $this->user->id,
+                'end_date' => null,
                 'created_at' => now()->subDays(10)
             ]);
             $oldPlan = Plan::factory()->create([
@@ -513,9 +517,10 @@ describe('WorkoutService', function () {
                 'name' => 'Old Plan'
             ]);
 
-            // Создаем новый цикл
+            // Создаем новый активный цикл
             $newCycle = Cycle::factory()->create([
                 'user_id' => $this->user->id,
+                'end_date' => null,
                 'created_at' => now()
             ]);
             $newPlan = Plan::factory()->create([
@@ -531,8 +536,8 @@ describe('WorkoutService', function () {
         });
 
         it('ignores workouts from other users when counting completed workouts', function () {
-            // Создаем новый цикл для этого теста
-            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id]);
+            // Создаем новый активный цикл для этого теста
+            $testCycle = Cycle::factory()->create(['user_id' => $this->user->id, 'end_date' => null]);
             
             // Создаем план
             $plan = Plan::factory()->create([
