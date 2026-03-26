@@ -259,9 +259,10 @@ final class ExerciseService
 
         try {
             foreach ($basePackExercises as $exercise) {
-                // Проверяем, используется ли упражнение в подходах тренировок
+                // Подходы хранят plan_exercise_id, не exercise_id — проверяем через plan_exercises
                 $hasWorkoutSets = DB::table('workout_sets')
-                    ->where('exercise_id', $exercise->id)
+                    ->join('plan_exercises', 'workout_sets.plan_exercise_id', '=', 'plan_exercises.id')
+                    ->where('plan_exercises.exercise_id', $exercise->id)
                     ->exists();
 
                 if ($hasWorkoutSets) {
