@@ -53,6 +53,24 @@ describe('Authentication', function () {
             ]);
         });
 
+        it('allows registration without captcha when SmartCaptcha is not required', function () {
+            config(['services.yandex_smartcaptcha.required' => false]);
+
+            $userData = [
+                'name' => 'Local User',
+                'email' => 'local@example.com',
+                'password' => 'password123',
+                'password_confirmation' => 'password123',
+            ];
+
+            $response = $this->postJson('/api/v1/register', $userData);
+
+            $response->assertStatus(201);
+            $this->assertDatabaseHas('users', [
+                'email' => 'local@example.com',
+            ]);
+        });
+
         it('prevents registration with duplicate email', function () {
             // Создаем существующего пользователя
             User::factory()->create([

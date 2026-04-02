@@ -33,15 +33,19 @@ final class RegisterRequest extends FormRequest
      * - name: обязательная строка до 255 символов
      * - email: обязательный email до 255 символов, уникальный в таблице users
      * - password: обязательная строка минимум 8 символов, требует подтверждения
-     * - smartcaptcha_token: обязательный токен от Yandex SmartCaptcha
+     * - smartcaptcha_token: токен Yandex SmartCaptcha (обязателен, если config services.yandex_smartcaptcha.required)
      */
     public function rules(): array
     {
+        $captchaTokenRules = config('services.yandex_smartcaptcha.required', true)
+            ? ['required', 'string']
+            : ['nullable', 'string'];
+
         return [
             'name' => 'required|string|max:255',
             'email' => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'smartcaptcha_token' => 'required|string',
+            'smartcaptcha_token' => $captchaTokenRules,
         ];
     }
 

@@ -33,12 +33,12 @@ final class AuthController extends Controller
      *     @OA\RequestBody(
      *         required=true,
      *         @OA\JsonContent(
-     *             required={"name","email","password","password_confirmation","smartcaptcha_token"},
+     *             required={"name","email","password","password_confirmation"},
      *             @OA\Property(property="name", type="string", example="Иван Петров", description="Имя пользователя"),
      *             @OA\Property(property="email", type="string", format="email", example="ivan@example.com", description="Email пользователя (должен быть уникальным)"),
      *             @OA\Property(property="password", type="string", format="password", example="SecurePass123", description="Пароль (минимум 8 символов)"),
      *             @OA\Property(property="password_confirmation", type="string", format="password", example="SecurePass123", description="Подтверждение пароля"),
-     *             @OA\Property(property="smartcaptcha_token", type="string", example="smartcaptcha_token_here", description="Токен от Yandex SmartCaptcha")
+     *             @OA\Property(property="smartcaptcha_token", type="string", example="smartcaptcha_token_here", description="Токен Yandex SmartCaptcha. На production обязателен; в APP_ENV=local по умолчанию не требуется.")
      *         )
      *     ),
      *     @OA\Response(
@@ -71,17 +71,18 @@ final class AuthController extends Controller
      */
     public function register(RegisterRequest $request): JsonResponse
     {
-        // Проверяем капчу перед регистрацией
-        $ip = $request->ip();
-        $token = $request->input('smartcaptcha_token');
-        
-        if (!$this->smartCaptchaService->verify($token, $ip)) {
-            return response()->json([
-                'message' => 'Ошибка валидации',
-                'errors' => [
-                    'smartcaptcha_token' => ['Не удалось проверить капчу. Попробуйте еще раз.'],
-                ],
-            ], 422);
+        if ($this->smartCaptchaService->isRequired()) {
+            $ip = $request->ip();
+            $token = $request->input('smartcaptcha_token');
+
+            if (! $this->smartCaptchaService->verify(is_string($token) ? $token : '', $ip)) {
+                return response()->json([
+                    'message' => 'Ошибка валидации',
+                    'errors' => [
+                        'smartcaptcha_token' => ['Не удалось проверить капчу. Попробуйте еще раз.'],
+                    ],
+                ], 422);
+            }
         }
 
         $user = User::create([

@@ -9,6 +9,7 @@ use App\Http\Resources\ExerciseResource;
 use App\Services\ExerciseService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 /**
  * @OA\Schema(
@@ -441,10 +442,10 @@ final class ExerciseController extends Controller
      *         )
      *     ),
      *     @OA\Response(
-     *         response=500,
-     *         description="Ошибка сервера (группы мышц отсутствуют)",
+     *         response=422,
+     *         description="Невозможно установить набор (например, справочник групп мышц недоступен)",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Ошибка при установке базового набора упражнений")
+     *             @OA\Property(property="message", type="string", example="Группы мышц не найдены в базе данных. Выполните сидер MuscleGroupSeeder.")
      *         )
      *     )
      * )
@@ -474,9 +475,13 @@ final class ExerciseController extends Controller
                 'data' => $result,
             ], 201);
         } catch (\RuntimeException $e) {
+            Log::warning('installBasePack: ' . $e->getMessage(), [
+                'user_id' => $userId,
+            ]);
+
             return response()->json([
-                'message' => 'Ошибка при установке базового набора упражнений',
-            ], 500);
+                'message' => $e->getMessage(),
+            ], 422);
         }
     }
 

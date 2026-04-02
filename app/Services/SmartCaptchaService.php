@@ -19,6 +19,14 @@ final class SmartCaptchaService
     }
 
     /**
+     * Нужно ли требовать и проверять токен (на production обычно true, на local — false).
+     */
+    public function isRequired(): bool
+    {
+        return (bool) config('services.yandex_smartcaptcha.required', true);
+    }
+
+    /**
      * Проверить токен SmartCaptcha
      * 
      * @param string $token Токен от фронтенда

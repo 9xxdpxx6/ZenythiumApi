@@ -32,8 +32,7 @@
                                     "name",
                                     "email",
                                     "password",
-                                    "password_confirmation",
-                                    "smartcaptcha_token"
+                                    "password_confirmation"
                                 ],
                                 "properties": {
                                     "name": {
@@ -60,7 +59,7 @@
                                         "example": "SecurePass123"
                                     },
                                     "smartcaptcha_token": {
-                                        "description": "Токен от Yandex SmartCaptcha",
+                                        "description": "Токен Yandex SmartCaptcha. На production обязателен; в APP_ENV=local по умолчанию не требуется.",
                                         "type": "string",
                                         "example": "smartcaptcha_token_here"
                                     }
@@ -2705,15 +2704,15 @@
                             }
                         }
                     },
-                    "500": {
-                        "description": "Ошибка сервера (группы мышц отсутствуют)",
+                    "422": {
+                        "description": "Невозможно установить набор (например, справочник групп мышц недоступен)",
                         "content": {
                             "application/json": {
                                 "schema": {
                                     "properties": {
                                         "message": {
                                             "type": "string",
-                                            "example": "Ошибка при установке базового набора упражнений"
+                                            "example": "Группы мышц не найдены в базе данных. Выполните сидер MuscleGroupSeeder."
                                         }
                                     },
                                     "type": "object"

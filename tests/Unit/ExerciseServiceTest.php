@@ -6,6 +6,7 @@ use App\Models\Exercise;
 use App\Models\MuscleGroup;
 use App\Models\User;
 use App\Services\ExerciseService;
+use App\Support\BaseExercisePack;
 
 dataset('exception_scenarios', [
     'non_existent' => [PHP_INT_MAX, 'non-existent exercise'],
@@ -285,5 +286,27 @@ describe('ExerciseService', function () {
             $result = $this->service->delete($exerciseId, $this->user->id);
             expect($result)->toBeFalse();
         })->with('exception_scenarios');
+    });
+
+    describe('installBasePack', function () {
+        it('creates reference muscle groups when empty and installs exercises', function () {
+            expect(MuscleGroup::query()->count())->toBe(0);
+
+            $result = $this->service->installBasePack($this->user->id);
+
+            expect(MuscleGroup::query()->count())->toBeGreaterThan(0);
+            expect($result['created'])->toBe(count(BaseExercisePack::getExercises()));
+            expect($result['skipped'])->toBe(0);
+            expect(Exercise::where('user_id', $this->user->id)->count())->toBe($result['created']);
+        });
+
+        it('is idempotent when called twice', function () {
+            $first = $this->service->installBasePack($this->user->id);
+            $second = $this->service->installBasePack($this->user->id);
+
+            expect($first['created'])->toBeGreaterThan(0);
+            expect($second['created'])->toBe(0);
+            expect($second['skipped'])->toBe(count(BaseExercisePack::getExercises()));
+        });
     });
 });

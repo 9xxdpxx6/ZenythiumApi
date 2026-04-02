@@ -7,10 +7,52 @@ namespace App\Services;
 use App\Models\PlanExercise;
 use App\Models\Plan;
 use App\Models\Exercise;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Collection;
 
 final class PlanExerciseService
 {
+    /**
+     * План доступен пользователю: standalone (plan.user_id) или через цикл (cycle.user_id).
+     * Должно совпадать с логикой PlanService::getById / update.
+     */
+    private function restrictPlanExerciseQueryToOwner(Builder $query, ?int $userId): void
+    {
+        if ($userId === null) {
+            return;
+        }
+
+        $query->whereHas('plan', function (Builder $planQuery) use ($userId): void {
+            self::applyPlanOwnedByUserScope($planQuery, $userId);
+        });
+    }
+
+    /**
+     * @param Builder<\App\Models\Plan> $planQuery
+     */
+    private static function applyPlanOwnedByUserScope(Builder $planQuery, int $userId): void
+    {
+        $planQuery->where(function (Builder $inner) use ($userId): void {
+            $inner->where('user_id', $userId)
+                ->orWhereHas('cycle', function (Builder $cycleQuery) use ($userId): void {
+                    $cycleQuery->where('user_id', $userId);
+                });
+        });
+    }
+
+    /**
+     * План существует и принадлежит пользователю (standalone или через цикл).
+     */
+    private function planExistsForUser(int $planId, int $userId): bool
+    {
+        return Plan::query()
+            ->where('id', $planId)
+            ->where(function (Builder $q) use ($userId): void {
+                self::applyPlanOwnedByUserScope($q, $userId);
+            })
+            ->exists();
+    }
+
     /**
      * Получить все упражнения плана
      * 
@@ -26,24 +68,13 @@ final class PlanExerciseService
             ->where('plan_id', $planId)
             ->orderBy('order');
 
-        if ($userId) {
-            $query->whereHas('plan.cycle', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
-        }
+        $this->restrictPlanExerciseQueryToOwner($query, $userId);
 
         $planExercises = $query->get();
-        
+
         // Проверяем, что план существует и принадлежит пользователю
-        if ($planExercises->isEmpty() && $userId) {
-            $planExists = Plan::query()
-                ->whereHas('cycle', function ($q) use ($userId) {
-                    $q->where('user_id', $userId);
-                })
-                ->where('id', $planId)
-                ->exists();
-                
-            if (!$planExists) {
+        if ($planExercises->isEmpty() && $userId !== null) {
+            if (!$this->planExistsForUser($planId, $userId)) {
                 return null;
             }
         }
@@ -65,11 +96,7 @@ final class PlanExerciseService
             ->orderBy('plan_id')
             ->orderBy('order');
 
-        if ($userId) {
-            $query->whereHas('plan.cycle', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
-        }
+        $this->restrictPlanExerciseQueryToOwner($query, $userId);
 
         return $query->get();
     }
@@ -89,10 +116,8 @@ final class PlanExerciseService
     {
         // Проверяем существование плана и принадлежность пользователю
         $planQuery = Plan::query()->where('id', $data['plan_id']);
-        if ($userId) {
-            $planQuery->whereHas('cycle', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
+        if ($userId !== null) {
+            self::applyPlanOwnedByUserScope($planQuery, $userId);
         }
         
         if (!$planQuery->exists()) {
@@ -139,18 +164,14 @@ final class PlanExerciseService
     {
         $query = PlanExercise::query()->where('id', $planExerciseId);
 
-        if ($userId) {
-            $query->whereHas('plan.cycle', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
-        }
+        $this->restrictPlanExerciseQueryToOwner($query, $userId);
 
         if ($planId) {
             $query->where('plan_id', $planId);
         }
 
         $planExercise = $query->first();
-        
+
         if (!$planExercise) {
             return null;
         }
@@ -173,18 +194,14 @@ final class PlanExerciseService
     {
         $query = PlanExercise::query()->where('id', $planExerciseId);
 
-        if ($userId) {
-            $query->whereHas('plan.cycle', function ($q) use ($userId) {
-                $q->where('user_id', $userId);
-            });
-        }
+        $this->restrictPlanExerciseQueryToOwner($query, $userId);
 
         if ($planId) {
             $query->where('plan_id', $planId);
         }
 
         $planExercise = $query->first();
-        
+
         if (!$planExercise) {
             return false;
         }

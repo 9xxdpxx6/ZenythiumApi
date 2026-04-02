@@ -346,4 +346,44 @@ describe('PlanExerciseController', function () {
             $response->assertStatus(401);
         });
     });
+
+    describe('standalone plan (cycle_id null)', function () {
+        it('DELETE removes plan exercise when plan.user_id matches', function () {
+            $standalonePlan = Plan::factory()->create([
+                'user_id' => $this->user->id,
+                'cycle_id' => null,
+            ]);
+            $planExercise = PlanExercise::factory()->create([
+                'plan_id' => $standalonePlan->id,
+                'exercise_id' => $this->exercise->id,
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->deleteJson("/api/v1/plans/{$standalonePlan->id}/exercises/{$planExercise->id}");
+
+            $response->assertStatus(200)
+                ->assertJson([
+                    'message' => 'Упражнение успешно удалено из плана',
+                ]);
+            $this->assertDatabaseMissing('plan_exercises', [
+                'id' => $planExercise->id,
+            ]);
+        });
+
+        it('GET lists exercises for standalone plan', function () {
+            $standalonePlan = Plan::factory()->create([
+                'user_id' => $this->user->id,
+                'cycle_id' => null,
+            ]);
+            PlanExercise::factory()->create([
+                'plan_id' => $standalonePlan->id,
+                'exercise_id' => $this->exercise->id,
+            ]);
+
+            $response = $this->actingAs($this->user)
+                ->getJson("/api/v1/plans/{$standalonePlan->id}/exercises");
+
+            $response->assertStatus(200)->assertJsonCount(1, 'data');
+        });
+    });
 });

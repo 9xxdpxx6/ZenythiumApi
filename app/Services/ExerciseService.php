@@ -10,6 +10,7 @@ use App\Models\Exercise;
 use App\Models\MuscleGroup;
 use App\Filters\ExerciseFilter;
 use App\Traits\HasPagination;
+use Database\Seeders\MuscleGroupSeeder;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 
@@ -157,8 +158,13 @@ final class ExerciseService
     {
         $exercises = BaseExercisePack::getExercises();
 
-        // Загружаем все группы мышц одним запросом
+        // Загружаем все группы мышц одним запросом (справочник нужен для сопоставления имён из BaseExercisePack)
         $muscleGroups = MuscleGroup::pluck('id', 'name');
+
+        if ($muscleGroups->isEmpty()) {
+            (new MuscleGroupSeeder())->run();
+            $muscleGroups = MuscleGroup::pluck('id', 'name');
+        }
 
         if ($muscleGroups->isEmpty()) {
             throw new \RuntimeException('Группы мышц не найдены в базе данных. Выполните сидер MuscleGroupSeeder.');
