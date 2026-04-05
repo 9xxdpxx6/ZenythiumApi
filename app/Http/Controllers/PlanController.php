@@ -269,7 +269,7 @@ final class PlanController extends Controller
      * @OA\Put(
      *     path="/api/v1/plans/{plan}",
      *     summary="Обновление плана тренировок",
-     *     description="Обновляет информацию о существующем плане тренировок. Поддерживает синхронизацию упражнений через массив exercise_ids. При передаче exercise_ids все существующие упражнения плана удаляются и заменяются новыми в указанном порядке. Для планов с циклом проверяется принадлежность упражнений пользователю. Для standalone планов упражнения добавляются без проверки принадлежности.",
+     *     description="Обновляет информацию о существующем плане тренировок. Поддерживает синхронизацию упражнений через массив exercise_ids. При передаче exercise_ids все существующие упражнения плана удаляются и заменяются новыми в указанном порядке. Для планов с циклом проверяется принадлежность упражнений пользователю. Для standalone планов упражнения добавляются без проверки принадлежности. Нельзя удалить упражнение из плана, если у него уже есть связанные подходы из тренировок (workout_sets) — вернётся 422.",
      *     tags={"Plans"},
      *     security={{"sanctum": {}}},
      *     @OA\Parameter(
@@ -286,7 +286,7 @@ final class PlanController extends Controller
      *             @OA\Property(property="cycle_id", type="integer", example=1, description="ID цикла тренировок (необязательно)"),
      *             @OA\Property(property="order", type="integer", example=1, description="Порядок плана"),
      *             @OA\Property(property="is_active", type="boolean", example=true, description="Статус активности плана"),
-     *             @OA\Property(property="exercise_ids", type="array", @OA\Items(type="integer"), example={1, 2, 3}, description="Массив ID упражнений для добавления в план. Упражнения добавляются в порядке указанном в массиве. Для планов с циклом проверяется принадлежность упражнений пользователю. Для standalone планов упражнения добавляются без проверки принадлежности.")
+     *             @OA\Property(property="exercise_ids", type="array", @OA\Items(type="integer"), example={1, 2, 3}, description="Массив ID упражнений для добавления в план. Упражнения добавляются в порядке указанном в массиве. Для планов с циклом проверяется принадлежность упражнений пользователю. Для standalone планов упражнения добавляются без проверки принадлежности. Упражнения с завершёнными подходами из тренировок удалить нельзя.")
      *         )
      *     ),
      *     @OA\Response(
@@ -313,17 +313,23 @@ final class PlanController extends Controller
      *     ),
      *     @OA\Response(
      *         response=422,
-     *         description="Ошибка валидации",
+     *         description="Ошибка валидации. Вернётся при попытке удалить упражнения, у которых есть подходы из тренировок.",
      *         @OA\JsonContent(
-     *             @OA\Property(property="message", type="string", example="Ошибка валидации"),
-     *             @OA\Property(property="errors", type="object")
+     *             @OA\Property(property="message", type="string", example="Нельзя убрать упражнения: Жим лёжа, Приседания. У них уже есть подходы из тренировок — сначала завершите или удалите эти тренировки, затем измените план."),
+     *             @OA\Property(property="errors", type="object",
+     *                 @OA\Property(property="exercise_ids", type="array",
+     *                     @OA\Items(type="string")
+     *                 )
+     *             )
      *         )
      *     )
      * )
      */
     public function update(PlanRequest $request, int $id): JsonResponse
     {
-        $plan = $this->planService->update($id, $request->validated(), $request->user()?->id);
+        $validated = $request->validated();
+
+        $plan = $this->planService->update($id, $validated, $request->user()?->id);
         
         if (!$plan) {
             return response()->json([

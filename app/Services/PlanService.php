@@ -148,7 +148,7 @@ final class PlanService
         if (!$plan) {
             return null;
         }
-        
+
         // Проверяем, был ли передан exercise_ids в запросе
         // Важно: синхронизируем упражнения только если exercise_ids явно передан как массив
         // Пустой массив [] — явное намерение удалить все упражнения
@@ -156,7 +156,7 @@ final class PlanService
         // null или отсутствие ключа — не трогать упражнения
         $exerciseIds = null;
         $shouldSyncExercises = false;
-        
+
         if (array_key_exists('exercise_ids', $data)) {
             $exerciseIds = $data['exercise_ids'];
             // Синхронизируем если передан массив (включая пустой — для очистки)
@@ -347,6 +347,9 @@ final class PlanService
      */
     private function syncExercisesToPlan(Plan $plan, array $exerciseIds): void
     {
+        // Дедупликация входного массива — убираем повторяющиеся ID
+        $exerciseIds = array_values(array_unique($exerciseIds));
+
         // Загружаем текущие упражнения плана, индексированные по exercise_id
         $existingPlanExercises = \App\Models\PlanExercise::where('plan_id', $plan->id)
             ->get()
@@ -357,14 +360,32 @@ final class PlanService
         // Упражнения, которые надо удалить (их нет в новом списке)
         $exerciseIdsToRemove = array_diff($existingExerciseIds, $exerciseIds);
         if (!empty($exerciseIdsToRemove)) {
-            $planExerciseIdsToDelete = $existingPlanExercises
-                ->only($exerciseIdsToRemove)
-                ->pluck('id')
-                ->toArray();
+            // Проверяем, что у удаляемых план-упражнений нет workout_sets
+            // workout_sets — это подходы из реальных тренировок,
+            // их удаление сломает тренировочный лог пользователя
+            $protectedPlanExercises = \App\Models\PlanExercise::where('plan_id', $plan->id)
+                ->whereIn('exercise_id', $exerciseIdsToRemove)
+                ->withCount('workoutSets')
+                ->get()
+                ->filter(fn($pe) => $pe->workout_sets_count > 0);
+
+            if ($protectedPlanExercises->isNotEmpty()) {
+                $protectedExerciseNames = $protectedPlanExercises->map(fn($pe) => $pe->exercise->name)->toArray();
+                $errorMessage = 'Нельзя убрать упражнения: ' . implode(', ', $protectedExerciseNames) . '. У них уже есть подходы из тренировок — сначала удалите эти тренировки, затем измените план.';
+
+                $validator = validator([], [
+                    'exercise_ids' => $errorMessage
+                ]);
+                $validator->messages()->add('exercise_ids', $errorMessage);
+
+                throw new \Illuminate\Validation\ValidationException($validator);
+            }
 
             // Удаляем только лишние записи — их workout_sets каскадно удалятся,
             // но подходы к оставшимся упражнениям остаются нетронутыми.
-            \App\Models\PlanExercise::whereIn('id', $planExerciseIdsToDelete)->delete();
+            \App\Models\PlanExercise::where('plan_id', $plan->id)
+                ->whereIn('exercise_id', $exerciseIdsToRemove)
+                ->delete();
         }
 
         if (empty($exerciseIds)) {

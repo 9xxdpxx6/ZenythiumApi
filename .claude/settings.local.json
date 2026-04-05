@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(php artisan tinker '--execute=:*)",
+      "Bash(php -r 'echo '\\\\''PHP version: '\\\\'' . PHP_VERSION . PHP_EOL; $a = [0 => '\\\\''262'\\\\'']; $b = array_flip\\($a\\); var_dump\\($b\\); $c = [262 => '\\\\''val'\\\\'']; var_dump\\(array_intersect_key\\($c, $b\\)\\); $d = ['\\\\''262'\\\\'' => '\\\\''val'\\\\'']; var_dump\\(array_intersect_key\\($d, $b\\)\\);')"
+    ]
+  }
+}
