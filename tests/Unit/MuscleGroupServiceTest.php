@@ -11,7 +11,7 @@ dataset('exception_scenarios', [
 ]);
 
 beforeEach(function () {
-    $this->service = new MuscleGroupService();
+    $this->service = new MuscleGroupService;
     $this->user = User::factory()->create();
 });
 
@@ -38,14 +38,14 @@ describe('MuscleGroupService', function () {
 
         it('applies user filter for exercises count', function () {
             $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
-            
+
             // Create exercises for the user
             $muscleGroup->exercises()->create([
                 'name' => 'Push-ups',
                 'description' => 'Basic push-ups',
                 'user_id' => $this->user->id,
             ]);
-            
+
             $muscleGroup->exercises()->create([
                 'name' => 'Bench Press',
                 'description' => 'Bench press exercise',
@@ -100,7 +100,7 @@ describe('MuscleGroupService', function () {
 
         it('applies user filter for exercises count', function () {
             $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
-            
+
             $muscleGroup->exercises()->create([
                 'name' => 'Push-ups',
                 'description' => 'Basic push-ups',
@@ -113,52 +113,4 @@ describe('MuscleGroupService', function () {
         });
     });
 
-    describe('create', function () {
-        it('creates a new muscle group', function () {
-            $data = ['name' => 'Chest'];
-
-            $result = $this->service->create($data);
-
-            expect($result->name)->toBe('Chest');
-            $this->assertDatabaseHas('muscle_groups', ['name' => 'Chest']);
-        });
-    });
-
-    describe('update', function () {
-        it('updates a muscle group', function () {
-            $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
-            $data = ['name' => 'Chest Updated'];
-
-            $result = $this->service->update($muscleGroup->id, $data);
-
-            expect($result->name)->toBe('Chest Updated');
-            $this->assertDatabaseHas('muscle_groups', [
-                'id' => $muscleGroup->id,
-                'name' => 'Chest Updated',
-            ]);
-        });
-
-        it('returns null for non-existent muscle group', function ($muscleGroupId, $scenario) {
-            $data = ['name' => 'Test Muscle Group'];
-            
-            $result = $this->service->update($muscleGroupId, $data);
-            expect($result)->toBeNull();
-        })->with('exception_scenarios');
-    });
-
-    describe('delete', function () {
-        it('deletes a muscle group', function () {
-            $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
-
-            $result = $this->service->delete($muscleGroup->id);
-
-            expect($result)->toBeTrue();
-            $this->assertDatabaseMissing('muscle_groups', ['id' => $muscleGroup->id]);
-        });
-
-        it('returns false for non-existent muscle group', function ($muscleGroupId, $scenario) {
-            $result = $this->service->delete($muscleGroupId);
-            expect($result)->toBeFalse();
-        })->with('exception_scenarios');
-    });
 });

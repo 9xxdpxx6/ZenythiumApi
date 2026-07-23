@@ -4,15 +4,15 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\MuscleGroup;
 use App\Filters\MuscleGroupFilter;
+use App\Models\MuscleGroup;
 use App\Traits\HasPagination;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class MuscleGroupService
 {
     use HasPagination;
+
     /**
      * Get all muscle groups with optional filtering and pagination.
      */
@@ -20,7 +20,7 @@ final class MuscleGroupService
     {
         $filter = new MuscleGroupFilter($filters);
         $query = MuscleGroup::query();
-        
+
         $filter->apply($query);
 
         return $this->applyPagination($query, $filters);
@@ -45,41 +45,5 @@ final class MuscleGroupService
         }
 
         return $query->find($id);
-    }
-
-    /**
-     * Create a new muscle group.
-     */
-    public function create(array $data): MuscleGroup
-    {
-        return MuscleGroup::create($data);
-    }
-
-    /**
-     * Update muscle group by ID.
-     */
-    public function update(int $id, array $data): ?MuscleGroup
-    {
-        $muscleGroup = MuscleGroup::find($id);
-        if (!$muscleGroup) {
-            return null;
-        }
-        
-        $muscleGroup->update($data);
-        
-        return $muscleGroup->fresh();
-    }
-
-    /**
-     * Delete muscle group by ID.
-     */
-    public function delete(int $id): bool
-    {
-        $muscleGroup = MuscleGroup::find($id);
-        if (!$muscleGroup) {
-            return false;
-        }
-        
-        return $muscleGroup->delete();
     }
 }

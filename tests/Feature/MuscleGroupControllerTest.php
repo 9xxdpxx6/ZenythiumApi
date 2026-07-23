@@ -6,14 +6,6 @@ use App\Models\MuscleGroup;
 use App\Models\User;
 use Laravel\Sanctum\Sanctum;
 
-dataset('protected_endpoints', [
-    'GET /api/v1/muscle-groups' => ['GET', '/api/v1/muscle-groups'],
-    'POST /api/v1/muscle-groups' => ['POST', '/api/v1/muscle-groups', []],
-    'GET /api/v1/muscle-groups/{id}' => ['GET', '/api/v1/muscle-groups/{id}'],
-    'PUT /api/v1/muscle-groups/{id}' => ['PUT', '/api/v1/muscle-groups/{id}', []],
-    'DELETE /api/v1/muscle-groups/{id}' => ['DELETE', '/api/v1/muscle-groups/{id}'],
-]);
-
 beforeEach(function () {
     $this->user = User::factory()->create();
     Sanctum::actingAs($this->user);
@@ -25,20 +17,20 @@ describe('MuscleGroupController', function () {
             // Create muscle groups
             $muscleGroup1 = MuscleGroup::factory()->create(['name' => 'Chest']);
             $muscleGroup2 = MuscleGroup::factory()->create(['name' => 'Back']);
-            
+
             // Create exercises for the authenticated user
             $muscleGroup1->exercises()->create([
                 'name' => 'Push-ups',
                 'description' => 'Basic push-ups',
                 'user_id' => $this->user->id,
             ]);
-            
+
             $muscleGroup1->exercises()->create([
                 'name' => 'Bench Press',
                 'description' => 'Bench press exercise',
                 'user_id' => $this->user->id,
             ]);
-            
+
             // Create exercise for another user (should not be counted)
             $muscleGroup1->exercises()->create([
                 'name' => 'Other User Exercise',
@@ -57,9 +49,9 @@ describe('MuscleGroupController', function () {
                             'created_at',
                             'updated_at',
                             'exercises_count',
-                        ]
+                        ],
                     ],
-                    'message'
+                    'message',
                 ]);
 
             // Check that exercises_count is correct for the authenticated user
@@ -89,54 +81,36 @@ describe('MuscleGroupController', function () {
         });
     });
 
-    describe('POST /api/muscle-groups', function () {
-        it('creates a new muscle group', function () {
-            $data = [
-                'name' => 'Chest',
-            ];
+    describe('mutation routes are not exposed to clients', function () {
+        it('does not allow creating a muscle group', function () {
+            $response = $this->postJson('/api/v1/muscle-groups', ['name' => 'Chest']);
 
-            $response = $this->postJson('/api/v1/muscle-groups', $data);
-
-            $response->assertStatus(201)
-                ->assertJsonStructure([
-                    'data' => [
-                        'id',
-                        'name',
-                        'created_at',
-                        'updated_at',
-                        'exercises_count',
-                    ],
-                    'message'
-                ]);
-
-            $this->assertDatabaseHas('muscle_groups', [
-                'name' => 'Chest',
-            ]);
+            $response->assertStatus(405);
         });
 
-        it('validates required fields', function () {
-            $response = $this->postJson('/api/v1/muscle-groups', []);
+        it('does not allow updating a muscle group', function () {
+            $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
 
-            $response->assertStatus(422)
-                ->assertJsonValidationErrors(['name']);
+            $response = $this->putJson("/api/v1/muscle-groups/{$muscleGroup->id}", ['name' => 'Updated']);
+
+            $response->assertStatus(405);
+            $this->assertDatabaseHas('muscle_groups', ['id' => $muscleGroup->id, 'name' => 'Chest']);
         });
 
-        it('validates unique name', function () {
-            MuscleGroup::factory()->create(['name' => 'Chest']);
+        it('does not allow deleting a muscle group', function () {
+            $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
 
-            $response = $this->postJson('/api/v1/muscle-groups', [
-                'name' => 'Chest',
-            ]);
+            $response = $this->deleteJson("/api/v1/muscle-groups/{$muscleGroup->id}");
 
-            $response->assertStatus(422)
-                ->assertJsonValidationErrors(['name']);
+            $response->assertStatus(405);
+            $this->assertDatabaseHas('muscle_groups', ['id' => $muscleGroup->id]);
         });
     });
 
     describe('GET /api/muscle-groups/{id}', function () {
         it('returns a specific muscle group', function () {
             $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
-            
+
             // Add exercises for the authenticated user
             $muscleGroup->exercises()->create([
                 'name' => 'Push-ups',
@@ -155,7 +129,7 @@ describe('MuscleGroupController', function () {
                         'updated_at',
                         'exercises_count',
                     ],
-                    'message'
+                    'message',
                 ]);
 
             expect($response->json('data.name'))->toBe('Chest');
@@ -169,65 +143,4 @@ describe('MuscleGroupController', function () {
         });
     });
 
-    describe('PUT /api/muscle-groups/{id}', function () {
-        it('updates a muscle group', function () {
-            $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
-
-            $response = $this->putJson("/api/v1/muscle-groups/{$muscleGroup->id}", [
-                'name' => 'Chest Updated',
-            ]);
-
-            $response->assertStatus(200)
-                ->assertJsonStructure([
-                    'data' => [
-                        'id',
-                        'name',
-                        'created_at',
-                        'updated_at',
-                        'exercises_count',
-                    ],
-                    'message'
-                ]);
-
-            expect($response->json('data.name'))->toBe('Chest Updated');
-            
-            $this->assertDatabaseHas('muscle_groups', [
-                'id' => $muscleGroup->id,
-                'name' => 'Chest Updated',
-            ]);
-        });
-
-        it('validates unique name on update', function () {
-            $muscleGroup1 = MuscleGroup::factory()->create(['name' => 'Chest']);
-            $muscleGroup2 = MuscleGroup::factory()->create(['name' => 'Back']);
-
-            $response = $this->putJson("/api/v1/muscle-groups/{$muscleGroup2->id}", [
-                'name' => 'Chest',
-            ]);
-
-            $response->assertStatus(422)
-                ->assertJsonValidationErrors(['name']);
-        });
-    });
-
-    describe('DELETE /api/muscle-groups/{id}', function () {
-        it('deletes a muscle group', function () {
-            $muscleGroup = MuscleGroup::factory()->create(['name' => 'Chest']);
-
-            $response = $this->deleteJson("/api/v1/muscle-groups/{$muscleGroup->id}");
-
-            $response->assertStatus(200)
-                ->assertJsonStructure(['message']);
-
-            $this->assertDatabaseMissing('muscle_groups', [
-                'id' => $muscleGroup->id,
-            ]);
-        });
-
-        it('returns 404 for non-existent muscle group', function () {
-            $response = $this->deleteJson('/api/muscle-groups/999');
-
-            $response->assertStatus(404);
-        });
-    });
 });
