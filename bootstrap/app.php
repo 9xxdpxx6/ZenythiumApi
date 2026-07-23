@@ -12,11 +12,15 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->alias([
+            'idempotent' => \App\Http\Middleware\EnsureIdempotentRequest::class,
+        ]);
+
         $middleware->api(prepend: [
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
             \App\Http\Middleware\LogCorsAndCookies::class,
         ]);
-        
+
         // ВАЖНО: Применяем CORS middleware к web routes, чтобы он работал для /sanctum/csrf-cookie
         // В Laravel 11 CORS применяется автоматически к API routes, но не к web routes
         // Также применяем EnsureFrontendRequestsAreStateful к web routes для /sanctum/csrf-cookie
@@ -24,13 +28,13 @@ return Application::configure(basePath: dirname(__DIR__))
             \Illuminate\Http\Middleware\HandleCors::class,
             \Laravel\Sanctum\Http\Middleware\EnsureFrontendRequestsAreStateful::class,
         ]);
-        
+
         // Принудительно добавляем CORS заголовки ПОСЛЕ всех других middleware
         // ForceCorsHeaders должен быть последним, чтобы гарантировать установку заголовков
         $middleware->web(append: [
             \App\Http\Middleware\ForceCorsHeaders::class,
         ]);
-        
+
         // Логирование применяем глобально, чтобы видеть финальный ответ
         $middleware->append(\App\Http\Middleware\LogCorsAndCookies::class);
     })

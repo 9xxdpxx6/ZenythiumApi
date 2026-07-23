@@ -44,14 +44,14 @@ describe('WorkoutController', function () {
                 'started_at' => '2024-03-10 10:00:00',
                 'finished_at' => '2024-03-10 11:00:00',
             ]);
-            
+
             $workout2 = Workout::factory()->create([
                 'plan_id' => $this->plan->id,
                 'user_id' => $this->user->id,
                 'started_at' => '2024-03-20 10:00:00',
                 'finished_at' => null,
             ]);
-            
+
             // Create workout for another user (should not be returned)
             $otherUser = User::factory()->create();
             $otherCycle = Cycle::factory()->create(['user_id' => $otherUser->id]);
@@ -84,7 +84,7 @@ describe('WorkoutController', function () {
                             ],
                             'created_at',
                             'updated_at',
-                        ]
+                        ],
                     ],
                     'message',
                     'meta' => [
@@ -94,7 +94,7 @@ describe('WorkoutController', function () {
                         'total',
                         'from',
                         'to',
-                    ]
+                    ],
                 ]);
 
             expect($response->json('data'))->toHaveCount(3); // 2 new + 1 existing
@@ -109,12 +109,12 @@ describe('WorkoutController', function () {
                 'cycle_id' => $this->cycle->id,
                 'name' => 'Another Plan',
             ]);
-            
+
             Workout::factory()->create([
                 'plan_id' => $plan1->id,
                 'user_id' => $this->user->id,
             ]);
-            
+
             Workout::factory()->create([
                 'plan_id' => $plan2->id,
                 'user_id' => $this->user->id,
@@ -130,12 +130,12 @@ describe('WorkoutController', function () {
         it('supports search filtering by user name', function () {
             $user1 = User::factory()->create(['name' => 'Test User']);
             $user2 = User::factory()->create(['name' => 'Another User']);
-            
+
             Workout::factory()->create([
                 'plan_id' => $this->plan->id,
                 'user_id' => $user1->id,
             ]);
-            
+
             Workout::factory()->create([
                 'plan_id' => $this->plan->id,
                 'user_id' => $user2->id,
@@ -151,12 +151,12 @@ describe('WorkoutController', function () {
         it('supports plan filtering', function () {
             $plan1 = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
             $plan2 = Plan::factory()->create(['cycle_id' => $this->cycle->id]);
-            
+
             Workout::factory()->create([
                 'plan_id' => $plan1->id,
                 'user_id' => $this->user->id,
             ]);
-            
+
             Workout::factory()->create([
                 'plan_id' => $plan2->id,
                 'user_id' => $this->user->id,
@@ -174,7 +174,7 @@ describe('WorkoutController', function () {
                 'plan_id' => $this->plan->id,
                 'user_id' => $this->user->id,
             ]);
-            
+
             Workout::factory()->inProgress()->create([
                 'plan_id' => $this->plan->id,
                 'user_id' => $this->user->id,
@@ -193,7 +193,7 @@ describe('WorkoutController', function () {
                 'user_id' => $this->user->id,
                 'started_at' => '2024-02-01 10:00:00',
             ]);
-            
+
             Workout::factory()->create([
                 'plan_id' => $this->plan->id,
                 'user_id' => $this->user->id,
@@ -256,7 +256,7 @@ describe('WorkoutController', function () {
                         'created_at',
                         'updated_at',
                     ],
-                    'message'
+                    'message',
                 ]);
 
             expect($response->json('data.plan.id'))->toBe($this->plan->id);
@@ -358,7 +358,7 @@ describe('WorkoutController', function () {
                         'created_at',
                         'updated_at',
                     ],
-                    'message'
+                    'message',
                 ]);
 
             expect($response->json('data.id'))->toBe($this->workout->id);
@@ -390,7 +390,7 @@ describe('WorkoutController', function () {
         it('returns exercises with history for workout', function () {
             // Создаем группу мышц
             $muscleGroup = \App\Models\MuscleGroup::factory()->create(['name' => 'Грудь']);
-            
+
             // Создаем упражнение
             $exercise = \App\Models\Exercise::factory()->create([
                 'name' => 'Жим лежа',
@@ -398,14 +398,14 @@ describe('WorkoutController', function () {
                 'muscle_group_id' => $muscleGroup->id,
                 'user_id' => $this->user->id,
             ]);
-            
+
             // Создаем упражнение в плане
             $planExercise = \App\Models\PlanExercise::factory()->create([
                 'plan_id' => $this->plan->id,
                 'exercise_id' => $exercise->id,
                 'order' => 1,
             ]);
-            
+
             // Создаем несколько тренировок с подходами для истории
             $workout1 = Workout::factory()->create([
                 'plan_id' => $this->plan->id,
@@ -413,21 +413,21 @@ describe('WorkoutController', function () {
                 'started_at' => '2024-03-10 10:00:00',
                 'finished_at' => '2024-03-10 11:00:00',
             ]);
-            
+
             $workout2 = Workout::factory()->create([
                 'plan_id' => $this->plan->id,
                 'user_id' => $this->user->id,
                 'started_at' => '2024-03-12 10:00:00',
                 'finished_at' => '2024-03-12 11:00:00',
             ]);
-            
+
             $workout3 = Workout::factory()->create([
                 'plan_id' => $this->plan->id,
                 'user_id' => $this->user->id,
                 'started_at' => '2024-03-14 10:00:00',
                 'finished_at' => '2024-03-14 11:00:00',
             ]);
-            
+
             // Создаем подходы для каждой тренировки
             \App\Models\WorkoutSet::factory()->create([
                 'workout_id' => $workout1->id,
@@ -435,14 +435,14 @@ describe('WorkoutController', function () {
                 'weight' => 80.0,
                 'reps' => 10,
             ]);
-            
+
             \App\Models\WorkoutSet::factory()->create([
                 'workout_id' => $workout2->id,
                 'plan_exercise_id' => $planExercise->id,
                 'weight' => 82.5,
                 'reps' => 10,
             ]);
-            
+
             \App\Models\WorkoutSet::factory()->create([
                 'workout_id' => $workout3->id,
                 'plan_exercise_id' => $planExercise->id,
@@ -501,20 +501,20 @@ describe('WorkoutController', function () {
                         'created_at',
                         'updated_at',
                     ],
-                    'message'
+                    'message',
                 ]);
 
             // Проверяем, что упражнения загружены
             $exercises = $response->json('data.exercises');
             expect($exercises)->toHaveCount(1);
-            
+
             $exerciseData = $exercises[0];
             expect($exerciseData['exercise']['name'])->toBe('Жим лежа');
             expect($exerciseData['exercise']['muscle_group']['name'])->toBe('Грудь');
-            
+
             // Проверяем историю (должна быть за последние 3 тренировки)
             expect($exerciseData['history'])->toHaveCount(3);
-            
+
             // Проверяем, что история отсортирована по дате (новые сначала)
             $history = $exerciseData['history'];
             expect($history[0]['workout_date'])->toBe('2024-03-14T08:00:00.000000Z');
@@ -552,7 +552,7 @@ describe('WorkoutController', function () {
                         'created_at',
                         'updated_at',
                     ],
-                    'message'
+                    'message',
                 ]);
 
             expect($response->json('data.started_at'))->toBe('2024-03-15T06:00:00.000000Z');
@@ -604,14 +604,14 @@ describe('WorkoutController', function () {
         it('deletes workout and related workout sets', function () {
             // Создаем WorkoutSet для этой тренировки
             $planExercise = \App\Models\PlanExercise::factory()->create([
-                'plan_id' => $this->plan->id
+                'plan_id' => $this->plan->id,
             ]);
-            
+
             $workoutSet = \App\Models\WorkoutSet::factory()->create([
                 'workout_id' => $this->workout->id,
                 'plan_exercise_id' => $planExercise->id,
                 'weight' => 80.5,
-                'reps' => 10
+                'reps' => 10,
             ]);
 
             $response = $this->actingAs($this->user)
@@ -620,9 +620,9 @@ describe('WorkoutController', function () {
             $response->assertStatus(200)
                 ->assertJson([
                     'data' => null,
-                    'message' => 'Тренировка успешно удалена'
+                    'message' => 'Тренировка успешно удалена',
                 ]);
-            
+
             $this->assertDatabaseMissing('workouts', [
                 'id' => $this->workout->id,
             ]);
@@ -658,14 +658,14 @@ describe('WorkoutController', function () {
         it('requires authentication for protected endpoints', function ($method, $url, $data = null) {
             // Заменяем {id} на реальный ID тренировки
             $url = str_replace('{id}', (string) $this->workout->id, $url);
-            
-            $response = match($method) {
+
+            $response = match ($method) {
                 'GET' => $this->getJson($url),
                 'POST' => $this->postJson($url, $data),
                 'PUT' => $this->putJson($url, $data),
                 'DELETE' => $this->deleteJson($url),
             };
-            
+
             $response->assertStatus(401);
         })->with('protected_endpoints');
     });
@@ -723,6 +723,24 @@ describe('WorkoutController', function () {
             ]);
 
             $response->assertStatus(401);
+        });
+
+        it('returns the existing active workout instead of creating a duplicate on a retried start', function () {
+            $first = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start', ['plan_id' => $this->plan->id]);
+            $first->assertStatus(201);
+
+            $retry = $this->actingAs($this->user)
+                ->postJson('/api/v1/workouts/start', ['plan_id' => $this->plan->id]);
+            $retry->assertStatus(201);
+
+            expect($retry->json('data.id'))->toBe($first->json('data.id'));
+            expect(
+                Workout::where('plan_id', $this->plan->id)
+                    ->where('user_id', $this->user->id)
+                    ->whereNull('finished_at')
+                    ->count()
+            )->toBe(1);
         });
     });
 
@@ -931,7 +949,7 @@ describe('WorkoutController', function () {
 
             $response->assertStatus(404)
                 ->assertJson([
-                    'message' => 'Не найден активный цикл с планами'
+                    'message' => 'Не найден активный цикл с планами',
                 ]);
         });
 
@@ -944,7 +962,7 @@ describe('WorkoutController', function () {
 
             $response->assertStatus(404)
                 ->assertJson([
-                    'message' => 'Не найден активный цикл с планами'
+                    'message' => 'Не найден активный цикл с планами',
                 ]);
         });
 
@@ -1005,7 +1023,7 @@ describe('WorkoutController', function () {
 
             $response->assertStatus(409)
                 ->assertJson([
-                    'message' => 'Все планы имеют активные тренировки. Завершите текущие тренировки перед началом новых.'
+                    'message' => 'Все планы имеют активные тренировки. Завершите текущие тренировки перед началом новых.',
                 ]);
         });
 

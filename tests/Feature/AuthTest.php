@@ -96,7 +96,7 @@ describe('Authentication', function () {
 
             // Проверяем, что второй пользователь не создан
             $this->assertDatabaseCount('users', 1);
-            
+
             // Проверяем точный формат ответа для мобильного приложения
             $responseData = $response->json();
             expect($responseData)->toHaveKey('message');
@@ -104,7 +104,7 @@ describe('Authentication', function () {
             expect($responseData['errors'])->toHaveKey('email');
             expect($responseData['errors']['email'])->toBeArray();
             expect($responseData['errors']['email'][0])->toBeString();
-            
+
             // Проверяем, что сообщение на русском языке
             expect($responseData['errors']['email'][0])->toBe('Пользователь с таким email уже зарегистрирован.');
         });
@@ -146,7 +146,7 @@ describe('Authentication', function () {
             $token = $user->createToken('test-token')->plainTextToken;
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->postJson('/api/v1/logout');
 
             $response->assertStatus(200)
@@ -163,7 +163,7 @@ describe('Authentication', function () {
             $token = $user->createToken('test-token')->plainTextToken;
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->getJson('/api/v1/user');
 
             $response->assertStatus(200)
@@ -175,7 +175,7 @@ describe('Authentication', function () {
                         'created_at',
                         'updated_at',
                     ],
-                    'message'
+                    'message',
                 ]);
         });
 
@@ -191,7 +191,7 @@ describe('Authentication', function () {
             ];
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->putJson('/api/v1/user', $profileData);
 
             $response->assertStatus(200)
@@ -203,7 +203,7 @@ describe('Authentication', function () {
                         'created_at',
                         'updated_at',
                     ],
-                    'message'
+                    'message',
                 ])
                 ->assertJson([
                     'data' => [
@@ -230,7 +230,7 @@ describe('Authentication', function () {
             $token = $user->createToken('test-token')->plainTextToken;
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->putJson('/api/v1/user', []);
 
             $response->assertStatus(422)
@@ -252,7 +252,7 @@ describe('Authentication', function () {
             $token = $user->createToken('test-token')->plainTextToken;
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->putJson('/api/v1/user', [
                 'name' => 12345,
             ]);
@@ -268,7 +268,7 @@ describe('Authentication', function () {
             $longName = str_repeat('a', 256); // 256 символов - больше лимита
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->putJson('/api/v1/user', [
                 'name' => $longName,
             ]);
@@ -291,7 +291,7 @@ describe('Authentication', function () {
             $longName = str_repeat('a', 255); // Ровно 255 символов
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->putJson('/api/v1/user', [
                 'name' => $longName,
             ]);
@@ -323,7 +323,7 @@ describe('Authentication', function () {
             $token = $user->createToken('test-token')->plainTextToken;
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->putJson('/api/v1/user', [
                 'name' => 'Updated Name',
             ]);
@@ -355,7 +355,7 @@ describe('Authentication', function () {
             ];
 
             $response = $this->withHeaders([
-                'Authorization' => 'Bearer ' . $token,
+                'Authorization' => 'Bearer '.$token,
             ])->postJson('/api/v1/change-password', $passwordData);
 
             $response->assertStatus(200)
@@ -363,6 +363,27 @@ describe('Authentication', function () {
                     'data' => null,
                     'message' => 'Пароль успешно изменен',
                 ]);
+        });
+
+        it('revokes other tokens when changing password but keeps the current one', function () {
+            $user = User::factory()->create([
+                'password' => Hash::make('oldpassword'),
+            ]);
+            $currentToken = $user->createToken('device-a');
+            $otherToken = $user->createToken('device-b');
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer '.$currentToken->plainTextToken,
+            ])->postJson('/api/v1/change-password', [
+                'current_password' => 'oldpassword',
+                'password' => 'newpassword123',
+                'password_confirmation' => 'newpassword123',
+            ]);
+
+            $response->assertStatus(200);
+
+            expect(\Laravel\Sanctum\PersonalAccessToken::find($currentToken->accessToken->id))->not->toBeNull();
+            expect(\Laravel\Sanctum\PersonalAccessToken::find($otherToken->accessToken->id))->toBeNull();
         });
 
         it('allows user to request password reset', function () {
@@ -380,8 +401,90 @@ describe('Authentication', function () {
             $response->assertStatus(200)
                 ->assertJson([
                     'data' => null,
-                    'message' => 'Ссылка для сброса пароля отправлена на вашу почту',
+                    'message' => 'Письмо отправлено на test@example.com',
                 ]);
+        });
+
+        it('returns the same response for a non-existent email, to avoid user enumeration', function () {
+            Notification::fake();
+
+            $response = $this->postJson('/api/v1/forgot-password', [
+                'email' => 'nobody-registered@example.com',
+            ]);
+
+            $response->assertStatus(200)
+                ->assertJson([
+                    'data' => null,
+                    'message' => 'Письмо отправлено на nobody-registered@example.com',
+                ]);
+        });
+
+        it('does not reveal registration status via validation errors', function () {
+            $response = $this->postJson('/api/v1/forgot-password', [
+                'email' => 'nobody-registered@example.com',
+            ]);
+
+            // Раньше 'exists:users,email' возвращал 422 только для незарегистрированных
+            // email — это и есть user enumeration. Теперь такой email не должен
+            // отличаться от зарегистрированного никаким статусом/сообщением.
+            $response->assertStatus(200);
+        });
+    });
+
+    describe('Token Refresh', function () {
+        it('refreshes a token that has not expired yet', function () {
+            $user = User::factory()->create();
+            $token = $user->createToken('auth_token')->plainTextToken;
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer '.$token,
+            ])->postJson('/api/v1/refresh-token');
+
+            $response->assertStatus(200)
+                ->assertJsonStructure([
+                    'data' => ['user', 'token', 'token_type'],
+                    'message',
+                ]);
+            expect($response->json('data.token'))->not->toBe($token);
+        });
+
+        it('refreshes a token that expired recently, within the grace period', function () {
+            $user = User::factory()->create();
+            $plainToken = $user->createToken('auth_token')->plainTextToken;
+            $tokenId = explode('|', $plainToken)[0];
+
+            \Laravel\Sanctum\PersonalAccessToken::where('id', $tokenId)
+                ->update(['expires_at' => now()->subDays(3)]);
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer '.$plainToken,
+            ])->postJson('/api/v1/refresh-token');
+
+            $response->assertStatus(200);
+        });
+
+        it('rejects a token that expired long ago, beyond the grace period, and deletes it', function () {
+            $user = User::factory()->create();
+            $plainToken = $user->createToken('auth_token')->plainTextToken;
+            $tokenId = explode('|', $plainToken)[0];
+
+            \Laravel\Sanctum\PersonalAccessToken::where('id', $tokenId)
+                ->update(['expires_at' => now()->subDays(30)]);
+
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer '.$plainToken,
+            ])->postJson('/api/v1/refresh-token');
+
+            $response->assertStatus(401);
+            expect(\Laravel\Sanctum\PersonalAccessToken::where('id', $tokenId)->exists())->toBeFalse();
+        });
+
+        it('rejects an unknown token', function () {
+            $response = $this->withHeaders([
+                'Authorization' => 'Bearer 999999|nonexistenttokenvalue',
+            ])->postJson('/api/v1/refresh-token');
+
+            $response->assertStatus(401);
         });
     });
 });

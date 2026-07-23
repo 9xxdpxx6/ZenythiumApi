@@ -4,12 +4,9 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\Workout;
 use App\Filters\WorkoutFilter;
-use App\Services\CycleService;
-use App\Services\GoalService;
+use App\Models\Workout;
 use App\Traits\HasPagination;
-use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
 
 final class WorkoutService
@@ -20,31 +17,30 @@ final class WorkoutService
         private readonly CycleService $cycleService,
         private readonly GoalService $goalService
     ) {}
-    
+
     /**
      * Получить все тренировки с фильтрацией и пагинацией
-     * 
-     * @param array $filters Массив фильтров для поиска тренировок
-     * @param int|null $filters['user_id'] ID пользователя (обязательно для безопасности)
-     * @param int|null $filters['plan_id'] ID плана тренировки
-     * @param string|null $filters['started_at'] Дата начала тренировки (от)
-     * @param string|null $filters['finished_at'] Дата окончания тренировки (до)
-     * @param int $filters['page'] Номер страницы (по умолчанию 1)
-     * @param int $filters['per_page'] Количество элементов на странице (по умолчанию 15)
-     * 
+     *
+     * @param  array  $filters  Массив фильтров для поиска тренировок
+     * @param  int|null  $filters['user_id']  ID пользователя (обязательно для безопасности)
+     * @param  int|null  $filters['plan_id']  ID плана тренировки
+     * @param  string|null  $filters['started_at']  Дата начала тренировки (от)
+     * @param  string|null  $filters['finished_at']  Дата окончания тренировки (до)
+     * @param  int  $filters['page']  Номер страницы (по умолчанию 1)
+     * @param  int  $filters['per_page']  Количество элементов на странице (по умолчанию 15)
      * @return LengthAwarePaginator Пагинированный список тренировок
-     * 
+     *
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если тренировка не найдена
      */
     public function getAll(array $filters = []): LengthAwarePaginator
     {
         $filter = new WorkoutFilter($filters);
         $query = Workout::query()->with(['plan', 'user']);
-        
-        if (!isset($filters['user_id']) || $filters['user_id'] === null) {
+
+        if (! isset($filters['user_id']) || $filters['user_id'] === null) {
             return new LengthAwarePaginator([], 0, 15, 1);
         }
-        
+
         $filter->apply($query);
 
         return $this->applyPagination($query, $filters);
@@ -52,19 +48,18 @@ final class WorkoutService
 
     /**
      * Получить тренировку по ID
-     * 
-     * @param int $id ID тренировки
-     * @param int|null $userId ID пользователя для проверки доступа (опционально)
-     * 
+     *
+     * @param  int  $id  ID тренировки
+     * @param  int|null  $userId  ID пользователя для проверки доступа (опционально)
      * @return Workout|null Модель тренировки с загруженными связями или null если не найдена.
-     * Загружает связи: plan.cycle, user, plan.planExercises.exercise.muscleGroup
+     *                      Загружает связи: plan.cycle, user, plan.planExercises.exercise.muscleGroup
      */
     public function getById(int $id, ?int $userId = null): ?Workout
     {
         $query = Workout::query()->with([
-            'plan.cycle', 
+            'plan.cycle',
             'user',
-            'plan.planExercises.exercise.muscleGroup'
+            'plan.planExercises.exercise.muscleGroup',
         ]);
 
         if ($userId) {
@@ -76,15 +71,14 @@ final class WorkoutService
 
     /**
      * Создать новую тренировку
-     * 
-     * @param array $data Данные для создания тренировки
-     * @param int $data['plan_id'] ID плана тренировки
-     * @param int $data['user_id'] ID пользователя
-     * @param string|null $data['started_at'] Время начала тренировки
-     * @param string|null $data['finished_at'] Время окончания тренировки
-     * 
+     *
+     * @param  array  $data  Данные для создания тренировки
+     * @param  int  $data['plan_id']  ID плана тренировки
+     * @param  int  $data['user_id']  ID пользователя
+     * @param  string|null  $data['started_at']  Время начала тренировки
+     * @param  string|null  $data['finished_at']  Время окончания тренировки
      * @return Workout Созданная модель тренировки
-     * 
+     *
      * @throws \Illuminate\Database\QueryException При ошибке создания записи
      */
     public function create(array $data): Workout
@@ -93,40 +87,39 @@ final class WorkoutService
         if (isset($data['started_at'])) {
             $data['started_at'] = $this->normalizeDateTimeForStorage($data['started_at']);
         }
-        
+
         if (isset($data['finished_at'])) {
             $data['finished_at'] = $this->normalizeDateTimeForStorage($data['finished_at']);
         }
-        
+
         $workout = Workout::create($data);
-        
+
         // Если тренировка создана сразу с finished_at, проверяем завершение цикла
         if ($workout->finished_at) {
             // Загружаем связи для проверки
             $workout->load('plan.cycle');
-            
+
             if ($workout->plan && $workout->plan->cycle) {
                 $this->cycleService->autoCompleteIfFinished($workout->plan->cycle);
             }
         }
-        
+
         // Обновляем прогресс целей пользователя
         if (isset($data['user_id'])) {
             $this->goalService->updateProgressForUser($data['user_id']);
         }
-        
+
         return $workout;
     }
 
     /**
      * Обновить тренировку по ID
-     * 
-     * @param int $id ID тренировки
-     * @param array $data Данные для обновления
-     * @param int|null $userId ID пользователя для проверки доступа (опционально)
-     * 
+     *
+     * @param  int  $id  ID тренировки
+     * @param  array  $data  Данные для обновления
+     * @param  int|null  $userId  ID пользователя для проверки доступа (опционально)
      * @return Workout|null Обновленная модель тренировки с загруженными связями или null если не найдена
-     * 
+     *
      * @throws \Illuminate\Database\QueryException При ошибке обновления записи
      */
     public function update(int $id, array $data, ?int $userId = null): ?Workout
@@ -138,46 +131,46 @@ final class WorkoutService
         }
 
         $workout = $query->find($id);
-        
-        if (!$workout) {
+
+        if (! $workout) {
             return null;
         }
-        
+
         // Запоминаем, была ли тренировка завершена до обновления
         $wasFinished = $workout->finished_at !== null;
-        
+
         // Нормализуем даты для правильной обработки временных зон
         if (isset($data['started_at'])) {
             $data['started_at'] = $this->normalizeDateTimeForStorage($data['started_at']);
         }
-        
+
         if (isset($data['finished_at'])) {
             $data['finished_at'] = $this->normalizeDateTimeForStorage($data['finished_at']);
         }
-        
+
         $workout->update($data);
-        
+
         // Получаем обновленную тренировку со связями
         $workout = $workout->fresh(['plan.cycle', 'user']);
-        
+
         // Если тренировка только что была завершена (finished_at был null, а теперь установлен),
         // проверяем и автоматически завершаем цикл при достижении 100%
-        if (!$wasFinished && $workout->finished_at && $workout->plan && $workout->plan->cycle) {
+        if (! $wasFinished && $workout->finished_at && $workout->plan && $workout->plan->cycle) {
             $this->cycleService->autoCompleteIfFinished($workout->plan->cycle);
         }
-        
+
         // Обновляем прогресс целей пользователя
         if ($workout->user_id) {
             $this->goalService->updateProgressForUser($workout->user_id);
         }
-        
+
         return $workout;
     }
 
     /**
      * Нормализует дату/время для сохранения в БД, интерпретируя строки без зоны как локальное время.
-     * 
-     * @param string|\Carbon\Carbon $dateTime Строка с датой/временем или Carbon объект
+     *
+     * @param  string|\Carbon\Carbon  $dateTime  Строка с датой/временем или Carbon объект
      * @return \Carbon\Carbon Carbon объект в локальной зоне (Laravel автоматически конвертирует в UTC при сохранении)
      */
     private function normalizeDateTimeForStorage(string|\Carbon\Carbon $dateTime): \Carbon\Carbon
@@ -191,6 +184,7 @@ final class WorkoutService
         if (preg_match('/[Z+-]\d{2}:?\d{2}$/', $dateTime)) {
             try {
                 $carbon = \Carbon\Carbon::parse($dateTime);
+
                 // Конвертируем в локальную зону
                 return $carbon->setTimezone(config('app.timezone'));
             } catch (\Exception $e) {
@@ -210,12 +204,11 @@ final class WorkoutService
 
     /**
      * Удалить тренировку по ID
-     * 
-     * @param int $id ID тренировки
-     * @param int|null $userId ID пользователя для проверки доступа (опционально)
-     * 
+     *
+     * @param  int  $id  ID тренировки
+     * @param  int|null  $userId  ID пользователя для проверки доступа (опционально)
      * @return bool True если тренировка успешно удалена, false если не найдена
-     * 
+     *
      * @note При удалении тренировки автоматически удаляются все связанные WorkoutSet записи
      */
     public function delete(int $id, ?int $userId = null): bool
@@ -227,26 +220,39 @@ final class WorkoutService
         }
 
         $workout = $query->find($id);
-        
-        if (!$workout) {
+
+        if (! $workout) {
             return false;
         }
-        
+
         return $workout->delete();
     }
 
     /**
      * Запустить новую тренировку для плана
-     * 
-     * @param int $planId ID плана тренировки
-     * @param int $userId ID пользователя
-     * 
+     *
+     * @param  int  $planId  ID плана тренировки
+     * @param  int  $userId  ID пользователя
      * @return Workout Созданная тренировка с установленным временем начала
-     * 
+     *
      * @throws \Illuminate\Database\QueryException При ошибке создания записи
      */
     public function start(int $planId, int $userId): Workout
     {
+        // Идемпотентность по бизнес-состоянию: у плана уже может быть активная
+        // (незавершённая) тренировка — например, повторный запрос при ретрае на
+        // плохой сети. Возвращаем её вместо создания второй активной тренировки.
+        $activeWorkout = Workout::query()
+            ->where('plan_id', $planId)
+            ->where('user_id', $userId)
+            ->whereNotNull('started_at')
+            ->whereNull('finished_at')
+            ->first();
+
+        if ($activeWorkout) {
+            return $activeWorkout;
+        }
+
         return Workout::create([
             'plan_id' => $planId,
             'user_id' => $userId,
@@ -256,9 +262,8 @@ final class WorkoutService
 
     /**
      * Автоматически определить план для следующей тренировки на основе активного цикла
-     * 
-     * @param int $userId ID пользователя
-     * 
+     *
+     * @param  int  $userId  ID пользователя
      * @return int|null ID плана для следующей тренировки, null если не найден активный цикл, -1 если все планы имеют активные тренировки
      */
     public function determineNextPlan(int $userId): ?int
@@ -273,7 +278,7 @@ final class WorkoutService
             ->orderBy('created_at', 'desc')
             ->first();
 
-        if (!$activeCycle) {
+        if (! $activeCycle) {
             return null;
         }
 
@@ -288,7 +293,7 @@ final class WorkoutService
                     $query->where('user_id', $userId)
                         ->whereNotNull('started_at')
                         ->whereNull('finished_at');
-                }
+                },
             ])
             ->get();
 
@@ -302,12 +307,12 @@ final class WorkoutService
                 'plan' => $plan,
                 'total_workouts' => $plan->total_workouts ?? 0,
                 'has_active_workout' => ($plan->active_workouts_count ?? 0) > 0,
-                'order' => $plan->order
+                'order' => $plan->order,
             ];
         }
 
         $availablePlans = array_filter($planProgress, function ($progress) {
-            return !$progress['has_active_workout'];
+            return ! $progress['has_active_workout'];
         });
 
         if (empty($availablePlans)) {
@@ -318,10 +323,10 @@ final class WorkoutService
 
         // Находим план с наименьшим количеством тренировок
         $minWorkouts = min(array_column($availablePlans, 'total_workouts'));
-        
+
         // Если несколько планов имеют одинаковое минимальное количество, берем первый по порядку
         foreach ($plans as $plan) {
-            if (isset($availablePlans[$plan->id]) && 
+            if (isset($availablePlans[$plan->id]) &&
                 $availablePlans[$plan->id]['total_workouts'] === $minWorkouts) {
                 return $plan->id;
             }
@@ -332,28 +337,27 @@ final class WorkoutService
 
     /**
      * Завершить тренировку установкой времени окончания
-     * 
-     * @param int $workoutId ID тренировки
-     * @param int $userId ID пользователя
-     * 
+     *
+     * @param  int  $workoutId  ID тренировки
+     * @param  int  $userId  ID пользователя
      * @return Workout Обновленная тренировка с установленным временем окончания
-     * 
+     *
      * @throws \InvalidArgumentException Если тренировка не запущена или уже завершена
      * @throws \Illuminate\Database\Eloquent\ModelNotFoundException Если тренировка не найдена
      */
     public function finish(int $workoutId, int $userId): ?Workout
     {
         $workout = Workout::where('user_id', $userId)->find($workoutId);
-        
-        if (!$workout) {
+
+        if (! $workout) {
             return null;
         }
-        
+
         // Validate that workout is started but not finished
-        if (!$workout->started_at) {
+        if (! $workout->started_at) {
             throw new \InvalidArgumentException('Нельзя завершить незапущенную тренировку');
         }
-        
+
         if ($workout->finished_at) {
             throw new \InvalidArgumentException('Тренировка уже завершена');
         }
@@ -363,41 +367,40 @@ final class WorkoutService
         // Обновляем через модель, чтобы Laravel правильно обработал временную зону
         $workout->finished_at = now();
         $workout->save();
-        
+
         // Перезагружаем модель из БД со связями, чтобы получить актуальные данные
         $workout = $workout->fresh(['plan.cycle', 'user']);
-        
+
         // Если тренировка связана с циклом, проверяем и автоматически завершаем цикл при достижении 100%
         if ($workout->plan && $workout->plan->cycle) {
             $this->cycleService->autoCompleteIfFinished($workout->plan->cycle);
         }
-        
+
         // Обновляем прогресс целей пользователя
         if ($workout->user_id) {
             $this->goalService->updateProgressForUser($workout->user_id);
         }
-        
+
         return $workout;
     }
 
     /**
      * Получить историю выполнения упражнения за последние 3 тренировки
-     * 
+     *
      * Возвращает подходы для указанного упражнения из плана за последние 3 завершенные тренировки.
      * Подходы отсортированы по дате создания (новые сначала) и сгруппированы по тренировкам.
-     * 
-     * @param int $planExerciseId ID упражнения в плане
-     * @param int $userId ID пользователя
-     * 
+     *
+     * @param  int  $planExerciseId  ID упражнения в плане
+     * @param  int  $userId  ID пользователя
      * @return \Illuminate\Database\Eloquent\Collection Коллекция подходов за последние 3 тренировки.
-     * Каждый подход содержит связь с тренировкой (id, started_at, finished_at).
+     *                                                  Каждый подход содержит связь с тренировкой (id, started_at, finished_at).
      */
     public function getExerciseHistory(int $planExerciseId, int $userId): \Illuminate\Database\Eloquent\Collection
     {
         return \App\Models\WorkoutSet::where('plan_exercise_id', $planExerciseId)
             ->whereHas('workout', function ($query) use ($userId) {
                 $query->where('user_id', $userId)
-                      ->whereNotNull('finished_at');
+                    ->whereNotNull('finished_at');
             })
             ->with(['workout' => function ($query) {
                 $query->select('id', 'started_at', 'finished_at');
