@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Models\WorkoutSet;
-use App\Models\Workout;
-use App\Models\PlanExercise;
 use App\Filters\WorkoutSetFilter;
+use App\Models\PlanExercise;
+use App\Models\Workout;
+use App\Models\WorkoutSet;
 use App\Traits\HasPagination;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -15,7 +15,7 @@ use Illuminate\Pagination\LengthAwarePaginator;
 final class WorkoutSetService
 {
     use HasPagination;
-    
+
     /**
      * Get all workout sets with optional filtering and pagination.
      */
@@ -23,11 +23,11 @@ final class WorkoutSetService
     {
         $filter = new WorkoutSetFilter($filters);
         $query = WorkoutSet::query()->with(['workout.plan', 'workout.user', 'planExercise.exercise']);
-        
-        if (!isset($filters['workout_id']) || $filters['workout_id'] === null) {
+
+        if (! isset($filters['workout_id']) || $filters['workout_id'] === null) {
             return new LengthAwarePaginator([], 0, 15, 1);
         }
-        
+
         $filter->apply($query);
 
         return $this->applyPagination($query, $filters);
@@ -51,9 +51,20 @@ final class WorkoutSetService
 
     /**
      * Create a new workout set.
+     *
+     * If a client_request_id is provided, the creation is idempotent: retried
+     * requests with the same key (e.g. after a client-side timeout on a flaky
+     * connection) return the already-created set instead of inserting a duplicate.
      */
     public function create(array $data): WorkoutSet
     {
+        if (! empty($data['client_request_id'])) {
+            return WorkoutSet::firstOrCreate(
+                ['client_request_id' => $data['client_request_id']],
+                $data
+            );
+        }
+
         return WorkoutSet::create($data);
     }
 
@@ -71,12 +82,12 @@ final class WorkoutSetService
         }
 
         $workoutSet = $query->find($id);
-        if (!$workoutSet) {
+        if (! $workoutSet) {
             return null;
         }
-        
+
         $workoutSet->update($data);
-        
+
         return $workoutSet->fresh(['workout.plan', 'workout.user', 'planExercise.exercise']);
     }
 
@@ -94,10 +105,10 @@ final class WorkoutSetService
         }
 
         $workoutSet = $query->find($id);
-        if (!$workoutSet) {
+        if (! $workoutSet) {
             return false;
         }
-        
+
         return $workoutSet->delete();
     }
 
@@ -117,12 +128,12 @@ final class WorkoutSetService
         }
 
         $results = $query->get();
-        
+
         // Если пользователь указан и результатов нет, проверяем существование workout
         if ($userId && $results->isEmpty()) {
             $workout = Workout::find($workoutId);
             if ($workout && $workout->user_id !== $userId) {
-                throw new \Illuminate\Database\Eloquent\ModelNotFoundException();
+                throw new \Illuminate\Database\Eloquent\ModelNotFoundException;
             }
         }
 
@@ -145,7 +156,7 @@ final class WorkoutSetService
         }
 
         $results = $query->get();
-        
+
         // Если пользователь указан и результатов нет, проверяем существование plan exercise
         if ($userId && $results->isEmpty()) {
             $planExercise = PlanExercise::find($planExerciseId);
@@ -153,9 +164,9 @@ final class WorkoutSetService
                 $workout = Workout::whereHas('plan', function ($q) use ($planExercise) {
                     $q->where('id', $planExercise->plan_id);
                 })->where('user_id', $userId)->first();
-                
-                if (!$workout) {
-                    throw new \Illuminate\Database\Eloquent\ModelNotFoundException();
+
+                if (! $workout) {
+                    throw new \Illuminate\Database\Eloquent\ModelNotFoundException;
                 }
             }
         }

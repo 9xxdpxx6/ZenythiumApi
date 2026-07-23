@@ -25,24 +25,24 @@ final class WorkoutSetRequest extends FormRequest
             'workout_id' => [
                 'required',
                 'integer',
-                'exists:workouts,id'
+                'exists:workouts,id',
             ],
             'plan_exercise_id' => [
                 'required',
                 'integer',
-                'exists:plan_exercises,id'
+                'exists:plan_exercises,id',
             ],
             'weight' => [
                 'nullable',
                 'numeric',
                 'min:0',
-                'max:999.99'
+                'max:999.99',
             ],
             'reps' => [
                 'nullable',
                 'integer',
                 'min:0',
-                'max:9999'
+                'max:9999',
             ],
         ];
 
@@ -50,6 +50,13 @@ final class WorkoutSetRequest extends FormRequest
         if ($this->isMethod('PUT') || $this->isMethod('PATCH')) {
             $rules['workout_id'][0] = 'sometimes';
             $rules['plan_exercise_id'][0] = 'sometimes';
+        }
+
+        // Идемпотентность имеет смысл только при создании: клиент присылает
+        // сгенерированный ключ, чтобы повтор запроса (ретрай при плохой сети)
+        // не создал дублирующийся подход.
+        if ($this->isMethod('POST')) {
+            $rules['client_request_id'] = ['nullable', 'string', 'max:64'];
         }
 
         return $rules;
@@ -103,14 +110,14 @@ final class WorkoutSetRequest extends FormRequest
                     ->where('plan_exercises.id', $this->plan_exercise_id)
                     ->select('workouts.id', 'workouts.plan_id', 'plan_exercises.plan_id as plan_exercise_plan_id')
                     ->first();
-                
-                if (!$workout) {
+
+                if (! $workout) {
                     // Проверяем отдельно, чтобы понять, какая именно проверка не прошла
                     $workoutExists = \App\Models\Workout::where('id', $this->workout_id)
                         ->where('user_id', $this->user_id)
                         ->exists();
-                    
-                    if (!$workoutExists) {
+
+                    if (! $workoutExists) {
                         $validator->errors()->add('workout_id', 'Тренировка не принадлежит текущему пользователю.');
                     } else {
                         $validator->errors()->add('plan_exercise_id', 'Упражнение должно принадлежать тому же плану, что и тренировка.');
@@ -121,8 +128,8 @@ final class WorkoutSetRequest extends FormRequest
                 $workoutExists = \App\Models\Workout::where('id', $this->workout_id)
                     ->where('user_id', $this->user_id)
                     ->exists();
-                
-                if (!$workoutExists) {
+
+                if (! $workoutExists) {
                     $validator->errors()->add('workout_id', 'Тренировка не принадлежит текущему пользователю.');
                 }
             }

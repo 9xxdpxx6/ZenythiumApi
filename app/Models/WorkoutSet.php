@@ -11,11 +11,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 final class WorkoutSet extends Model
 {
     use HasFactory;
+
     protected $fillable = [
         'workout_id',
         'plan_exercise_id',
         'weight',
         'reps',
+        'client_request_id',
     ];
 
     protected $casts = [

@@ -37,7 +37,7 @@ beforeEach(function () {
         'weight' => 50.5,
         'reps' => 10,
     ]);
-    $this->workoutSetService = new WorkoutSetService();
+    $this->workoutSetService = new WorkoutSetService;
 });
 
 describe('WorkoutSetService', function () {
@@ -47,10 +47,10 @@ describe('WorkoutSetService', function () {
                 'workout_id' => $this->workout->id,
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
-            
+
             $filters = ['workout_id' => $this->workout->id];
             $result = $this->workoutSetService->getAll($filters);
-            
+
             expect($result)->toBeInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class);
             expect($result->count())->toBe(6); // 5 new + 1 existing
             expect($result->items()[0])->toBeInstanceOf(WorkoutSet::class);
@@ -59,7 +59,7 @@ describe('WorkoutSetService', function () {
         it('returns empty paginator when workout_id is null', function () {
             $filters = ['workout_id' => null];
             $result = $this->workoutSetService->getAll($filters);
-            
+
             expect($result)->toBeInstanceOf(\Illuminate\Pagination\LengthAwarePaginator::class);
             expect($result->count())->toBe(0);
             expect($result->total())->toBe(0);
@@ -76,14 +76,14 @@ describe('WorkoutSetService', function () {
                 'plan_exercise_id' => $this->planExercise->id,
                 'weight' => 80.0,
             ]);
-            
+
             $filters = [
                 'workout_id' => $this->workout->id,
                 'weight_from' => 40.0,
                 'weight_to' => 70.0,
             ];
             $result = $this->workoutSetService->getAll($filters);
-            
+
             expect($result->count())->toBe(1);
             expect($result->items()[0]->weight)->toBe('50.50');
         });
@@ -99,14 +99,14 @@ describe('WorkoutSetService', function () {
                 'plan_exercise_id' => $this->planExercise->id,
                 'reps' => 15,
             ]);
-            
+
             $filters = [
                 'workout_id' => $this->workout->id,
                 'reps_from' => 8,
                 'reps_to' => 12,
             ];
             $result = $this->workoutSetService->getAll($filters);
-            
+
             expect($result->count())->toBe(1);
             expect($result->items()[0]->reps)->toBe(10);
         });
@@ -115,7 +115,7 @@ describe('WorkoutSetService', function () {
     describe('getById', function () {
         it('returns workout set by id', function () {
             $result = $this->workoutSetService->getById($this->workoutSet->id);
-            
+
             expect($result)->toBeInstanceOf(WorkoutSet::class);
             expect($result->id)->toBe($this->workoutSet->id);
             expect($result->weight)->toBe('50.50');
@@ -124,7 +124,7 @@ describe('WorkoutSetService', function () {
 
         it('returns workout set with relationships loaded', function () {
             $result = $this->workoutSetService->getById($this->workoutSet->id);
-            
+
             expect($result->relationLoaded('workout'))->toBeTrue();
             expect($result->relationLoaded('planExercise'))->toBeTrue();
             expect($result->workout->relationLoaded('plan'))->toBeTrue();
@@ -142,10 +142,10 @@ describe('WorkoutSetService', function () {
                 'workout_id' => $otherWorkout->id,
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
-            
+
             $result = $this->workoutSetService->getById($this->workoutSet->id, $this->user->id);
             expect($result->id)->toBe($this->workoutSet->id);
-            
+
             $result = $this->workoutSetService->getById($otherWorkoutSet->id, $this->user->id);
             expect($result)->toBeNull();
         });
@@ -164,9 +164,9 @@ describe('WorkoutSetService', function () {
                 'weight' => 75.0,
                 'reps' => 12,
             ];
-            
+
             $result = $this->workoutSetService->create($data);
-            
+
             expect($result)->toBeInstanceOf(WorkoutSet::class);
             expect($result->workout_id)->toBe($this->workout->id);
             expect($result->plan_exercise_id)->toBe($this->planExercise->id);
@@ -182,12 +182,56 @@ describe('WorkoutSetService', function () {
                 'weight' => null,
                 'reps' => null,
             ];
-            
+
             $result = $this->workoutSetService->create($data);
-            
+
             expect($result)->toBeInstanceOf(WorkoutSet::class);
             expect($result->weight)->toBeNull();
             expect($result->reps)->toBeNull();
+        });
+
+        it('returns the same set instead of a duplicate when client_request_id repeats', function () {
+            $data = [
+                'workout_id' => $this->workout->id,
+                'plan_exercise_id' => $this->planExercise->id,
+                'weight' => 80.0,
+                'reps' => 10,
+                'client_request_id' => 'retry-key-123',
+            ];
+
+            $first = $this->workoutSetService->create($data);
+            $retry = $this->workoutSetService->create($data);
+
+            expect($retry->id)->toBe($first->id);
+            expect(WorkoutSet::where('client_request_id', 'retry-key-123')->count())->toBe(1);
+        });
+
+        it('creates separate sets when client_request_id differs', function () {
+            $base = [
+                'workout_id' => $this->workout->id,
+                'plan_exercise_id' => $this->planExercise->id,
+                'weight' => 80.0,
+                'reps' => 10,
+            ];
+
+            $first = $this->workoutSetService->create([...$base, 'client_request_id' => 'key-a']);
+            $second = $this->workoutSetService->create([...$base, 'client_request_id' => 'key-b']);
+
+            expect($first->id)->not->toBe($second->id);
+        });
+
+        it('creates separate sets when client_request_id is absent, as before', function () {
+            $data = [
+                'workout_id' => $this->workout->id,
+                'plan_exercise_id' => $this->planExercise->id,
+                'weight' => 80.0,
+                'reps' => 10,
+            ];
+
+            $first = $this->workoutSetService->create($data);
+            $second = $this->workoutSetService->create($data);
+
+            expect($first->id)->not->toBe($second->id);
         });
     });
 
@@ -197,9 +241,9 @@ describe('WorkoutSetService', function () {
                 'weight' => 60.0,
                 'reps' => 15,
             ];
-            
+
             $result = $this->workoutSetService->update($this->workoutSet->id, $data);
-            
+
             expect($result)->toBeInstanceOf(WorkoutSet::class);
             expect($result->weight)->toBe('60.00');
             expect($result->reps)->toBe(15);
@@ -218,9 +262,9 @@ describe('WorkoutSetService', function () {
                 'workout_id' => $otherWorkout->id,
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
-            
+
             $data = ['weight' => 100.0];
-            
+
             $result = $this->workoutSetService->update($otherWorkoutSet->id, $data, $this->user->id);
             expect($result)->toBeNull();
         });
@@ -234,7 +278,7 @@ describe('WorkoutSetService', function () {
     describe('delete', function () {
         it('deletes workout set successfully', function () {
             $result = $this->workoutSetService->delete($this->workoutSet->id);
-            
+
             expect($result)->toBeTrue();
             expect(WorkoutSet::find($this->workoutSet->id))->toBeNull();
         });
@@ -251,7 +295,7 @@ describe('WorkoutSetService', function () {
                 'workout_id' => $otherWorkout->id,
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
-            
+
             $result = $this->workoutSetService->delete($otherWorkoutSet->id, $this->user->id);
             expect($result)->toBeFalse();
         });
@@ -268,12 +312,12 @@ describe('WorkoutSetService', function () {
                 'workout_id' => $this->workout->id,
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
-            
+
             $result = $this->workoutSetService->getByWorkoutId($this->workout->id);
-            
+
             expect($result)->toBeInstanceOf(\Illuminate\Database\Eloquent\Collection::class);
             expect($result->count())->toBe(4); // 3 new + 1 existing
-            expect($result->every(fn($item) => $item->workout_id === $this->workout->id))->toBeTrue();
+            expect($result->every(fn ($item) => $item->workout_id === $this->workout->id))->toBeTrue();
         });
 
         it('filters by user when provided', function () {
@@ -288,9 +332,9 @@ describe('WorkoutSetService', function () {
                 'workout_id' => $otherWorkout->id,
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
-            
+
             $result = $this->workoutSetService->getByWorkoutId($this->workout->id, $this->user->id);
-            
+
             expect($result->count())->toBe(1);
             expect($result->first()->workout_id)->toBe($this->workout->id);
         });
@@ -306,12 +350,12 @@ describe('WorkoutSetService', function () {
                 'workout_id' => $otherWorkout->id,
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
-            
+
             $result = $this->workoutSetService->getByPlanExerciseId($this->planExercise->id);
-            
+
             expect($result)->toBeInstanceOf(\Illuminate\Database\Eloquent\Collection::class);
             expect($result->count())->toBe(3); // 2 new + 1 existing
-            expect($result->every(fn($item) => $item->plan_exercise_id === $this->planExercise->id))->toBeTrue();
+            expect($result->every(fn ($item) => $item->plan_exercise_id === $this->planExercise->id))->toBeTrue();
         });
 
         it('filters by user when provided', function () {
@@ -326,9 +370,9 @@ describe('WorkoutSetService', function () {
                 'workout_id' => $otherWorkout->id,
                 'plan_exercise_id' => $this->planExercise->id,
             ]);
-            
+
             $result = $this->workoutSetService->getByPlanExerciseId($this->planExercise->id, $this->user->id);
-            
+
             expect($result->count())->toBe(1);
             expect($result->first()->workout->user_id)->toBe($this->user->id);
         });
