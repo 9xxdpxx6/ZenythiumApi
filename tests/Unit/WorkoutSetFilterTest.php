@@ -118,9 +118,10 @@ describe('WorkoutSetFilter', function () {
 
     describe('plan exercise filter', function () {
         it('filters by plan_exercise_id', function () {
+            $otherExercise = Exercise::factory()->create(['muscle_group_id' => $this->muscleGroup->id]);
             $otherPlanExercise = PlanExercise::factory()->create([
                 'plan_id' => $this->plan->id,
-                'exercise_id' => $this->exercise->id,
+                'exercise_id' => $otherExercise->id,
             ]);
             
             $workoutSet1 = WorkoutSet::factory()->create([
