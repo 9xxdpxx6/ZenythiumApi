@@ -7,7 +7,9 @@ namespace App\Http\Middleware;
 use Closure;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpFoundation\Response;
+use Throwable;
 
 /**
  * Идемпотентность мутирующих запросов по заголовку Idempotency-Key.
@@ -35,7 +37,20 @@ final class EnsureIdempotentRequest
 
         $cacheKey = $this->buildCacheKey($request, $key);
 
-        $cached = Cache::get($cacheKey);
+        // Идемпотентность — это оптимизация поверх обычного запроса, а не его
+        // условие: если кеш недоступен или повреждён (проблема с драйвером,
+        // сериализацией и т.п.), запрос всё равно должен отработать как обычно,
+        // а не упасть с 500 из-за слоя, который вообще не должен быть заметен.
+        try {
+            $cached = Cache::get($cacheKey);
+        } catch (Throwable $e) {
+            Log::error('EnsureIdempotentRequest: failed to read cache', [
+                'key' => $cacheKey,
+                'error' => $e->getMessage(),
+            ]);
+            $cached = null;
+        }
+
         if ($cached !== null) {
             return response($cached['content'], $cached['status'])
                 ->header('Content-Type', $cached['contentType']);
@@ -44,11 +59,18 @@ final class EnsureIdempotentRequest
         $response = $next($request);
 
         if ($response->getStatusCode() >= 200 && $response->getStatusCode() < 300) {
-            Cache::put($cacheKey, [
-                'status' => $response->getStatusCode(),
-                'content' => $response->getContent(),
-                'contentType' => $response->headers->get('Content-Type') ?? 'application/json',
-            ], self::CACHE_TTL_SECONDS);
+            try {
+                Cache::put($cacheKey, [
+                    'status' => $response->getStatusCode(),
+                    'content' => $response->getContent(),
+                    'contentType' => $response->headers->get('Content-Type') ?? 'application/json',
+                ], self::CACHE_TTL_SECONDS);
+            } catch (Throwable $e) {
+                Log::error('EnsureIdempotentRequest: failed to write cache', [
+                    'key' => $cacheKey,
+                    'error' => $e->getMessage(),
+                ]);
+            }
         }
 
         return $response;
