@@ -595,4 +595,58 @@ final class CycleController extends Controller
             ], 500);
         }
     }
+
+    /**
+     * @OA\Post(
+     *     path="/api/v1/cycles/{id}/duplicate",
+     *     summary="Создание копии цикла тренировок",
+     *     description="Рекурсивно копирует цикл: сам цикл → все его планы → все упражнения каждого плана. Даты (start_date/end_date) обнуляются, тренировки и подходы НЕ копируются. Название цикла получает суффикс ' (копия)'; при коллизии — ' (копия 2)', ' (копия 3)' и т.д.",
+     *     tags={"Cycles"},
+     *     security={{"sanctum": {}}},
+     *     @OA\Parameter(
+     *         name="id",
+     *         in="path",
+     *         description="ID исходного цикла",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Цикл успешно скопирован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="data", ref="#/components/schemas/CycleResource"),
+     *             @OA\Property(property="message", type="string", example="Цикл успешно скопирован")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Не авторизован",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Unauthenticated.")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Цикл не найден",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Цикл не найден")
+     *         )
+     *     )
+     * )
+     */
+    public function duplicate(int $id, Request $request): JsonResponse
+    {
+        $newCycle = $this->cycleService->duplicate($id, $request->user()?->id);
+
+        if (!$newCycle) {
+            return response()->json([
+                'message' => 'Цикл не найден'
+            ], 404);
+        }
+
+        return response()->json([
+            'data' => new CycleResource($newCycle),
+            'message' => 'Цикл успешно скопирован'
+        ], 201);
+    }
 }

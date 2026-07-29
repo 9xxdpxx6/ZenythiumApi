@@ -76,6 +76,7 @@ Route::prefix('v1')->middleware(['auth:sanctum', 'throttle:200,1', 'idempotent']
     Route::delete('/cycles/{id}', [CycleController::class, 'destroy']);
     Route::get('/cycles/{id}/export', [CycleController::class, 'export']);
     Route::get('/cycles/{id}/share-link', [CycleController::class, 'shareLink'])->middleware('throttle:60,1');
+    Route::post('/cycles/{id}/duplicate', [CycleController::class, 'duplicate']);
 
     // Exercises CRUD routes
     Route::get('/exercises', [ExerciseController::class, 'index']);

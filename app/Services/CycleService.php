@@ -5,10 +5,13 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\Models\Cycle;
+use App\Models\Plan;
+use App\Models\PlanExercise;
 use App\Filters\CycleFilter;
 use App\Traits\HasPagination;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Facades\DB;
 
 final class CycleService
 {
@@ -196,6 +199,86 @@ final class CycleService
                 ]);
             }
         }
+    }
+
+    /**
+     * Рекурсивно скопировать цикл: сам цикл → все его планы → все упражнения каждого плана.
+     *
+     * Копируется только структура: даты (start_date/end_date) обнуляются, workouts/workout_sets
+     * не копируются. Название цикла получает суффикс " (копия)"; если такое уже занято —
+     * инкрементируется до " (копия N)". Названия и порядок планов/упражнений сохраняются как есть.
+     */
+    public function duplicate(int $id, ?int $userId = null): ?Cycle
+    {
+        $original = Cycle::query()
+            ->with(['plans.planExercises'])
+            ->when($userId !== null, fn ($q) => $q->where('user_id', $userId))
+            ->find($id);
+
+        if (!$original) {
+            return null;
+        }
+
+        return DB::transaction(function () use ($original, $userId): Cycle {
+            $newCycle = Cycle::create([
+                'user_id' => $userId ?? $original->user_id,
+                'name' => $this->buildUniqueCopyName($original->name, $userId ?? $original->user_id),
+                'weeks' => $original->weeks,
+                'start_date' => null,
+                'end_date' => null,
+            ]);
+
+            foreach ($original->plans as $plan) {
+                $newPlan = Plan::create([
+                    'user_id' => $plan->user_id,
+                    'cycle_id' => $newCycle->id,
+                    'name' => $plan->name,
+                    'order' => $plan->order,
+                    'is_active' => $plan->is_active,
+                ]);
+
+                $rows = [];
+                foreach ($plan->planExercises as $planExercise) {
+                    $rows[] = [
+                        'plan_id' => $newPlan->id,
+                        'exercise_id' => $planExercise->exercise_id,
+                        'order' => $planExercise->order,
+                        'created_at' => now(),
+                        'updated_at' => now(),
+                    ];
+                }
+
+                if (!empty($rows)) {
+                    PlanExercise::insert($rows);
+                }
+            }
+
+            return $newCycle->fresh();
+        });
+    }
+
+    /**
+     * Подобрать не занятое имя копии: "X (копия)", затем "X (копия 2)", "X (копия 3)" и т.д.
+     */
+    private function buildUniqueCopyName(string $baseName, ?int $userId): string
+    {
+        $candidate = $baseName . ' (копия)';
+
+        $exists = fn (string $name): bool => Cycle::query()
+            ->where('user_id', $userId)
+            ->where('name', $name)
+            ->exists();
+
+        if (!$exists($candidate)) {
+            return $candidate;
+        }
+
+        $n = 2;
+        while ($exists($baseName . ' (копия ' . $n . ')')) {
+            $n++;
+        }
+
+        return $baseName . ' (копия ' . $n . ')';
     }
 
     /**
