@@ -34,7 +34,9 @@ final class StatisticsController extends Controller
      *                 @OA\Property(property="total_volume", type="number", format="float", example=125000.00, description="Суммарный объём (вес × повторения) по всем завершённым тренировкам"),
      *                 @OA\Property(property="current_weight", type="number", format="float", example=75.5),
      *                 @OA\Property(property="active_cycles_count", type="integer", example=1, description="Количество активных циклов (без end_date)"),
-     *                 @OA\Property(property="weight_change_30_days", type="number", example=2, description="Изменение веса за 30 дней (разница между последним замером и замером ~30 дней назад). null если недостаточно данных"),
+     *                 @OA\Property(property="weight_change_7_days", type="number", example=-0.2, description="Изменение веса за 7 дней (последний замер минус замер ~7 дней назад). null если недостаточно данных"),
+     *                 @OA\Property(property="weight_change_30_days", type="number", example=-0.6, description="Изменение веса за 30 дней. null если недостаточно данных"),
+     *                 @OA\Property(property="weight_change_90_days", type="number", example=-1.8, description="Изменение веса за 90 дней. null если недостаточно данных"),
      *                 @OA\Property(property="training_frequency_4_weeks", type="number", example=3.5, description="Среднее количество тренировок в неделю за последние 35 дней. Делится на фактическое число недель активности (макс. 5)"),
      *             ),
      *             @OA\Property(property="message", type="string", example="Статистика пользователя успешно получена")
@@ -123,8 +125,10 @@ final class StatisticsController extends Controller
                 $activeCyclesCount = 0;
             }
 
-            // Weight change over time (last 30 days)
-            $weightChange = $this->getWeightChange($userId);
+            // Weight change over multiple windows (7 / 30 / 90 days)
+            $weightChange7 = $this->getWeightChange($userId, 7);
+            $weightChange30 = $this->getWeightChange($userId, 30);
+            $weightChange90 = $this->getWeightChange($userId, 90);
 
             // Training frequency (workouts per week in last 35 days / 5 weeks)
             $trainingFrequency = $this->getTrainingFrequency($userId);
@@ -137,7 +141,9 @@ final class StatisticsController extends Controller
                     'total_volume' => (float) ($totalVolume ?? 0),
                     'current_weight' => $currentWeight !== null ? (float) $currentWeight : null,
                     'active_cycles_count' => (int) $activeCyclesCount,
-                    'weight_change_30_days' => $weightChange !== null ? (float) $weightChange : null,
+                    'weight_change_7_days' => $weightChange7 !== null ? (float) $weightChange7 : null,
+                    'weight_change_30_days' => $weightChange30 !== null ? (float) $weightChange30 : null,
+                    'weight_change_90_days' => $weightChange90 !== null ? (float) $weightChange90 : null,
                     'training_frequency_4_weeks' => (float) ($trainingFrequency ?? 0),
                 ],
                 'message' => 'Статистика пользователя успешно получена'
@@ -181,25 +187,26 @@ final class StatisticsController extends Controller
     }
 
     /**
-     * Get weight change over last 30 days.
-     * 
-     * Uses the last metric recorded BEFORE the 30-day window as baseline,
-     * compared to the most recent metric. Returns null if insufficient data.
+     * Get weight change over the last N days.
+     *
+     * Uses the last metric recorded BEFORE the N-day window as baseline, compared to
+     * the most recent metric. Falls back to the earliest metric inside the window if
+     * no metric predates the window. Returns null if insufficient data.
      */
-    private function getWeightChange(int $userId): ?float
+    private function getWeightChange(int $userId, int $days): ?float
     {
         try {
             $user = User::find($userId);
             if (!$user) {
                 Log::warning('StatisticsController::getWeightChange - User not found', [
                     'user_id' => $userId,
+                    'days' => $days,
                 ]);
                 return null;
             }
 
-            $thirtyDaysAgo = now()->subDays(30);
+            $windowStart = now()->subDays($days);
 
-            // Last metric within the 30-day window (most recent)
             $latestMetric = $user->metrics()
                 ->orderByDesc('date')
                 ->first();
@@ -208,16 +215,14 @@ final class StatisticsController extends Controller
                 return null;
             }
 
-            // Baseline: last metric recorded before or at the start of the 30-day window
             $baselineMetric = $user->metrics()
-                ->where('date', '<=', $thirtyDaysAgo)
+                ->where('date', '<=', $windowStart)
                 ->orderByDesc('date')
                 ->first();
 
-            // Fallback: if no metric before the window, use the earliest metric within the window
             if (!$baselineMetric) {
                 $baselineMetric = $user->metrics()
-                    ->where('date', '>=', $thirtyDaysAgo)
+                    ->where('date', '>=', $windowStart)
                     ->orderBy('date')
                     ->first();
             }
@@ -230,6 +235,7 @@ final class StatisticsController extends Controller
         } catch (Throwable $e) {
             Log::error('StatisticsController::getWeightChange - Error', [
                 'user_id' => $userId,
+                'days' => $days,
                 'exception' => get_class($e),
                 'message' => $e->getMessage(),
                 'trace' => $e->getTraceAsString(),
